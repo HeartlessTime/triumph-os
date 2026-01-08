@@ -1,4 +1,5 @@
 from datetime import date, timedelta
+from decimal import Decimal
 from fastapi import APIRouter, Request, Depends
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
@@ -9,6 +10,11 @@ from app.database import get_db
 from app.auth import get_current_user, DEMO_MODE
 from app.models import Opportunity, Account, Task, Activity
 from app.services.followup import get_followup_status
+from app.demo_data import (
+    get_all_demo_opportunities,
+    get_all_demo_tasks,
+    get_all_demo_activities
+)
 
 router = APIRouter(tags=["dashboard"])
 templates = Jinja2Templates(directory="app/templates")
@@ -29,17 +35,53 @@ async def dashboard(
     # Get pipeline stats
     open_stages = ['Prospecting', 'Qualification', 'Needs Analysis', 'Proposal', 'Bid Sent', 'Negotiation']
 
-    # DEMO MODE: Return mock data
+    # DEMO MODE: Return demo data
     if DEMO_MODE or db is None:
-        pipeline_value = 0
+        demo_opps = get_all_demo_opportunities()
+        demo_tasks_list = get_all_demo_tasks()
+        demo_activities_list = get_all_demo_activities()
+
+        # Calculate pipeline stats from demo data
+        open_opps = [o for o in demo_opps if o.stage in open_stages]
+        pipeline_value = sum((o.lv_value or Decimal(0)) + (o.hdd_value or Decimal(0)) for o in open_opps)
         weighted_pipeline = 0
-        open_opportunities = 0
-        won_this_month = 0
-        followup_opps = []
-        upcoming_bids = []
-        my_tasks = []
-        recent_activities = []
+        open_opportunities = len(open_opps)
+
+        # Won this month
+        first_of_month = today.replace(day=1)
+        won_opps = [o for o in demo_opps if o.stage == 'Won' and o.close_date and o.close_date >= first_of_month]
+        won_this_month = sum((o.lv_value or Decimal(0)) + (o.hdd_value or Decimal(0)) for o in won_opps)
+
+        # Opportunities needing follow-up
+        followup_opps = [o for o in open_opps if o.next_followup and o.next_followup <= today]
+        followup_opps.sort(key=lambda o: o.next_followup if o.next_followup else today)
+        followup_opps = followup_opps[:10]
+
+        # Add followup status
+        for opp in followup_opps:
+            opp.followup_status = get_followup_status(opp.next_followup, today)
+
+        # Upcoming bids
+        upcoming_bids = [o for o in open_opps if o.bid_date and today <= o.bid_date <= today + timedelta(days=14)]
+        upcoming_bids.sort(key=lambda o: o.bid_date if o.bid_date else today + timedelta(days=999))
+        upcoming_bids = upcoming_bids[:10]
+
+        # My tasks
+        my_tasks = [t for t in demo_tasks_list if t.status == 'Open']
+        my_tasks.sort(key=lambda t: (t.due_date if t.due_date else date(9999, 12, 31), -(['Low', 'Medium', 'High'].index(t.priority) if t.priority in ['Low', 'Medium', 'High'] else 0)))
+        my_tasks = my_tasks[:10]
+
+        # Recent activities
+        recent_activities = sorted(demo_activities_list, key=lambda a: a.activity_date, reverse=True)[:10]
+
+        # Stage distribution
         stage_data = {}
+        for stage in open_stages:
+            stage_opps = [o for o in demo_opps if o.stage == stage]
+            if stage_opps:
+                count = len(stage_opps)
+                value = sum((o.lv_value or Decimal(0)) + (o.hdd_value or Decimal(0)) for o in stage_opps)
+                stage_data[stage] = {'count': count, 'value': float(value)}
     else:
         # Pipeline value: sum of LV + HDD estimates
         pipeline_value = db.query(

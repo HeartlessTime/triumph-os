@@ -7,6 +7,7 @@ from app.routes.estimates import router as estimates_router
 from app.routes.documents import router as documents_router
 from app.routes.activities import router as activities_router
 from app.routes.tasks import router as tasks_router
+from app.routes.guide import router as guide_router
 
 __all__ = [
     "auth_router",
@@ -18,4 +19,5 @@ __all__ = [
     "documents_router",
     "activities_router",
     "tasks_router",
+    "guide_router",
 ]

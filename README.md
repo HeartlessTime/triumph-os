@@ -1,4 +1,4 @@
-# Triumph OS
+# RevenueOS
 
 A production-ready internal web application that connects Sales and Estimating teams in one unified database.
 
@@ -51,8 +51,8 @@ brew services start postgresql@15
 
 1. **Extract the zip and navigate to the project**:
 ```bash
-unzip triumphos.zip
-cd triumphos
+unzip revenueos.zip
+cd revenueos
 ```
 
 2. **Create and activate virtual environment**:
@@ -69,7 +69,7 @@ pip install -r requirements.txt
 
 4. **Create the database**:
 ```bash
-createdb triumphos
+createdb revenueos
 ```
 
 > **Note**: If you get a "role does not exist" error, first create your user:
@@ -84,15 +84,10 @@ cp .env.example .env
 
 If your PostgreSQL uses a different user/password, edit `.env`:
 ```
-DATABASE_URL=postgresql://YOUR_USERNAME@localhost:5432/triumphos
+DATABASE_URL=postgresql://YOUR_USERNAME@localhost:5432/revenueos
 ```
 
 6. **Run database migrations**:
-```bash
-alembic upgrade head
-```
-
-If you added the intake schema changes, run the new migration (already included):
 ```bash
 alembic upgrade head
 ```
@@ -118,9 +113,9 @@ http://localhost:8000
 
 | Email | Password | Role |
 |-------|----------|------|
-| admin@triumphos.com | admin123 | Admin |
-| sarah.sales@triumphos.com | sales123 | Sales |
-| mike.estimator@triumphos.com | estimate123 | Estimator |
+| admin@revenueos.com | admin123 | Admin |
+| sarah.sales@revenueos.com | sales123 | Sales |
+| mike.estimator@revenueos.com | estimate123 | Estimator |
 
 ---
 
@@ -167,7 +162,7 @@ uvicorn app.main:app --reload --port 8080
 ## Project Structure
 
 ```
-triumphos/
+revenueos/
 ├── alembic/                 # Database migrations
 ├── app/
 │   ├── models/              # SQLAlchemy models
@@ -212,47 +207,3 @@ Follow-up dates are recalculated whenever `last_contacted` or `stage` changes.
 ## License
 
 Proprietary - Internal Use Only
-
----
-
-**SQLite (quick dev) setup**
-
-If you don't have Postgres available, the project now defaults to a local
-SQLite DB for development. The SQLite DB file is `triumphos_dev.db` in the
-project root by default (or use `DATABASE_URL` to override).
-
-Exact commands to use for SQLite dev:
-
-- Delete the sqlite DB file (start fresh):
-```bash
-rm -f triumphos_dev.db
-```
-
-- (Optional) run Alembic migrations against the SQLite dev DB:
-```bash
-# Ensure DATABASE_URL is not set or points to sqlite:///./triumphos_dev.db
-source venv/bin/activate
-alembic upgrade head
-```
-
-- Seed data (this will always create/update the default demo users and
-	print their credentials):
-```bash
-source venv/bin/activate
-python -m app.seed
-```
-
-- Start the app (it will auto-create tables for SQLite if migrations haven't
-	been run):
-```bash
-source venv/bin/activate
-uvicorn app.main:app --reload --port 8000
-```
-
-Notes:
-- The app will fail loudly on startup if the database cannot be initialized.
-- Default dev credentials printed by `app.seed` are:
-	- admin@triumphos.com / admin123
-	- sarah.sales@triumphos.com / sales123
-	- mike.estimator@triumphos.com / estimate123
-

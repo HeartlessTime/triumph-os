@@ -1,0 +1,308 @@
+{% extends "base.html" %}
+
+{% block title %}How to Use - Triumph OS{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1><i class="bi bi-book me-2"></i>How to Use Triumph OS</h1>
+    <p class="text-muted">Complete guide to using the Sales & Estimating platform</p>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="bi bi-speedometer2 me-2"></i>Dashboard Overview</h5>
+            </div>
+            <div class="card-body">
+                <p><strong>What it shows:</strong> Your main hub for tracking sales pipeline, upcoming bids, and tasks.</p>
+                <ul>
+                    <li><strong>Pipeline Value:</strong> Total estimated value of all open opportunities (LV + HDD)</li>
+                    <li><strong>Open Opportunities:</strong> Count of active bids in progress</li>
+                    <li><strong>Won This Month:</strong> Total value of projects won in current month</li>
+                    <li><strong>Opportunities Needing Follow-up:</strong> Bids past their next follow-up date</li>
+                    <li><strong>Upcoming Bids:</strong> Projects with bid dates in next 14 days</li>
+                    <li><strong>My Tasks:</strong> Your open action items sorted by priority and due date</li>
+                    <li><strong>Recent Activities:</strong> Latest customer interactions and notes</li>
+                </ul>
+                <p class="mb-0"><strong>Best Practice:</strong> Check dashboard first thing each morning to stay on top of deadlines.</p>
+            </div>
+        </div>
+
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0"><i class="bi bi-building me-2"></i>Managing Accounts</h5>
+            </div>
+            <div class="card-body">
+                <p><strong>What they are:</strong> Customer companies (General Contractors, Developers, etc.)</p>
+
+                <h6 class="mt-3">Creating an Account:</h6>
+                <ol>
+                    <li>Click "Accounts" in left sidebar</li>
+                    <li>Click "+ New Account" button</li>
+                    <li>Fill in company details (name, industry, contact info, address)</li>
+                    <li>Add notes about the company (bidding preferences, payment history, etc.)</li>
+                    <li>Click "Save"</li>
+                </ol>
+
+                <h6 class="mt-3">Account Details Include:</h6>
+                <ul>
+                    <li><strong>Industry:</strong> Construction, Real Estate, Healthcare, Education, etc.</li>
+                    <li><strong>Contacts:</strong> People you work with at the company</li>
+                    <li><strong>Opportunities:</strong> All bids/projects for this account</li>
+                    <li><strong>Activity History:</strong> All calls, emails, meetings logged</li>
+                </ul>
+
+                <p class="mb-0"><strong>Tip:</strong> Use consistent naming (e.g., "ABC Construction" not "ABC Const" or "ABC").</p>
+            </div>
+        </div>
+
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0"><i class="bi bi-people me-2"></i>Managing Contacts</h5>
+            </div>
+            <div class="card-body">
+                <p><strong>What they are:</strong> Individual people at customer companies</p>
+
+                <h6 class="mt-3">Adding a Contact:</h6>
+                <ol>
+                    <li>Go to an Account detail page</li>
+                    <li>Click "+ Add Contact" in Contacts section</li>
+                    <li>Enter name, title, email, phone numbers</li>
+                    <li>Mark as "Primary Contact" if main decision maker</li>
+                    <li>Add notes (communication preferences, role in bid process)</li>
+                    <li>Click "Save"</li>
+                </ol>
+
+                <h6 class="mt-3">Contact Information:</h6>
+                <ul>
+                    <li><strong>Primary Contact:</strong> Main decision maker (only one per account)</li>
+                    <li><strong>Title:</strong> Project Manager, Estimator, VP Operations, etc.</li>
+                    <li><strong>Mobile vs. Office Phone:</strong> Both tracked for easier reach</li>
+                </ul>
+
+                <p class="mb-0"><strong>Best Practice:</strong> Always update contact info after phone calls if details change.</p>
+            </div>
+        </div>
+
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-warning text-white">
+                <h5 class="mb-0"><i class="bi bi-trophy me-2"></i>Managing Opportunities (Bids)</h5>
+            </div>
+            <div class="card-body">
+                <p><strong>What they are:</strong> Individual bid opportunities or projects</p>
+
+                <h6 class="mt-3">Creating an Opportunity:</h6>
+                <ol>
+                    <li>Click "Opportunities" in sidebar or "+ New Opportunity" from account page</li>
+                    <li>Select the customer account</li>
+                    <li>Enter project name (e.g., "Downtown Office Tower - LV Package")</li>
+                    <li>Set Stage (Prospecting → Qualification → Needs Analysis → Proposal → Bid Sent → Negotiation → Won/Lost)</li>
+                    <li>Enter bid date, project type, and submission details</li>
+                    <li>Fill in estimated values:
+                        <ul>
+                            <li><strong>LV Value:</strong> Low-voltage systems estimate</li>
+                            <li><strong>HDD Value:</strong> Horizontal directional drilling / underground estimate</li>
+                        </ul>
+                    </li>
+                    <li>Assign estimator and owner</li>
+                    <li>Set next follow-up date to stay on top of communication</li>
+                </ol>
+
+                <h6 class="mt-3">Sales Stages Explained:</h6>
+                <ul>
+                    <li><strong>Prospecting (10%):</strong> Initial contact, gathering basic info</li>
+                    <li><strong>Qualification (20%):</strong> Determining if it's a good fit</li>
+                    <li><strong>Needs Analysis (40%):</strong> Understanding project scope and requirements</li>
+                    <li><strong>Proposal (60%):</strong> Actively preparing estimate</li>
+                    <li><strong>Bid Sent (75%):</strong> Bid submitted, awaiting decision</li>
+                    <li><strong>Negotiation (90%):</strong> In final negotiations</li>
+                    <li><strong>Won (100%):</strong> Project awarded to us</li>
+                    <li><strong>Lost (0%):</strong> Lost to competitor or project cancelled</li>
+                </ul>
+
+                <h6 class="mt-3">Estimating Checklist:</h6>
+                <p>Each opportunity has a built-in checklist to track estimating progress:</p>
+                <ul>
+                    <li>Review bid documents</li>
+                    <li>Site visit scheduled</li>
+                    <li>Takeoff complete</li>
+                    <li>Vendor quotes received</li>
+                    <li>Labor estimate complete</li>
+                    <li>Management review</li>
+                </ul>
+
+                <p class="mb-0"><strong>Tip:</strong> Update the stage as the opportunity progresses. Set realistic follow-up dates and stick to them!</p>
+            </div>
+        </div>
+
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-danger text-white">
+                <h5 class="mb-0"><i class="bi bi-calculator me-2"></i>Creating Estimates</h5>
+            </div>
+            <div class="card-body">
+                <p><strong>What they are:</strong> Detailed cost breakdowns for opportunities</p>
+
+                <h6 class="mt-3">Building an Estimate:</h6>
+                <ol>
+                    <li>Open an Opportunity detail page</li>
+                    <li>Click "Create Estimate" or "+ New Estimate"</li>
+                    <li>Enter version number (1.0, 2.0 for revisions)</li>
+                    <li>Add line items for each scope:
+                        <ul>
+                            <li>Description (e.g., "Fire Alarm System - Simplex 4100ES")</li>
+                            <li>Quantity</li>
+                            <li>Unit (EA, LF, SF, LS)</li>
+                            <li>Unit price</li>
+                            <li>Labor hours</li>
+                        </ul>
+                    </li>
+                    <li>System automatically calculates totals</li>
+                    <li>Add notes about assumptions, exclusions, alternates</li>
+                    <li>Mark as "Submitted" when sent to customer</li>
+                </ol>
+
+                <h6 class="mt-3">Estimate Statuses:</h6>
+                <ul>
+                    <li><strong>Draft:</strong> Work in progress</li>
+                    <li><strong>Review:</strong> Ready for management review</li>
+                    <li><strong>Approved:</strong> Ready to submit</li>
+                    <li><strong>Submitted:</strong> Sent to customer</li>
+                    <li><strong>Accepted:</strong> Customer accepted (won project)</li>
+                    <li><strong>Rejected:</strong> Lost bid</li>
+                </ul>
+
+                <p class="mb-0"><strong>Best Practice:</strong> Keep old estimate versions for reference. Never delete - just create new versions.</p>
+            </div>
+        </div>
+
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-secondary text-white">
+                <h5 class="mb-0"><i class="bi bi-chat-dots me-2"></i>Logging Activities</h5>
+            </div>
+            <div class="card-body">
+                <p><strong>What they are:</strong> Record of all customer interactions</p>
+
+                <h6 class="mt-3">Activity Types:</h6>
+                <ul>
+                    <li><strong>Call:</strong> Phone conversations</li>
+                    <li><strong>Email:</strong> Email exchanges</li>
+                    <li><strong>Meeting:</strong> In-person or virtual meetings</li>
+                    <li><strong>Site Visit:</strong> Project site walks</li>
+                    <li><strong>Note:</strong> General notes or updates</li>
+                </ul>
+
+                <h6 class="mt-3">Logging an Activity:</h6>
+                <ol>
+                    <li>Go to Account, Contact, or Opportunity page</li>
+                    <li>Click "+ Log Activity"</li>
+                    <li>Select activity type</li>
+                    <li>Enter subject/title</li>
+                    <li>Add detailed notes about the conversation</li>
+                    <li>Set date/time and duration</li>
+                    <li>Link to relevant opportunity if applicable</li>
+                    <li>Click "Save"</li>
+                </ol>
+
+                <h6 class="mt-3">What to Include in Notes:</h6>
+                <ul>
+                    <li>Who you spoke with</li>
+                    <li>Topics discussed</li>
+                    <li>Decisions made</li>
+                    <li>Action items for follow-up</li>
+                    <li>Next steps and timelines</li>
+                    <li>Customer concerns or objections</li>
+                </ul>
+
+                <p class="mb-0"><strong>Why it matters:</strong> Detailed activity logs help your team stay coordinated and provide context for future interactions.</p>
+            </div>
+        </div>
+
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-dark text-white">
+                <h5 class="mb-0"><i class="bi bi-check-square me-2"></i>Managing Tasks</h5>
+            </div>
+            <div class="card-body">
+                <p><strong>What they are:</strong> Action items and to-dos for opportunities</p>
+
+                <h6 class="mt-3">Creating a Task:</h6>
+                <ol>
+                    <li>Go to Tasks page or Opportunity detail</li>
+                    <li>Click "+ New Task"</li>
+                    <li>Enter task title and description</li>
+                    <li>Set priority (Low, Medium, High)</li>
+                    <li>Set due date</li>
+                    <li>Assign to team member</li>
+                    <li>Link to opportunity if applicable</li>
+                    <li>Click "Save"</li>
+                </ol>
+
+                <h6 class="mt-3">Task Priorities:</h6>
+                <ul>
+                    <li><strong>High:</strong> Urgent - blocks bid submission or has tight deadline</li>
+                    <li><strong>Medium:</strong> Important but not urgent</li>
+                    <li><strong>Low:</strong> Nice to have, no immediate deadline</li>
+                </ul>
+
+                <h6 class="mt-3">Task Examples:</h6>
+                <ul>
+                    <li>"Request fire alarm quotes from vendors"</li>
+                    <li>"Schedule site visit with GC"</li>
+                    <li>"Complete labor estimate for cabling"</li>
+                    <li>"Follow up with customer on bid questions"</li>
+                    <li>"Review and approve estimate"</li>
+                </ul>
+
+                <p class="mb-0"><strong>Best Practice:</strong> Mark tasks complete immediately when done. Review task list daily.</p>
+            </div>
+        </div>
+
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="bi bi-lightbulb me-2"></i>Tips for Success</h5>
+            </div>
+            <div class="card-body">
+                <h6>Daily Workflow:</h6>
+                <ol>
+                    <li>Check Dashboard for overdue follow-ups and upcoming bids</li>
+                    <li>Review and complete high-priority tasks</li>
+                    <li>Log all customer interactions (calls, emails) immediately</li>
+                    <li>Update opportunity stages as they progress</li>
+                    <li>Set next follow-up dates before ending calls</li>
+                </ol>
+
+                <h6 class="mt-3">Data Quality:</h6>
+                <ul>
+                    <li>Use consistent naming conventions</li>
+                    <li>Keep contact information up to date</li>
+                    <li>Add detailed notes - your future self will thank you</li>
+                    <li>Update opportunity values as estimates are refined</li>
+                    <li>Move lost opportunities to "Lost" stage (don't delete)</li>
+                </ul>
+
+                <h6 class="mt-3">Team Collaboration:</h6>
+                <ul>
+                    <li>Assign opportunities to correct owners and estimators</li>
+                    <li>Use activity logs to communicate with team about customer interactions</li>
+                    <li>Create tasks for team members when action is needed</li>
+                    <li>Keep estimating checklist updated so others can see progress</li>
+                </ul>
+
+                <h6 class="mt-3">Pipeline Management:</h6>
+                <ul>
+                    <li>Set realistic bid dates and follow-up dates</li>
+                    <li>Move opportunities through stages as they progress</li>
+                    <li>Don't let opportunities sit in "Prospecting" too long</li>
+                    <li>Update to "Lost" quickly if project is cancelled</li>
+                    <li>Update to "Won" immediately when awarded (celebrate!)</li>
+                </ul>
+
+                <div class="alert alert-info mt-4">
+                    <i class="bi bi-info-circle me-2"></i>
+                    <strong>Need Help?</strong> Contact your system administrator or team lead with questions about using Triumph OS.
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

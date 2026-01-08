@@ -18,6 +18,7 @@ from app.routes import (
     documents_router,
     activities_router,
     tasks_router,
+    guide_router,
 )
 from app.auth import DEMO_MODE
 
@@ -41,6 +42,7 @@ def create_app() -> FastAPI:
     app.include_router(documents_router)
     app.include_router(activities_router)
     app.include_router(tasks_router)
+    app.include_router(guide_router)
 
     return app
 
