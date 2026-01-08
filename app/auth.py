@@ -80,7 +80,7 @@ async def get_current_user(
     db: Optional[Session] = Depends(get_db)
 ) -> Optional[User]:
     """Get current user from session."""
-    if DEMO_MODE:
+    if DEMO_MODE or db is None:
         return get_demo_user()
 
     user_id = get_session_user_id(request)
@@ -96,7 +96,7 @@ async def require_auth(
     db: Optional[Session] = Depends(get_db)
 ) -> User:
     """Require authenticated user, redirect to login if not."""
-    if DEMO_MODE:
+    if DEMO_MODE or db is None:
         return get_demo_user()
 
     user = await get_current_user(request, db)
@@ -114,7 +114,7 @@ def require_role(*roles):
         request: Request,
         db: Optional[Session] = Depends(get_db)
     ) -> User:
-        if DEMO_MODE:
+        if DEMO_MODE or db is None:
             user = get_demo_user()
         else:
             user = await require_auth(request, db)
@@ -145,7 +145,7 @@ def require_estimator_or_admin():
 
 def authenticate_user(db: Session, email: str, password: str) -> Optional[User]:
     """Authenticate a user by email and password."""
-    if DEMO_MODE:
+    if DEMO_MODE or db is None:
         return get_demo_user()
 
     user = db.query(User).filter(User.email == email).first()
