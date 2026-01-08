@@ -14,7 +14,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from dotenv import load_dotenv
 load_dotenv()
 
-from app.database import Base
+from app.database import Base, get_database_url
 from app.models import *  # noqa: Import all models
 
 # this is the Alembic Config object, which provides
@@ -22,7 +22,7 @@ from app.models import *  # noqa: Import all models
 config = context.config
 
 # Override sqlalchemy.url with environment variable
-config.set_main_option("sqlalchemy.url", os.getenv("DATABASE_URL", "sqlite:///./triumphos_dev.db"))
+config.set_main_option("sqlalchemy.url", get_database_url())
 
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.
