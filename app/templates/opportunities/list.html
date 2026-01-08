@@ -41,6 +41,22 @@
                     </select>
                 </div>
                 <div class="col-md-2">
+                    <select class="form-select" name="gc_id">
+                        <option value="">All GCs</option>
+                        {% for acc in accounts %}
+                        <option value="{{ acc.id }}" {% if gc_id and gc_id == acc.id %}selected{% endif %}>{{ acc.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <select class="form-select" name="end_user_account_id">
+                        <option value="">All End-Users</option>
+                        {% for acc in accounts %}
+                        <option value="{{ acc.id }}" {% if end_user_account_id and end_user_account_id == acc.id %}selected{% endif %}>{{ acc.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
                     <select class="form-select" name="estimator_id">
                         <option value="">All Estimators</option>
                         {% for u in users %}

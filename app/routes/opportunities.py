@@ -42,6 +42,8 @@ async def list_opportunities(
     stage: str = None,
     owner_id: int = None,
     estimator_id: int = None,
+    gc_id: int = None,
+    end_user_account_id: int = None,
     db: Session = Depends(get_db)
 ):
     """List all opportunities with optional filtering."""
@@ -54,6 +56,7 @@ async def list_opportunities(
     # DEMO MODE: Use demo data
     if DEMO_MODE or db is None:
         opportunities = get_all_demo_opportunities()
+        accounts = get_demo_accounts()
 
         # Apply filters to demo data
         if search:
@@ -68,6 +71,12 @@ async def list_opportunities(
 
         if estimator_id:
             opportunities = [o for o in opportunities if o.assigned_estimator_id == estimator_id]
+
+        if gc_id:
+            opportunities = [o for o in opportunities if getattr(o, 'gcs', None) and gc_id in (o.gcs or [])]
+
+        if end_user_account_id:
+            opportunities = [o for o in opportunities if getattr(o, 'end_user_account_id', None) == end_user_account_id]
 
         # Sort by bid date
         opportunities.sort(key=lambda o: (o.bid_date if o.bid_date else date(9999, 12, 31), o.name))
@@ -100,6 +109,14 @@ async def list_opportunities(
 
         opportunities = query.order_by(Opportunity.bid_date.nullslast(), Opportunity.name).all()
 
+        # If filtering by GC or end-user, apply Python-side filters (JSON fields can't be queried portably here)
+        if gc_id:
+            opportunities = [o for o in opportunities if o.gcs and gc_id in (o.gcs or [])]
+        if end_user_account_id:
+            opportunities = [o for o in opportunities if o.end_user_account_id == end_user_account_id]
+
+        accounts = db.query(Account).order_by(Account.name).all()
+
         # Add followup status to each
         for opp in opportunities:
             opp.followup_status = get_followup_status(opp.next_followup, today)
@@ -116,6 +133,9 @@ async def list_opportunities(
         "stage": stage,
         "owner_id": owner_id,
         "estimator_id": estimator_id,
+        "gc_id": gc_id,
+        "end_user_account_id": end_user_account_id,
+        "accounts": accounts,
     })
 
 
@@ -197,6 +217,10 @@ async def create_opportunity(
     primary_contact_id: int = Form(None),
     source: str = Form(None),
     notes: str = Form(None),
+    gc_ids: List[int] = Form(default=[]),
+    related_contact_ids: List[int] = Form(default=[]),
+    quick_links_text: str = Form(None),
+    end_user_account_id: int = Form(None),
     scope_ids: List[int] = Form(default=[]),
     scope_names: List[str] = Form(default=[]),
     scope_other_text: str = Form(None),
@@ -268,6 +292,10 @@ async def create_opportunity(
         known_risks=known_risks,
         project_type=project_type or None,
         rebid=bool(rebid),
+        gcs=gc_ids or None,
+        related_contact_ids=related_contact_ids or None,
+        quick_links=[l.strip() for l in quick_links_text.splitlines() if l.strip()] if quick_links_text else None,
+        end_user_account_id=end_user_account_id or None,
     )
     
     # Calculate initial followup
@@ -370,6 +398,9 @@ async def command_center(
         sales_users = []
         estimators = []
         contacts = []
+        gcs_accounts = []
+        related_contacts = []
+        quick_links = []
     else:
         opportunity = db.query(Opportunity).filter(Opportunity.id == opp_id).first()
         if not opportunity:
@@ -386,6 +417,14 @@ async def command_center(
         contacts = db.query(Contact).filter(
             Contact.account_id == opportunity.account_id
         ).order_by(Contact.last_name).all()
+        # Resolve GC accounts and related contacts if present
+        gcs_accounts = []
+        if opportunity.gcs:
+            gcs_accounts = db.query(Account).filter(Account.id.in_(opportunity.gcs)).order_by(Account.name).all()
+        related_contacts = []
+        if opportunity.related_contact_ids:
+            related_contacts = db.query(Contact).filter(Contact.id.in_(opportunity.related_contact_ids)).order_by(Contact.last_name).all()
+        quick_links = opportunity.quick_links or []
     
     return templates.TemplateResponse("opportunities/command_center.html", {
         "request": request,
@@ -396,6 +435,9 @@ async def command_center(
         "sales_users": sales_users,
         "estimators": estimators,
         "contacts": contacts,
+        "gcs_accounts": gcs_accounts,
+        "related_contacts": related_contacts,
+        "quick_links": quick_links,
         "today": today,
     })
 
@@ -624,6 +666,10 @@ async def save_opportunity_edit(
     primary_contact_id: int = Form(None),
     source: str = Form(None),
     notes: str = Form(None),
+    gc_ids: List[int] = Form(default=[]),
+    related_contact_ids: List[int] = Form(default=[]),
+    quick_links_text: str = Form(None),
+    end_user_account_id: int = Form(None),
     last_contacted: str = Form(None),
     scope_ids: List[int] = Form(default=[]),
     scope_names: List[str] = Form(default=[]),
@@ -679,6 +725,11 @@ async def save_opportunity_edit(
     opportunity.primary_contact_id = primary_contact_id or None
     opportunity.source = source or None
     opportunity.notes = notes or None
+    # Update newly added fields
+    opportunity.gcs = gc_ids or None
+    opportunity.related_contact_ids = related_contact_ids or None
+    opportunity.quick_links = [l.strip() for l in quick_links_text.splitlines() if l.strip()] if quick_links_text else None
+    opportunity.end_user_account_id = end_user_account_id or None
     
     # Update scope packages
     db.query(OpportunityScope).filter(

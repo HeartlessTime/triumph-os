@@ -182,6 +182,33 @@
                 </div>
             </div>
             {% endif %}
+
+            {% if gcs_accounts %}
+            <div class="card mb-4">
+                <div class="card-header">General Contractors (GCs)</div>
+                <div class="card-body">
+                    {% for gc in gcs_accounts %}
+                    <div class="mb-2">
+                        <a href="/accounts/{{ gc.id }}" class="text-decoration-none">{{ gc.name }}</a>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            {% if related_contacts %}
+            <div class="card mb-4">
+                <div class="card-header">Related Contacts</div>
+                <div class="card-body">
+                    {% for rc in related_contacts %}
+                    <div class="mb-2">
+                        <a href="/contacts/{{ rc.id }}" class="text-decoration-none">{{ rc.full_name }}</a>
+                        {% if rc.title %}<div class="small text-muted">{{ rc.title }}</div>{% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
             
             <!-- Scope Packages -->
             {% if opportunity.scopes %}
@@ -207,6 +234,16 @@
             </div>
             
             <!-- Documents Section -->
+            {% if quick_links %}
+            <div class="card mb-4">
+                <div class="card-header">Quick Links</div>
+                <div class="card-body">
+                    {% for link in quick_links %}
+                    <div class="mb-2"><a href="{{ link }}" target="_blank">{{ link }}</a></div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
             <div class="card mb-4">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <span><i class="bi bi-folder me-2"></i>Documents</span>

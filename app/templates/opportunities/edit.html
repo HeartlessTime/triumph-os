@@ -43,6 +43,15 @@
                                     {% endfor %}
                                 </select>
                             </div>
+                            <div class="col-md-6">
+                                <label for="gc_ids" class="form-label">General Contractors (GCs)</label>
+                                <select class="form-select" id="gc_ids" name="gc_ids" multiple>
+                                    {% for acc in accounts %}
+                                    <option value="{{ acc.id }}" {% if opportunity.gcs and (acc.id in opportunity.gcs) %}selected{% endif %}>{{ acc.name }}</option>
+                                    {% endfor %}
+                                </select>
+                                <div class="form-text">Select one or more GCs bidding on this project.</div>
+                            </div>
                             <div class="col-12">
                                 <label for="name" class="form-label">Opportunity Name <span class="text-danger">*</span></label>
                                 <input type="text" class="form-control" id="name" name="name" value="{{ opportunity.name }}" required>
@@ -51,6 +60,26 @@
                                 <label for="description" class="form-label">Description</label>
                                 <textarea class="form-control" id="description" name="description" rows="3">{{ opportunity.description or '' }}</textarea>
                             </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card mb-4">
+                    <div class="card-header">Related Contacts & Quick Links</div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label for="related_contact_ids" class="form-label">Related Contacts</label>
+                            <select class="form-select" id="related_contact_ids" name="related_contact_ids" multiple>
+                                {% for c in contacts %}
+                                <option value="{{ c.id }}" {% if opportunity.related_contact_ids and (c.id in opportunity.related_contact_ids) %}selected{% endif %}>{{ c.full_name }}</option>
+                                {% endfor %}
+                            </select>
+                            <div class="form-text">Contacts relevant to this project.</div>
+                        </div>
+                        <div>
+                            <label for="quick_links_text" class="form-label">Quick Links (one per line)</label>
+                            <textarea class="form-control" id="quick_links_text" name="quick_links_text" rows="3">{% if opportunity.quick_links %}{{ '\n'.join(opportunity.quick_links) }}{% endif %}</textarea>
+                            <div class="form-text">Add URLs to bid pages or shared folders.</div>
                         </div>
                     </div>
                 </div>

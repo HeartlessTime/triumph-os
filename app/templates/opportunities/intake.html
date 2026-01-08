@@ -39,6 +39,15 @@
                                     {% endfor %}
                                 </select>
                             </div>
+                            <div class="col-md-6">
+                                <label for="gc_ids" class="form-label">General Contractors (GCs)</label>
+                                <select class="form-select" id="gc_ids" name="gc_ids" multiple>
+                                    {% for acc in accounts %}
+                                    <option value="{{ acc.id }}">{{ acc.name }}</option>
+                                    {% endfor %}
+                                </select>
+                                <div class="form-text">Select GC accounts bidding on this project (optional).</div>
+                            </div>
                             <div class="col-12">
                                 <label for="name" class="form-label">Opportunity Name <span class="text-danger">*</span></label>
                                 <input type="text" class="form-control" id="name" name="name" required placeholder="e.g., Office Building Renovation">
@@ -195,6 +204,29 @@
                             <div class="col-12">
                                 <label for="notes" class="form-label">Internal Notes</label>
                                 <textarea class="form-control" id="notes" name="notes" rows="2"></textarea>
+                            </div>
+                            <div class="col-12">
+                                <label for="quick_links_text" class="form-label">Quick Links (one per line)</label>
+                                <textarea class="form-control" id="quick_links_text" name="quick_links_text" rows="2" placeholder="https://...\n..."></textarea>
+                                <div class="form-text">Links to bid portals or shared folders.</div>
+                            </div>
+                            <div class="col-12">
+                                <label for="related_contact_ids" class="form-label">Related Contacts</label>
+                                <select class="form-select" id="related_contact_ids" name="related_contact_ids" multiple>
+                                    {% for c in contacts %}
+                                    <option value="{{ c.id }}">{{ c.full_name }}</option>
+                                    {% endfor %}
+                                </select>
+                                <div class="form-text">Select other contacts relevant to this project.</div>
+                            </div>
+                            <div class="col-12">
+                                <label for="end_user_account_id" class="form-label">End-User / Owner</label>
+                                <select class="form-select" id="end_user_account_id" name="end_user_account_id">
+                                    <option value="">(optional) Select End-User</option>
+                                    {% for acc in accounts %}
+                                    <option value="{{ acc.id }}">{{ acc.name }}</option>
+                                    {% endfor %}
+                                </select>
                             </div>
                         </div>
                     </div>
