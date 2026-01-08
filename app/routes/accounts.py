@@ -5,8 +5,9 @@ from sqlalchemy.orm import Session
 from sqlalchemy import or_
 
 from app.database import get_db
-from app.auth import get_current_user
+from app.auth import get_current_user, DEMO_MODE
 from app.models import Account, User
+from app.demo_data import get_all_demo_accounts
 
 router = APIRouter(prefix="/accounts", tags=["accounts"])
 templates = Jinja2Templates(directory="app/templates")
@@ -23,22 +24,36 @@ async def list_accounts(
     user = await get_current_user(request, db)
     if not user:
         return RedirectResponse(url="/login?next=/accounts", status_code=303)
-    
-    query = db.query(Account)
-    
-    if search:
-        query = query.filter(
-            or_(
-                Account.name.ilike(f"%{search}%"),
-                Account.city.ilike(f"%{search}%"),
+
+    # DEMO MODE: Use demo data
+    if DEMO_MODE or db is None:
+        accounts = get_all_demo_accounts()
+
+        # Apply filters to demo data
+        if search:
+            search_lower = search.lower()
+            accounts = [a for a in accounts if search_lower in a.name.lower() or (a.city and search_lower in a.city.lower())]
+
+        if industry:
+            accounts = [a for a in accounts if a.industry == industry]
+
+        accounts.sort(key=lambda a: a.name)
+    else:
+        query = db.query(Account)
+
+        if search:
+            query = query.filter(
+                or_(
+                    Account.name.ilike(f"%{search}%"),
+                    Account.city.ilike(f"%{search}%"),
+                )
             )
-        )
-    
-    if industry:
-        query = query.filter(Account.industry == industry)
-    
-    accounts = query.order_by(Account.name).all()
-    
+
+        if industry:
+            query = query.filter(Account.industry == industry)
+
+        accounts = query.order_by(Account.name).all()
+
     return templates.TemplateResponse("accounts/list.html", {
         "request": request,
         "user": user,

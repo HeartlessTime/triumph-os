@@ -9,13 +9,14 @@ from typing import List, Optional
 import os
 
 from app.database import get_db
-from app.auth import get_current_user
+from app.auth import get_current_user, DEMO_MODE
 from app.models import (
-    Opportunity, OpportunityScope, Account, Contact, 
+    Opportunity, OpportunityScope, Account, Contact,
     User, ScopePackage, Estimate, Activity, Task, Document
 )
 from app.models import Document as DocModel
 from app.services.followup import calculate_next_followup, get_followup_status
+from app.demo_data import get_all_demo_opportunities
 
 router = APIRouter(prefix="/opportunities", tags=["opportunities"])
 templates = Jinja2Templates(directory="app/templates")
@@ -47,35 +48,63 @@ async def list_opportunities(
     user = await get_current_user(request, db)
     if not user:
         return RedirectResponse(url="/login?next=/opportunities", status_code=303)
-    
-    query = db.query(Opportunity).join(Account)
-    
-    if search:
-        search_term = f"%{search}%"
-        query = query.filter(
-            or_(
-                Opportunity.name.ilike(search_term),
-                Account.name.ilike(search_term),
-            )
-        )
-    
-    if stage:
-        query = query.filter(Opportunity.stage == stage)
-    
-    if owner_id:
-        query = query.filter(Opportunity.owner_id == owner_id)
-    
-    if estimator_id:
-        query = query.filter(Opportunity.assigned_estimator_id == estimator_id)
-    
-    opportunities = query.order_by(Opportunity.bid_date.nullslast(), Opportunity.name).all()
-    
-    # Add followup status to each
+
     today = date.today()
-    for opp in opportunities:
-        opp.followup_status = get_followup_status(opp.next_followup, today)
-    
-    users = db.query(User).filter(User.is_active == True).order_by(User.full_name).all()
+
+    # DEMO MODE: Use demo data
+    if DEMO_MODE or db is None:
+        opportunities = get_all_demo_opportunities()
+
+        # Apply filters to demo data
+        if search:
+            search_lower = search.lower()
+            opportunities = [o for o in opportunities if search_lower in o.name.lower()]
+
+        if stage:
+            opportunities = [o for o in opportunities if o.stage == stage]
+
+        if owner_id:
+            opportunities = [o for o in opportunities if o.owner_id == owner_id]
+
+        if estimator_id:
+            opportunities = [o for o in opportunities if o.assigned_estimator_id == estimator_id]
+
+        # Sort by bid date
+        opportunities.sort(key=lambda o: (o.bid_date if o.bid_date else date(9999, 12, 31), o.name))
+
+        # Add followup status
+        for opp in opportunities:
+            opp.followup_status = get_followup_status(opp.next_followup, today)
+
+        users = []  # No users list in demo mode
+    else:
+        query = db.query(Opportunity).join(Account)
+
+        if search:
+            search_term = f"%{search}%"
+            query = query.filter(
+                or_(
+                    Opportunity.name.ilike(search_term),
+                    Account.name.ilike(search_term),
+                )
+            )
+
+        if stage:
+            query = query.filter(Opportunity.stage == stage)
+
+        if owner_id:
+            query = query.filter(Opportunity.owner_id == owner_id)
+
+        if estimator_id:
+            query = query.filter(Opportunity.assigned_estimator_id == estimator_id)
+
+        opportunities = query.order_by(Opportunity.bid_date.nullslast(), Opportunity.name).all()
+
+        # Add followup status to each
+        for opp in opportunities:
+            opp.followup_status = get_followup_status(opp.next_followup, today)
+
+        users = db.query(User).filter(User.is_active == True).order_by(User.full_name).all()
     
     return templates.TemplateResponse("opportunities/list.html", {
         "request": request,

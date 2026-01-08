@@ -4,8 +4,9 @@ from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 
 from app.database import get_db
-from app.auth import get_current_user
+from app.auth import get_current_user, DEMO_MODE
 from app.models import Contact, Account
+from app.demo_data import get_all_demo_contacts, get_all_demo_accounts
 
 router = APIRouter(prefix="/contacts", tags=["contacts"])
 templates = Jinja2Templates(directory="app/templates")
@@ -22,24 +23,42 @@ async def list_contacts(
     user = await get_current_user(request, db)
     if not user:
         return RedirectResponse(url="/login?next=/contacts", status_code=303)
-    
-    query = db.query(Contact).join(Account)
-    
-    if search:
-        search_term = f"%{search}%"
-        query = query.filter(
-            (Contact.first_name.ilike(search_term)) |
-            (Contact.last_name.ilike(search_term)) |
-            (Contact.email.ilike(search_term)) |
-            (Account.name.ilike(search_term))
-        )
-    
-    if account_id:
-        query = query.filter(Contact.account_id == account_id)
-    
-    contacts = query.order_by(Contact.last_name, Contact.first_name).all()
-    accounts = db.query(Account).order_by(Account.name).all()
-    
+
+    # DEMO MODE: Use demo data
+    if DEMO_MODE or db is None:
+        contacts = get_all_demo_contacts()
+        accounts = get_all_demo_accounts()
+
+        # Apply filters to demo data
+        if search:
+            search_lower = search.lower()
+            contacts = [c for c in contacts if
+                       search_lower in c.first_name.lower() or
+                       search_lower in c.last_name.lower() or
+                       (c.email and search_lower in c.email.lower())]
+
+        if account_id:
+            contacts = [c for c in contacts if c.account_id == account_id]
+
+        contacts.sort(key=lambda c: (c.last_name, c.first_name))
+    else:
+        query = db.query(Contact).join(Account)
+
+        if search:
+            search_term = f"%{search}%"
+            query = query.filter(
+                (Contact.first_name.ilike(search_term)) |
+                (Contact.last_name.ilike(search_term)) |
+                (Contact.email.ilike(search_term)) |
+                (Account.name.ilike(search_term))
+            )
+
+        if account_id:
+            query = query.filter(Contact.account_id == account_id)
+
+        contacts = query.order_by(Contact.last_name, Contact.first_name).all()
+        accounts = db.query(Account).order_by(Account.name).all()
+
     return templates.TemplateResponse("contacts/list.html", {
         "request": request,
         "user": user,
