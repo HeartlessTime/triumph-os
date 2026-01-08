@@ -25,7 +25,7 @@ async def login_page(
     request: Request,
     next: str = "/",
     error: str = None,
-    db: Optional[Session] = Depends(get_db) if not DEMO_MODE else None
+    db: Optional[Session] = Depends(get_db)
 ):
     """Display login page."""
     # In demo mode, redirect directly to dashboard
@@ -50,7 +50,7 @@ async def login(
     email: str = Form(...),
     password: str = Form(...),
     next: str = Form("/"),
-    db: Optional[Session] = Depends(get_db) if not DEMO_MODE else None
+    db: Optional[Session] = Depends(get_db)
 ):
     """Process login form."""
     # In demo mode, always succeed
@@ -81,7 +81,7 @@ async def logout(request: Request):
 @router.get("/profile", response_class=HTMLResponse)
 async def profile_page(
     request: Request,
-    db: Optional[Session] = Depends(get_db) if not DEMO_MODE else None
+    db: Optional[Session] = Depends(get_db)
 ):
     """Display user profile page."""
     if DEMO_MODE:

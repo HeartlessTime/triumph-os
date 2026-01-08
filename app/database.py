@@ -31,8 +31,12 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 def get_db():
     """Dependency for FastAPI routes to get database session."""
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
+    from app.auth import DEMO_MODE
+    if DEMO_MODE:
+        yield None
+    else:
+        db = SessionLocal()
+        try:
+            yield db
+        finally:
+            db.close()

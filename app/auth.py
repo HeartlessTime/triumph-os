@@ -77,7 +77,7 @@ def get_session_user_id(request: Request) -> Optional[int]:
 
 async def get_current_user(
     request: Request,
-    db: Optional[Session] = Depends(get_db) if not DEMO_MODE else None
+    db: Optional[Session] = Depends(get_db)
 ) -> Optional[User]:
     """Get current user from session."""
     if DEMO_MODE:
@@ -93,7 +93,7 @@ async def get_current_user(
 
 async def require_auth(
     request: Request,
-    db: Optional[Session] = Depends(get_db) if not DEMO_MODE else None
+    db: Optional[Session] = Depends(get_db)
 ) -> User:
     """Require authenticated user, redirect to login if not."""
     if DEMO_MODE:
@@ -112,7 +112,7 @@ def require_role(*roles):
     """Decorator to require specific roles."""
     async def dependency(
         request: Request,
-        db: Optional[Session] = Depends(get_db) if not DEMO_MODE else None
+        db: Optional[Session] = Depends(get_db)
     ) -> User:
         if DEMO_MODE:
             user = get_demo_user()
