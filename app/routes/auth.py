@@ -1,4 +1,7 @@
 import os
+router = APIRouter(tags=["auth"])
+templates = Jinja2Templates(directory="app/templates")
+
 from datetime import datetime, timedelta
 from typing import Optional
 from passlib.context import CryptContext
