@@ -532,3 +532,109 @@ def get_all_demo_tasks():
     if _demo_tasks is None:
         init_demo_data()
     return _demo_tasks
+
+
+# Demo mode CRUD helpers - for persistent in-memory data during presentations
+def get_next_id(entity_list):
+    """Get the next available ID for an entity."""
+    if not entity_list:
+        return 1
+    return max(item.id for item in entity_list) + 1
+
+
+def add_demo_account(account):
+    """Add a new account to demo data (persists during session)."""
+    if _demo_accounts is None:
+        init_demo_data()
+    if account.id is None:
+        account.id = get_next_id(_demo_accounts)
+    _demo_accounts.append(account)
+    return account
+
+
+def update_demo_account(account_id, **updates):
+    """Update an account in demo data."""
+    if _demo_accounts is None:
+        init_demo_data()
+    for acc in _demo_accounts:
+        if acc.id == account_id:
+            for key, value in updates.items():
+                setattr(acc, key, value)
+            acc.updated_at = datetime.utcnow()
+            return acc
+    return None
+
+
+def delete_demo_account(account_id):
+    """Delete an account from demo data."""
+    global _demo_accounts, _demo_contacts
+    if _demo_accounts is None:
+        init_demo_data()
+    _demo_accounts = [acc for acc in _demo_accounts if acc.id != account_id]
+    # Also remove contacts for this account
+    _demo_contacts = [c for c in _demo_contacts if c.account_id != account_id]
+    return True
+
+
+def add_demo_contact(contact):
+    """Add a new contact to demo data (persists during session)."""
+    if _demo_contacts is None:
+        init_demo_data()
+    if contact.id is None:
+        contact.id = get_next_id(_demo_contacts)
+    _demo_contacts.append(contact)
+    return contact
+
+
+def update_demo_contact(contact_id, **updates):
+    """Update a contact in demo data."""
+    if _demo_contacts is None:
+        init_demo_data()
+    for contact in _demo_contacts:
+        if contact.id == contact_id:
+            for key, value in updates.items():
+                setattr(contact, key, value)
+            contact.updated_at = datetime.utcnow()
+            return contact
+    return None
+
+
+def delete_demo_contact(contact_id):
+    """Delete a contact from demo data."""
+    global _demo_contacts
+    if _demo_contacts is None:
+        init_demo_data()
+    _demo_contacts = [c for c in _demo_contacts if c.id != contact_id]
+    return True
+
+
+def add_demo_opportunity(opportunity):
+    """Add a new opportunity to demo data (persists during session)."""
+    if _demo_opportunities is None:
+        init_demo_data()
+    if opportunity.id is None:
+        opportunity.id = get_next_id(_demo_opportunities)
+    _demo_opportunities.append(opportunity)
+    return opportunity
+
+
+def update_demo_opportunity(opportunity_id, **updates):
+    """Update an opportunity in demo data."""
+    if _demo_opportunities is None:
+        init_demo_data()
+    for opp in _demo_opportunities:
+        if opp.id == opportunity_id:
+            for key, value in updates.items():
+                setattr(opp, key, value)
+            opp.updated_at = datetime.utcnow()
+            return opp
+    return None
+
+
+def delete_demo_opportunity(opportunity_id):
+    """Delete an opportunity from demo data."""
+    global _demo_opportunities
+    if _demo_opportunities is None:
+        init_demo_data()
+    _demo_opportunities = [o for o in _demo_opportunities if o.id != opportunity_id]
+    return True

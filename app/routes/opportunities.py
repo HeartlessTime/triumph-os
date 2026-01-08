@@ -16,7 +16,10 @@ from app.models import (
 )
 from app.models import Document as DocModel
 from app.services.followup import calculate_next_followup, get_followup_status
-from app.demo_data import get_all_demo_opportunities, get_demo_accounts
+from app.demo_data import (
+    get_all_demo_opportunities, get_demo_accounts, get_all_demo_contacts,
+    add_demo_opportunity, update_demo_opportunity, delete_demo_opportunity
+)
 
 router = APIRouter(prefix="/opportunities", tags=["opportunities"])
 templates = Jinja2Templates(directory="app/templates")
@@ -227,8 +230,6 @@ async def create_opportunity(
     user = await get_current_user(request, db)
     if not user:
         return RedirectResponse(url="/login", status_code=303)
-    if DEMO_MODE or db is None:
-        return RedirectResponse(url="/opportunities", status_code=303)
     
     # Parse values (strip commas if present)
     def clean_num(s: Optional[str]):
@@ -246,12 +247,57 @@ async def create_opportunity(
         except Exception:
             bid_time_parsed = None
     
-    # Get default probability for stage — treat as optional and default to 0
+    # Get default probability for stage
     probability = Opportunity.STAGE_PROBABILITIES.get(stage, 0)
     
-    # known_risks is optional now
-
-    # Ensure estimator assignment rules: if not provided, auto-assign a default estimator
+    # DEMO MODE: Create in-memory opportunity
+    if DEMO_MODE or db is None:
+        accounts = get_all_demo_accounts()
+        account = next((a for a in accounts if a.id == account_id), None)
+        if not account:
+            raise HTTPException(status_code=404, detail="Account not found")
+        
+        opportunity = Opportunity()
+        opportunity.account_id = account_id
+        opportunity.account = account
+        opportunity.name = name
+        opportunity.description = description or None
+        opportunity.stage = stage
+        opportunity.probability = probability
+        opportunity.lv_value = lv_value_decimal
+        opportunity.hdd_value = hdd_value_decimal
+        opportunity.bid_date = bid_date_parsed
+        opportunity.bid_time = bid_time_parsed
+        opportunity.bid_type = bid_type or None
+        opportunity.submission_method = submission_method or None
+        opportunity.bid_form_required = bool(bid_form_required)
+        opportunity.bond_required = bool(bond_required)
+        opportunity.prevailing_wage = prevailing_wage or None
+        opportunity.owner_id = owner_id or user.id
+        opportunity.assigned_estimator_id = assigned_estimator_id or None
+        opportunity.primary_contact_id = primary_contact_id or None
+        opportunity.source = source or None
+        opportunity.notes = notes or None
+        opportunity.estimating_checklist = Opportunity.DEFAULT_CHECKLIST.copy()
+        opportunity.last_contacted = date.today()
+        opportunity.known_risks = known_risks
+        opportunity.project_type = project_type or None
+        opportunity.rebid = bool(rebid)
+        opportunity.gcs = gc_ids or None
+        opportunity.related_contact_ids = related_contact_ids or None
+        opportunity.quick_links = [l.strip() for l in quick_links_text.splitlines() if l.strip()] if quick_links_text else None
+        opportunity.end_user_account_id = end_user_account_id or None
+        opportunity.created_at = datetime.utcnow()
+        opportunity.updated_at = datetime.utcnow()
+        
+        # Calculate initial followup
+        update_opportunity_followup(opportunity)
+        
+        add_demo_opportunity(opportunity)
+        return RedirectResponse(url=f"/opportunities/{opportunity.id}", status_code=303)
+    
+    # DB MODE: Create opportunity in database
+    # Ensure estimator assignment rules
     if not assigned_estimator_id:
         default_estimator = db.query(User).filter(User.is_active == True).filter(User.role.in_(['Estimator','Admin'])).order_by(User.full_name).first()
         if default_estimator:
@@ -511,9 +557,45 @@ async def update_opportunity(
     user = await get_current_user(request, db)
     if not user:
         return RedirectResponse(url="/login", status_code=303)
+    
+    # DEMO MODE: Update in-memory opportunity
     if DEMO_MODE or db is None:
+        opportunities = get_all_demo_opportunities()
+        opportunity = next((o for o in opportunities if o.id == opp_id), None)
+        if not opportunity:
+            raise HTTPException(status_code=404, detail="Opportunity not found")
+        
+        # Track old values for followup recalculation
+        old_stage = opportunity.stage
+        old_bid_date = opportunity.bid_date
+        
+        # Update fields
+        if stage is not None:
+            opportunity.stage = stage
+        if hdd_value is not None:
+            cleaned = hdd_value.replace(',', '') if hdd_value else None
+            opportunity.hdd_value = Decimal(cleaned) if cleaned else None
+        if bid_date is not None:
+            opportunity.bid_date = datetime.strptime(bid_date, "%Y-%m-%d").date() if bid_date else None
+        if owner_id is not None:
+            opportunity.owner_id = owner_id if owner_id else None
+        if assigned_estimator_id is not None:
+            opportunity.assigned_estimator_id = assigned_estimator_id if assigned_estimator_id else None
+        if primary_contact_id is not None:
+            opportunity.primary_contact_id = primary_contact_id if primary_contact_id else None
+        if estimating_status is not None:
+            opportunity.estimating_status = estimating_status
+        if notes is not None:
+            opportunity.notes = notes or None
+        
+        # Recalculate followup if relevant fields changed
+        if old_stage != opportunity.stage or old_bid_date != opportunity.bid_date:
+            update_opportunity_followup(opportunity)
+        
+        opportunity.updated_at = datetime.utcnow()
         return RedirectResponse(url=f"/opportunities/{opp_id}", status_code=303)
     
+    # DB MODE: Update opportunity in database
     opportunity = db.query(Opportunity).filter(Opportunity.id == opp_id).first()
     if not opportunity:
         raise HTTPException(status_code=404, detail="Opportunity not found")
@@ -833,6 +915,17 @@ async def delete_opportunity(
     if not user:
         return RedirectResponse(url="/login", status_code=303)
     
+    # DEMO MODE: Delete from in-memory data
+    if DEMO_MODE or db is None:
+        opportunities = get_all_demo_opportunities()
+        opportunity = next((o for o in opportunities if o.id == opp_id), None)
+        if not opportunity:
+            raise HTTPException(status_code=404, detail="Opportunity not found")
+        
+        delete_demo_opportunity(opp_id)
+        return RedirectResponse(url="/opportunities", status_code=303)
+    
+    # DB MODE: Delete from database
     if not user.is_admin:
         raise HTTPException(status_code=403, detail="Only admins can delete opportunities")
     

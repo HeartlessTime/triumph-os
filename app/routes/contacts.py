@@ -2,11 +2,12 @@ from fastapi import APIRouter, Request, Depends, Form, HTTPException
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
+from datetime import datetime
 
 from app.database import get_db
 from app.auth import get_current_user, DEMO_MODE
 from app.models import Contact, Account
-from app.demo_data import get_all_demo_contacts, get_all_demo_accounts
+from app.demo_data import get_all_demo_contacts, get_all_demo_accounts, add_demo_contact, update_demo_contact, delete_demo_contact
 
 router = APIRouter(prefix="/contacts", tags=["contacts"])
 templates = Jinja2Templates(directory="app/templates")
@@ -121,9 +122,37 @@ async def create_contact(
     if not user:
         return RedirectResponse(url="/login", status_code=303)
 
-    # DEMO MODE: Redirect to contacts list
+    # DEMO MODE: Create in-memory contact
     if DEMO_MODE or db is None:
-        return RedirectResponse(url="/contacts", status_code=303)
+        accounts = get_all_demo_accounts()
+        account = next((a for a in accounts if a.id == account_id), None)
+        if not account:
+            raise HTTPException(status_code=404, detail="Account not found")
+        
+        # If primary, unset other primary contacts for this account
+        if is_primary:
+            contacts = get_all_demo_contacts()
+            for c in contacts:
+                if c.account_id == account_id and c.is_primary:
+                    c.is_primary = False
+        
+        contact = Contact()
+        contact.account_id = account_id
+        contact.first_name = first_name
+        contact.last_name = last_name
+        contact.title = title or None
+        contact.email = email or None
+        contact.phone = phone or None
+        contact.mobile = mobile or None
+        contact.is_primary = is_primary
+        contact.notes = notes or None
+        contact.created_at = datetime.utcnow()
+        contact.updated_at = datetime.utcnow()
+        contact.account = account
+        
+        add_demo_contact(contact)
+        redirect_url = request.query_params.get("next", f"/accounts/{account_id}")
+        return RedirectResponse(url=redirect_url, status_code=303)
 
     # Verify account exists
     account = db.query(Account).filter(Account.id == account_id).first()
@@ -199,12 +228,20 @@ async def edit_contact_form(
 
     # DEMO MODE: Show notice
     if DEMO_MODE or db is None:
-        return templates.TemplateResponse("demo_mode_notice.html", {
+        contacts = get_all_demo_contacts()
+        contact = next((c for c in contacts if c.id == contact_id), None)
+        if not contact:
+            raise HTTPException(status_code=404, detail="Contact not found")
+        
+        accounts = get_all_demo_accounts()
+
+        return templates.TemplateResponse("contacts/form.html", {
             "request": request,
             "user": user,
-            "feature": "Edit Contact",
-            "message": "Editing contacts is disabled in demo mode. This feature is view-only.",
-            "back_url": f"/contacts/{contact_id}",
+            "contact": contact,
+            "accounts": accounts,
+            "selected_account_id": contact.account_id,
+            "is_new": False,
         })
 
     contact = db.query(Contact).filter(Contact.id == contact_id).first()
@@ -242,7 +279,32 @@ async def update_contact(
     user = await get_current_user(request, db)
     if not user:
         return RedirectResponse(url="/login", status_code=303)
+    
+    # DEMO MODE: Update in-memory contact
     if DEMO_MODE or db is None:
+        contacts = get_all_demo_contacts()
+        contact = next((c for c in contacts if c.id == contact_id), None)
+        if not contact:
+            raise HTTPException(status_code=404, detail="Contact not found")
+        
+        # If becoming primary, unset other primary contacts for this account
+        if is_primary and not contact.is_primary:
+            for c in contacts:
+                if c.account_id == account_id and c.is_primary and c.id != contact_id:
+                    c.is_primary = False
+        
+        update_demo_contact(contact_id,
+            account_id=account_id,
+            first_name=first_name,
+            last_name=last_name,
+            title=title or None,
+            email=email or None,
+            phone=phone or None,
+            mobile=mobile or None,
+            is_primary=is_primary,
+            notes=notes or None
+        )
+        
         return RedirectResponse(url=f"/contacts/{contact_id}", status_code=303)
     
     contact = db.query(Contact).filter(Contact.id == contact_id).first()
@@ -282,8 +344,17 @@ async def delete_contact(
     user = await get_current_user(request, db)
     if not user:
         return RedirectResponse(url="/login", status_code=303)
+    
+    # DEMO MODE: Delete from in-memory data
     if DEMO_MODE or db is None:
-        return RedirectResponse(url=f"/accounts/", status_code=303)
+        contacts = get_all_demo_contacts()
+        contact = next((c for c in contacts if c.id == contact_id), None)
+        if not contact:
+            raise HTTPException(status_code=404, detail="Contact not found")
+        
+        account_id = contact.account_id
+        delete_demo_contact(contact_id)
+        return RedirectResponse(url=f"/accounts/{account_id}", status_code=303)
     
     contact = db.query(Contact).filter(Contact.id == contact_id).first()
     if not contact:
