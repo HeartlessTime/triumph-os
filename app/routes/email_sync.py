@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 from datetime import datetime, timedelta
 
 from app.database import get_db
-from app.auth import get_current_user, DEMO_MODE
+from app.auth import get_current_user
 from app.email_integration import get_email_integration
 from app.background_jobs import scheduler
 
@@ -25,16 +25,6 @@ async def email_sync_dashboard(
 
     if not user.is_admin:
         raise HTTPException(status_code=403, detail="Only admins can access email sync settings")
-
-    # DEMO MODE: Show notice
-    if DEMO_MODE or db is None:
-        return templates.TemplateResponse("demo_mode_notice.html", {
-            "request": request,
-            "user": user,
-            "feature": "Email Sync",
-            "message": "Email sync is disabled in demo mode. This feature requires email credentials.",
-            "back_url": "/",
-        })
 
     # Check if email integration is configured
     gmail_integration = get_email_integration(db, 'gmail')
@@ -60,9 +50,6 @@ async def trigger_email_sync(
 
     if not user.is_admin:
         raise HTTPException(status_code=403, detail="Only admins can trigger email sync")
-
-    if DEMO_MODE or db is None:
-        raise HTTPException(status_code=400, detail="Email sync disabled in demo mode")
 
     # Get email integration
     email_integration = get_email_integration(db, 'gmail')

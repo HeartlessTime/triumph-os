@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Request, Depends, HTTPException
-from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 from sqlalchemy import func, and_
@@ -8,9 +8,8 @@ from collections import defaultdict
 from decimal import Decimal
 
 from app.database import get_db
-from app.auth import get_current_user, DEMO_MODE
+from app.auth import get_current_user
 from app.models import User, Opportunity
-from app.demo_data import get_all_demo_opportunities, get_all_demo_users
 
 router = APIRouter(prefix="/estimators", tags=["estimators"])
 templates = Jinja2Templates(directory="app/templates")
@@ -90,42 +89,17 @@ async def estimator_dashboard(
     if not user:
         return RedirectResponse(url="/login?next=/estimators", status_code=303)
 
-    # DEMO MODE: Use demo data
-    if DEMO_MODE or db is None:
-        users = get_all_demo_users()
-        opportunities = get_all_demo_opportunities()
+    # Get all estimators (users with role=Estimator)
+    estimators = db.query(User).filter(User.role == 'Estimator').all()
 
-        # Filter for estimators only
-        estimators = [u for u in users if u.role == 'Estimator']
-
-        # Calculate workload for each estimator
-        estimator_workloads = []
-        for estimator in estimators:
-            # Filter opportunities for this estimator
-            est_opps = [o for o in opportunities if o.assigned_estimator_id == estimator.id and o.stage not in ['Won', 'Lost']]
-
-            workload = {
-                'estimator': estimator,
-                'active_opportunities': len(est_opps),
-                'total_pipeline_value': sum((o.lv_value or 0) + (o.hdd_value or 0) for o in est_opps),
-                'upcoming_bids_count': len([o for o in est_opps if o.bid_date and o.bid_date <= datetime.now().date() + timedelta(days=7)]),
-                'estimating_status_breakdown': {},
-                'opportunities': []
-            }
-            estimator_workloads.append(workload)
-
-    else:
-        # Get all estimators (users with role=Estimator)
-        estimators = db.query(User).filter(User.role == 'Estimator').all()
-
-        # Calculate workload for each
-        estimator_workloads = []
-        for estimator in estimators:
-            workload_data = calculate_estimator_workload(db, estimator.id)
-            estimator_workloads.append({
-                'estimator': estimator,
-                **workload_data
-            })
+    # Calculate workload for each
+    estimator_workloads = []
+    for estimator in estimators:
+        workload_data = calculate_estimator_workload(db, estimator.id)
+        estimator_workloads.append({
+            'estimator': estimator,
+            **workload_data
+        })
 
     # Determine capacity levels (green/yellow/red)
     for workload in estimator_workloads:
@@ -164,9 +138,6 @@ async def get_estimator_workload_json(
     if not user:
         raise HTTPException(status_code=401, detail="Not authenticated")
 
-    if DEMO_MODE or db is None:
-        return JSONResponse({"error": "Not available in demo mode"})
-
     workload_data = calculate_estimator_workload(db, estimator_id)
     return JSONResponse(workload_data)
 
@@ -183,9 +154,6 @@ async def suggest_estimator_assignment(
     user = await get_current_user(request, db)
     if not user:
         raise HTTPException(status_code=401, detail="Not authenticated")
-
-    if DEMO_MODE or db is None:
-        return JSONResponse({"suggested_estimator_id": None, "reason": "Not available in demo mode"})
 
     # Get all estimators
     estimators = db.query(User).filter(User.role == 'Estimator').all()

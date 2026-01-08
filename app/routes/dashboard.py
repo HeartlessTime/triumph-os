@@ -190,5 +190,5 @@ async def dashboard(
         "recent_activities": recent_activities,
         "stage_data": stage_data,
         "today": today,
-        "estimator_capacity": estimator_capacity if not DEMO_MODE and db else [],
+        "estimator_capacity": estimator_capacity,
     })

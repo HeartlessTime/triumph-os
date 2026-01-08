@@ -7,7 +7,7 @@ from datetime import datetime, timedelta
 import json
 
 from app.database import get_db, Base
-from app.auth import get_current_user, DEMO_MODE
+from app.auth import get_current_user
 from app.models import Account, Opportunity, Activity, Contact
 from app.ai_research import MeetingPrepResearcher
 
@@ -36,16 +36,6 @@ async def get_meeting_prep(
     user = await get_current_user(request, db)
     if not user:
         return RedirectResponse(url=f"/login?next=/meeting-prep/account/{account_id}", status_code=303)
-
-    # DEMO MODE: Show demo notice
-    if DEMO_MODE or db is None:
-        return templates.TemplateResponse("demo_mode_notice.html", {
-            "request": request,
-            "user": user,
-            "feature": "AI Meeting Prep",
-            "message": "AI-powered meeting prep is disabled in demo mode. This feature requires an Anthropic API key.",
-            "back_url": f"/accounts/{account_id}",
-        })
 
     # Get account
     account = db.query(Account).filter(Account.id == account_id).first()
