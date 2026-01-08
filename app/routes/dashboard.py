@@ -8,7 +8,7 @@ from sqlalchemy import func
 
 from app.database import get_db
 from app.auth import get_current_user, DEMO_MODE
-from app.models import Opportunity, Account, Task, Activity
+from app.models import Opportunity, Account, Task, Activity, User
 from app.services.followup import get_followup_status
 from app.demo_data import (
     get_all_demo_opportunities,
@@ -162,6 +162,21 @@ async def dashboard(
 
         stage_data = {row[0]: {'count': row[1], 'value': float(row[2] or 0)} for row in stage_counts}
 
+        # Estimator capacity summary
+        estimators = db.query(User).filter(User.role == 'Estimator').all()
+        estimator_capacity = []
+        for estimator in estimators:
+            active_count = db.query(func.count(Opportunity.id)).filter(
+                Opportunity.assigned_estimator_id == estimator.id,
+                Opportunity.stage.in_(open_stages)
+            ).scalar() or 0
+
+            estimator_capacity.append({
+                'name': estimator.full_name,
+                'active_opportunities': active_count,
+                'capacity_level': 'green' if active_count <= 4 else ('yellow' if active_count <= 7 else 'red')
+            })
+
     return templates.TemplateResponse("dashboard/index.html", {
         "request": request,
         "user": user,
@@ -175,4 +190,5 @@ async def dashboard(
         "recent_activities": recent_activities,
         "stage_data": stage_data,
         "today": today,
+        "estimator_capacity": estimator_capacity if not DEMO_MODE and db else [],
     })

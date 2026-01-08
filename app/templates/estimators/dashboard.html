@@ -1,0 +1,167 @@
+{% extends "base.html" %}
+
+{% block title %}Estimator Workload - RevenueOS{% endblock %}
+
+{% block content %}
+<div class="content-area">
+    <div class="page-header">
+        <h1><i class="bi bi-person-workspace me-2"></i>Estimator Workload Dashboard</h1>
+        <p class="text-muted">Monitor estimator capacity and distribute work effectively</p>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="row g-3 mb-4">
+        {% for workload in estimator_workloads %}
+        <div class="col-md-6 col-lg-4">
+            <div class="card h-100 border-{{ workload.capacity_level }}">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <span><i class="bi bi-person-circle me-2"></i>{{ workload.estimator.full_name }}</span>
+                    <span class="badge bg-{{ workload.capacity_level }}">{{ workload.capacity_label }}</span>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-6">
+                            <div class="text-muted small">Active Opportunities</div>
+                            <div class="h3 mb-0">{{ workload.active_opportunities }}</div>
+                        </div>
+                        <div class="col-6">
+                            <div class="text-muted small">Upcoming Bids (7d)</div>
+                            <div class="h3 mb-0">{{ workload.upcoming_bids_count }}</div>
+                        </div>
+                        <div class="col-12">
+                            <div class="text-muted small">Pipeline Value</div>
+                            <div class="h4 mb-0 currency">{{ workload.total_pipeline_value }}</div>
+                        </div>
+                    </div>
+
+                    {% if workload.estimating_status_breakdown %}
+                    <hr>
+                    <div class="small">
+                        <strong>Status Breakdown:</strong>
+                        <ul class="list-unstyled mb-0 mt-2">
+                            {% for status, count in workload.estimating_status_breakdown.items() %}
+                            <li><span class="text-muted">{{ status }}:</span> {{ count }}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="card-footer">
+                    <button class="btn btn-sm btn-outline-primary w-100" onclick="showEstimatorDetails({{ workload.estimator.id }}, '{{ workload.estimator.full_name }}')">
+                        <i class="bi bi-eye me-1"></i> View Details
+                    </button>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+
+        {% if not estimator_workloads %}
+        <div class="col-12">
+            <div class="alert alert-info" role="alert">
+                <i class="bi bi-info-circle me-2"></i>
+                No estimators found. Add users with the "Estimator" role to see their workload here.
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Detailed Breakdown (Hidden by default, shown via modal/collapse) -->
+    <div class="card">
+        <div class="card-header">
+            <i class="bi bi-list-task me-2"></i>All Estimator Assignments
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead>
+                        <tr>
+                            <th>Estimator</th>
+                            <th>Opportunity</th>
+                            <th>Account</th>
+                            <th>Stage</th>
+                            <th>Value</th>
+                            <th>Bid Date</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for workload in estimator_workloads %}
+                            {% for opp in workload.opportunities %}
+                            <tr>
+                                <td>{{ workload.estimator.full_name }}</td>
+                                <td>
+                                    <a href="/opportunities/{{ opp.id }}" class="text-decoration-none">
+                                        {{ opp.name }}
+                                    </a>
+                                </td>
+                                <td>{{ opp.account_name }}</td>
+                                <td>
+                                    <span class="badge badge-stage badge-{{ opp.stage|lower|replace(' ', '-') }}">
+                                        {{ opp.stage }}
+                                    </span>
+                                </td>
+                                <td class="currency">{{ opp.value }}</td>
+                                <td>
+                                    {% if opp.bid_date %}
+                                        {{ opp.bid_date.strftime('%b %d, %Y') }}
+                                        {% if opp.days_until_bid is not none %}
+                                            <span class="small text-muted">({{ opp.days_until_bid }}d)</span>
+                                        {% endif %}
+                                    {% else %}
+                                        —
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <span class="badge bg-secondary">{{ opp.estimating_status }}</span>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Capacity Level Colors */
+.border-green {
+    border-left: 4px solid #28a745 !important;
+}
+
+.border-yellow {
+    border-left: 4px solid #ffc107 !important;
+}
+
+.border-red {
+    border-left: 4px solid #dc3545 !important;
+}
+
+.bg-green {
+    background-color: #28a745 !important;
+    color: white;
+}
+
+.bg-yellow {
+    background-color: #ffc107 !important;
+    color: #000;
+}
+
+.bg-red {
+    background-color: #dc3545 !important;
+    color: white;
+}
+</style>
+
+<script>
+function showEstimatorDetails(estimatorId, estimatorName) {
+    // Scroll to details table and highlight rows for this estimator
+    const table = document.querySelector('.table-responsive');
+    table.scrollIntoView({ behavior: 'smooth' });
+
+    // Highlight rows (basic implementation)
+    alert(`Viewing details for ${estimatorName}.\n\nFull opportunity list shown in table below.`);
+}
+</script>
+{% endblock %}

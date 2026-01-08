@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+
+{% block title %}Email Sync - RevenueOS{% endblock %}
+
+{% block content %}
+<div class="content-area">
+    <div class="page-header">
+        <h1><i class="bi bi-envelope-check me-2"></i>Email Activity Auto-Logger</h1>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-8">
+            <!-- Status Card -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="bi bi-info-circle me-2"></i>Configuration Status
+                </div>
+                <div class="card-body">
+                    {% if is_configured %}
+                    <div class="alert alert-success" role="alert">
+                        <i class="bi bi-check-circle me-2"></i>
+                        <strong>Email sync is configured and ready.</strong>
+                        <p class="mb-0 mt-2">Gmail integration is active. Emails will be automatically synced and activities created.</p>
+                    </div>
+                    {% else %}
+                    <div class="alert alert-warning" role="alert">
+                        <i class="bi bi-exclamation-triangle me-2"></i>
+                        <strong>Email sync is not configured.</strong>
+                        <p class="mb-0 mt-2">Set the following environment variables to enable email sync:</p>
+                        <ul class="mt-2">
+                            <li><code>GMAIL_ADDRESS</code> - Your Gmail address</li>
+                            <li><code>GMAIL_APP_PASSWORD</code> - Gmail app-specific password (<a href="https://support.google.com/accounts/answer/185833" target="_blank">How to create</a>)</li>
+                            <li><code>EMAIL_SYNC_ENABLED=true</code> - Enable automatic background sync</li>
+                        </ul>
+                    </div>
+                    {% endif %}
+
+                    {% if scheduler_running %}
+                    <div class="alert alert-info mt-3" role="alert">
+                        <i class="bi bi-clock me-2"></i>
+                        Background sync is running. Emails are synced automatically every 15 minutes.
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- How It Works -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="bi bi-lightbulb me-2"></i>How It Works
+                </div>
+                <div class="card-body">
+                    <ol>
+                        <li><strong>Email Monitoring:</strong> System connects to your Gmail account via IMAP</li>
+                        <li><strong>Contact Matching:</strong> Emails are matched to contacts in your database by email address</li>
+                        <li><strong>Opportunity Detection:</strong> System finds the most relevant opportunity to attach the email to</li>
+                        <li><strong>Activity Creation:</strong> An email activity is automatically logged in the opportunity</li>
+                        <li><strong>Follow-up Updates:</strong> The opportunity's last_contacted date is updated, triggering follow-up recalculation</li>
+                    </ol>
+
+                    <div class="alert alert-secondary mt-3">
+                        <strong>Privacy Note:</strong> Only emails with contacts in your system are processed. Email content is stored as activity descriptions (truncated to 500 characters).
+                    </div>
+                </div>
+            </div>
+
+            <!-- Manual Sync -->
+            {% if is_configured %}
+            <div class="card">
+                <div class="card-header">
+                    <i class="bi bi-play-circle me-2"></i>Manual Sync
+                </div>
+                <div class="card-body">
+                    <p>Click the button below to manually sync emails from the last 7 days.</p>
+                    <form action="/email-sync/sync-now" method="post">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-arrow-repeat me-1"></i> Sync Now
+                        </button>
+                    </form>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="col-lg-4">
+            <!-- Quick Stats -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="bi bi-bar-chart me-2"></i>Quick Stats
+                </div>
+                <div class="card-body">
+                    <p class="text-muted small">Stats will appear here after running a sync.</p>
+                </div>
+            </div>
+
+            <!-- Setup Guide -->
+            <div class="card">
+                <div class="card-header">
+                    <i class="bi bi-question-circle me-2"></i>Setup Guide
+                </div>
+                <div class="card-body">
+                    <h6>Gmail Setup</h6>
+                    <ol class="small">
+                        <li>Go to <a href="https://myaccount.google.com/security" target="_blank">Google Account Security</a></li>
+                        <li>Enable 2-Step Verification</li>
+                        <li>Generate an App Password for "Mail"</li>
+                        <li>Add credentials to your <code>.env</code> file</li>
+                        <li>Restart the application</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

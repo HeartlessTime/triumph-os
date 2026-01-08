@@ -1,0 +1,159 @@
+{% extends "base.html" %}
+
+{% block title %}Meeting Prep: {{ account.name }} - RevenueOS{% endblock %}
+
+{% block content %}
+<div class="content-area">
+    <div class="page-header">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="/accounts">Accounts</a></li>
+                <li class="breadcrumb-item"><a href="/accounts/{{ account.id }}">{{ account.name }}</a></li>
+                <li class="breadcrumb-item active">Meeting Prep</li>
+            </ol>
+        </nav>
+        <div class="d-flex justify-content-between align-items-center">
+            <h1><i class="bi bi-lightbulb me-2"></i>Meeting Prep: {{ account.name }}</h1>
+            <div>
+                {% if not brief.get('error') %}
+                <form action="/meeting-prep/account/{{ account.id }}/refresh" method="post" style="display: inline;">
+                    <button type="submit" class="btn btn-outline-primary">
+                        <i class="bi bi-arrow-clockwise me-1"></i> Refresh
+                    </button>
+                </form>
+                {% endif %}
+                <a href="/accounts/{{ account.id }}" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left me-1"></i> Back to Account
+                </a>
+            </div>
+        </div>
+    </div>
+
+    {% if brief.get('error') %}
+    <!-- Error State -->
+    <div class="alert alert-danger" role="alert">
+        <h5 class="alert-heading"><i class="bi bi-exclamation-triangle me-2"></i>Research Failed</h5>
+        <p class="mb-0">{{ brief.error }}</p>
+        <hr>
+        <p class="mb-0 small">
+            Make sure the ANTHROPIC_API_KEY is set in your environment variables.
+            <a href="https://console.anthropic.com/" target="_blank" class="alert-link">Get an API key</a>
+        </p>
+    </div>
+    {% else %}
+    <!-- Success State -->
+    <div class="alert alert-info mb-4" role="alert">
+        <i class="bi bi-info-circle me-2"></i>
+        {% if is_cached %}
+        This brief was generated {{ brief.researched_at }}. Click "Refresh" to research updated information.
+        {% else %}
+        Fresh research generated. AI searched the web for the latest information about {{ account.name }}.
+        {% endif %}
+    </div>
+
+    <div class="row g-4">
+        <!-- Left Column: Research Results -->
+        <div class="col-lg-8">
+            <!-- Full AI Brief -->
+            <div class="card mb-4">
+                <div class="card-header bg-success text-white">
+                    <i class="bi bi-file-text me-2"></i>AI Research Brief
+                </div>
+                <div class="card-body">
+                    <div style="white-space: pre-wrap; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;">{{ brief.raw_content }}</div>
+                </div>
+            </div>
+
+            {% if brief.sources and brief.sources|length > 0 %}
+            <!-- Sources -->
+            <div class="card">
+                <div class="card-header">
+                    <i class="bi bi-link-45deg me-2"></i>Sources
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled mb-0">
+                        {% for source in brief.sources %}
+                        <li class="mb-2">
+                            <i class="bi bi-check-circle text-success me-2"></i>
+                            <a href="{{ source.url }}" target="_blank" class="text-decoration-none">
+                                {{ source.title or source.url }}
+                            </a>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Right Column: Quick Context -->
+        <div class="col-lg-4">
+            {% if brief.internal_history %}
+            <!-- Our History -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="bi bi-clock-history me-2"></i>Our History with {{ account.name }}
+                </div>
+                <div class="card-body">
+                    <div style="white-space: pre-wrap; font-size: 0.9rem;">{{ brief.internal_history }}</div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Quick Actions -->
+            <div class="card">
+                <div class="card-header">
+                    <i class="bi bi-lightning me-2"></i>Quick Actions
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="/opportunities/intake?account_id={{ account.id }}" class="btn btn-primary">
+                            <i class="bi bi-plus-lg me-1"></i> Create Opportunity
+                        </a>
+                        <a href="/activities/new?account_id={{ account.id }}" class="btn btn-outline-primary">
+                            <i class="bi bi-journal-plus me-1"></i> Log Activity
+                        </a>
+                        <a href="mailto:{{ account.primary_contact.email if account.primary_contact else '' }}" class="btn btn-outline-secondary">
+                            <i class="bi bi-envelope me-1"></i> Send Email
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Account Info -->
+            <div class="card mt-4">
+                <div class="card-header">
+                    <i class="bi bi-building me-2"></i>Account Info
+                </div>
+                <div class="card-body">
+                    <dl class="mb-0 small">
+                        {% if account.industry %}
+                        <dt class="text-muted">Industry</dt>
+                        <dd>{{ account.industry }}</dd>
+                        {% endif %}
+
+                        {% if account.website %}
+                        <dt class="text-muted">Website</dt>
+                        <dd><a href="{{ account.website }}" target="_blank">{{ account.website }}</a></dd>
+                        {% endif %}
+
+                        <dt class="text-muted">Open Opportunities</dt>
+                        <dd>{{ account.open_opportunities_count }}</dd>
+
+                        <dt class="text-muted">Pipeline Value</dt>
+                        <dd class="currency">{{ account.total_pipeline_value }}</dd>
+                    </dl>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<style>
+/* Custom styling for meeting prep page */
+.card-header.bg-success {
+    background-color: #198754 !important;
+}
+</style>
+{% endblock %}

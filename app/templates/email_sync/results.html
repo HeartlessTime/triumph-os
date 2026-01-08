@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+
+{% block title %}Email Sync Results - RevenueOS{% endblock %}
+
+{% block content %}
+<div class="content-area">
+    <div class="page-header">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="/email-sync">Email Sync</a></li>
+                <li class="breadcrumb-item active">Sync Results</li>
+            </ol>
+        </nav>
+        <h1><i class="bi bi-check-circle me-2"></i>Email Sync Complete</h1>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-8">
+            <!-- Results Summary -->
+            <div class="card mb-4">
+                <div class="card-header bg-success text-white">
+                    <i class="bi bi-graph-up me-2"></i>Sync Results
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <div class="text-muted small">Total Emails Processed</div>
+                            <div class="h3 mb-0">{{ stats.total_emails }}</div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="text-muted small">Activities Created</div>
+                            <div class="h3 mb-0 text-success">{{ stats.activities_created }}</div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="text-muted small">Contacts Matched</div>
+                            <div class="h3 mb-0">{{ stats.contacts_matched }}</div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="text-muted small">Opportunities Matched</div>
+                            <div class="h3 mb-0">{{ stats.opportunities_matched }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Errors (if any) -->
+            {% if stats.errors and stats.errors|length > 0 %}
+            <div class="card">
+                <div class="card-header bg-warning">
+                    <i class="bi bi-exclamation-triangle me-2"></i>Errors Encountered
+                </div>
+                <div class="card-body">
+                    <ul class="mb-0">
+                        {% for error in stats.errors %}
+                        <li class="text-danger">{{ error }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="col-lg-4">
+            <!-- Actions -->
+            <div class="card">
+                <div class="card-header">
+                    <i class="bi bi-lightning me-2"></i>Next Steps
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="/" class="btn btn-primary">
+                            <i class="bi bi-house me-1"></i> Go to Dashboard
+                        </a>
+                        <a href="/email-sync" class="btn btn-outline-secondary">
+                            <i class="bi bi-arrow-left me-1"></i> Back to Email Sync
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tips -->
+            <div class="card mt-4">
+                <div class="card-header">
+                    <i class="bi bi-lightbulb me-2"></i>Tips
+                </div>
+                <div class="card-body">
+                    <ul class="small mb-0">
+                        <li>Activities are only created for emails with contacts in your database</li>
+                        <li>Duplicate emails are automatically detected and skipped</li>
+                        <li>Last contacted dates are updated automatically</li>
+                        <li>Enable automatic sync in environment variables for hands-free operation</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

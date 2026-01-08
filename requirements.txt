@@ -27,3 +27,9 @@ python-dotenv==1.0.1
 
 # Utilities
 aiofiles==23.2.1
+
+# AI/ML
+anthropic==0.42.0
+
+# Background Jobs
+APScheduler==3.10.4
