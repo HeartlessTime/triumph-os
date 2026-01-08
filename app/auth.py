@@ -79,16 +79,18 @@ async def get_current_user(
     request: Request,
     db: Optional[Session] = Depends(get_db)
 ) -> Optional[User]:
-    """Get current user from session."""
-    if DEMO_MODE or db is None:
+    """Get current user from session. Always returns a user (no login required)."""
+    # Always return first admin user or create a default user
+    if db is None:
         return get_demo_user()
 
-    user_id = get_session_user_id(request)
-    if not user_id:
-        return None
+    # Try to get first admin user
+    user = db.query(User).filter(User.is_active == True, User.role == 'Admin').first()
+    if user:
+        return user
 
-    user = db.query(User).filter(User.id == user_id, User.is_active == True).first()
-    return user
+    # If no users exist, return demo user
+    return get_demo_user()
 
 
 async def require_auth(
