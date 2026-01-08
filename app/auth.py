@@ -80,16 +80,7 @@ async def get_current_user(
     db: Optional[Session] = Depends(get_db)
 ) -> Optional[User]:
     """Get current user from session. Always returns a user (no login required)."""
-    # Always return first admin user or create a default user
-    if db is None:
-        return get_demo_user()
-
-    # Try to get first admin user
-    user = db.query(User).filter(User.is_active == True, User.role == 'Admin').first()
-    if user:
-        return user
-
-    # If no users exist, return demo user
+    # Always return demo user (no database queries, no authentication)
     return get_demo_user()
 
 
@@ -98,16 +89,8 @@ async def require_auth(
     db: Optional[Session] = Depends(get_db)
 ) -> User:
     """Require authenticated user, redirect to login if not."""
-    if DEMO_MODE or db is None:
-        return get_demo_user()
-
-    user = await get_current_user(request, db)
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_303_SEE_OTHER,
-            headers={"Location": "/login?next=" + str(request.url.path)}
-        )
-    return user
+    # Always return demo user (no authentication required)
+    return get_demo_user()
 
 
 def require_role(*roles):
@@ -116,17 +99,8 @@ def require_role(*roles):
         request: Request,
         db: Optional[Session] = Depends(get_db)
     ) -> User:
-        if DEMO_MODE or db is None:
-            user = get_demo_user()
-        else:
-            user = await require_auth(request, db)
-
-        if user.role not in roles:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="You don't have permission to access this resource"
-            )
-        return user
+        # Always return demo user (no role checks)
+        return get_demo_user()
     return Depends(dependency)
 
 
@@ -147,17 +121,8 @@ def require_estimator_or_admin():
 
 def authenticate_user(db: Session, email: str, password: str) -> Optional[User]:
     """Authenticate a user by email and password."""
-    if DEMO_MODE or db is None:
-        return get_demo_user()
-
-    user = db.query(User).filter(User.email == email).first()
-    if not user:
-        return None
-    if not user.is_active:
-        return None
-    if not verify_password(password, user.password_hash):
-        return None
-    return user
+    # Always return demo user (no authentication)
+    return get_demo_user()
 
 
 def set_session_cookie(response, user_id: int):
