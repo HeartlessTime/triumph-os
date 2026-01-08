@@ -10,7 +10,13 @@ Base = declarative_base()
 
 def get_database_url() -> str:
     """Get database URL from environment."""
-    return os.getenv("DATABASE_URL", "postgresql://postgres:postgres@localhost:5432/revenueos")
+    url = os.getenv("DATABASE_URL", "postgresql://postgres:postgres@localhost:5432/revenueos")
+    # Ensure psycopg (v3) driver is used
+    if url.startswith("postgresql://"):
+        url = url.replace("postgresql://", "postgresql+psycopg://", 1)
+    elif url.startswith("postgres://"):
+        url = url.replace("postgres://", "postgresql+psycopg://", 1)
+    return url
 
 
 def get_engine():
