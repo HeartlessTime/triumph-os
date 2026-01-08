@@ -46,7 +46,7 @@
             height: 100vh;
             background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
             padding: 0;
-            z-index: 1000;
+            z-index: 1120;
             overflow-y: auto;
         }
         
@@ -457,7 +457,7 @@
     
     <!-- Mobile sidebar toggle + overlay -->
     {% if user %}
-    <button id="sidebarToggle" class="btn btn-primary d-lg-none position-fixed" style="z-index:1101; left:1rem; top:1rem;">
+    <button id="sidebarToggle" class="btn btn-primary d-lg-none position-fixed" style="z-index:1130; left:1rem; top:1rem;">
         <i class="bi bi-list"></i>
     </button>
     <div id="sidebarOverlay" class="mobile-overlay"></div>
@@ -509,7 +509,7 @@
     </script>
     <style>
         /* Mobile overlay for sidebar */
-        .mobile-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 1100; display: none; }
+        .mobile-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 1110; display: none; }
         .mobile-overlay.show { display: block; }
     </style>
     
