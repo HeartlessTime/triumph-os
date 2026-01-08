@@ -1,0 +1,287 @@
+"""Initial migration - create all tables
+
+Revision ID: 001_initial
+Revises: 
+Create Date: 2024-01-15
+
+"""
+from typing import Sequence, Union
+
+from alembic import op
+import sqlalchemy as sa
+
+# revision identifiers, used by Alembic.
+revision: str = '001_initial'
+down_revision: Union[str, None] = None
+branch_labels: Union[str, Sequence[str], None] = None
+depends_on: Union[str, Sequence[str], None] = None
+
+
+def upgrade() -> None:
+    # Users table
+    op.create_table('users',
+        sa.Column('id', sa.Integer(), nullable=False),
+        sa.Column('email', sa.String(255), nullable=False),
+        sa.Column('password_hash', sa.String(255), nullable=False),
+        sa.Column('full_name', sa.String(255), nullable=False),
+        sa.Column('role', sa.String(50), nullable=False),
+        sa.Column('is_active', sa.Boolean(), nullable=False, server_default='true'),
+        sa.Column('created_at', sa.DateTime(), nullable=False, server_default=sa.func.now()),
+        sa.Column('updated_at', sa.DateTime(), nullable=False, server_default=sa.func.now()),
+        sa.PrimaryKeyConstraint('id'),
+        sa.UniqueConstraint('email')
+    )
+    op.create_index('ix_users_email', 'users', ['email'])
+    op.create_index('ix_users_role', 'users', ['role'])
+
+    # Accounts table
+    op.create_table('accounts',
+        sa.Column('id', sa.Integer(), nullable=False),
+        sa.Column('name', sa.String(255), nullable=False),
+        sa.Column('industry', sa.String(100), nullable=True),
+        sa.Column('website', sa.String(255), nullable=True),
+        sa.Column('phone', sa.String(50), nullable=True),
+        sa.Column('address', sa.Text(), nullable=True),
+        sa.Column('city', sa.String(100), nullable=True),
+        sa.Column('state', sa.String(100), nullable=True),
+        sa.Column('zip_code', sa.String(20), nullable=True),
+        sa.Column('notes', sa.Text(), nullable=True),
+        sa.Column('created_by_id', sa.Integer(), nullable=True),
+        sa.Column('created_at', sa.DateTime(), nullable=False, server_default=sa.func.now()),
+        sa.Column('updated_at', sa.DateTime(), nullable=False, server_default=sa.func.now()),
+        sa.ForeignKeyConstraint(['created_by_id'], ['users.id']),
+        sa.PrimaryKeyConstraint('id')
+    )
+    op.create_index('ix_accounts_name', 'accounts', ['name'])
+
+    # Contacts table
+    op.create_table('contacts',
+        sa.Column('id', sa.Integer(), nullable=False),
+        sa.Column('account_id', sa.Integer(), nullable=False),
+        sa.Column('first_name', sa.String(100), nullable=False),
+        sa.Column('last_name', sa.String(100), nullable=False),
+        sa.Column('title', sa.String(100), nullable=True),
+        sa.Column('email', sa.String(255), nullable=True),
+        sa.Column('phone', sa.String(50), nullable=True),
+        sa.Column('mobile', sa.String(50), nullable=True),
+        sa.Column('is_primary', sa.Boolean(), nullable=False, server_default='false'),
+        sa.Column('notes', sa.Text(), nullable=True),
+        sa.Column('created_at', sa.DateTime(), nullable=False, server_default=sa.func.now()),
+        sa.Column('updated_at', sa.DateTime(), nullable=False, server_default=sa.func.now()),
+        sa.ForeignKeyConstraint(['account_id'], ['accounts.id'], ondelete='CASCADE'),
+        sa.PrimaryKeyConstraint('id')
+    )
+    op.create_index('ix_contacts_account_id', 'contacts', ['account_id'])
+    op.create_index('ix_contacts_email', 'contacts', ['email'])
+
+    # Scope Packages table (predefined scopes for opportunities)
+    op.create_table('scope_packages',
+        sa.Column('id', sa.Integer(), nullable=False),
+        sa.Column('name', sa.String(100), nullable=False),
+        sa.Column('description', sa.Text(), nullable=True),
+        sa.Column('is_active', sa.Boolean(), nullable=False, server_default='true'),
+        sa.Column('sort_order', sa.Integer(), nullable=False, server_default='0'),
+        sa.Column('created_at', sa.DateTime(), nullable=False, server_default=sa.func.now()),
+        sa.PrimaryKeyConstraint('id')
+    )
+
+    # Opportunities table
+    op.create_table('opportunities',
+        sa.Column('id', sa.Integer(), nullable=False),
+        sa.Column('account_id', sa.Integer(), nullable=False),
+        sa.Column('name', sa.String(255), nullable=False),
+        sa.Column('description', sa.Text(), nullable=True),
+        sa.Column('stage', sa.String(50), nullable=False, server_default='Prospecting'),
+        sa.Column('probability', sa.Integer(), nullable=False, server_default='10'),
+        sa.Column('value', sa.Numeric(15, 2), nullable=True),
+        sa.Column('bid_date', sa.Date(), nullable=True),
+        sa.Column('close_date', sa.Date(), nullable=True),
+        sa.Column('last_contacted', sa.Date(), nullable=True),
+        sa.Column('next_followup', sa.Date(), nullable=True),
+        sa.Column('owner_id', sa.Integer(), nullable=True),
+        sa.Column('assigned_estimator_id', sa.Integer(), nullable=True),
+        sa.Column('estimating_status', sa.String(50), nullable=False, server_default='Not Started'),
+        sa.Column('estimating_checklist', sa.JSON(), nullable=True),
+        sa.Column('primary_contact_id', sa.Integer(), nullable=True),
+        sa.Column('source', sa.String(100), nullable=True),
+        sa.Column('notes', sa.Text(), nullable=True),
+        sa.Column('created_at', sa.DateTime(), nullable=False, server_default=sa.func.now()),
+        sa.Column('updated_at', sa.DateTime(), nullable=False, server_default=sa.func.now()),
+        sa.ForeignKeyConstraint(['account_id'], ['accounts.id'], ondelete='CASCADE'),
+        sa.ForeignKeyConstraint(['owner_id'], ['users.id']),
+        sa.ForeignKeyConstraint(['assigned_estimator_id'], ['users.id']),
+        sa.ForeignKeyConstraint(['primary_contact_id'], ['contacts.id']),
+        sa.PrimaryKeyConstraint('id')
+    )
+    op.create_index('ix_opportunities_account_id', 'opportunities', ['account_id'])
+    op.create_index('ix_opportunities_stage', 'opportunities', ['stage'])
+    op.create_index('ix_opportunities_bid_date', 'opportunities', ['bid_date'])
+    op.create_index('ix_opportunities_next_followup', 'opportunities', ['next_followup'])
+
+    # Opportunity-Scope junction table
+    op.create_table('opportunity_scopes',
+        sa.Column('opportunity_id', sa.Integer(), nullable=False),
+        sa.Column('scope_package_id', sa.Integer(), nullable=False),
+        sa.ForeignKeyConstraint(['opportunity_id'], ['opportunities.id'], ondelete='CASCADE'),
+        sa.ForeignKeyConstraint(['scope_package_id'], ['scope_packages.id'], ondelete='CASCADE'),
+        sa.PrimaryKeyConstraint('opportunity_id', 'scope_package_id')
+    )
+
+    # Estimates table
+    op.create_table('estimates',
+        sa.Column('id', sa.Integer(), nullable=False),
+        sa.Column('opportunity_id', sa.Integer(), nullable=False),
+        sa.Column('version', sa.Integer(), nullable=False, server_default='1'),
+        sa.Column('name', sa.String(255), nullable=True),
+        sa.Column('status', sa.String(50), nullable=False, server_default='Draft'),
+        sa.Column('labor_total', sa.Numeric(15, 2), nullable=False, server_default='0'),
+        sa.Column('material_total', sa.Numeric(15, 2), nullable=False, server_default='0'),
+        sa.Column('subtotal', sa.Numeric(15, 2), nullable=False, server_default='0'),
+        sa.Column('margin_percent', sa.Numeric(5, 2), nullable=False, server_default='20'),
+        sa.Column('margin_amount', sa.Numeric(15, 2), nullable=False, server_default='0'),
+        sa.Column('total', sa.Numeric(15, 2), nullable=False, server_default='0'),
+        sa.Column('notes', sa.Text(), nullable=True),
+        sa.Column('created_by_id', sa.Integer(), nullable=True),
+        sa.Column('created_at', sa.DateTime(), nullable=False, server_default=sa.func.now()),
+        sa.Column('updated_at', sa.DateTime(), nullable=False, server_default=sa.func.now()),
+        sa.ForeignKeyConstraint(['opportunity_id'], ['opportunities.id'], ondelete='CASCADE'),
+        sa.ForeignKeyConstraint(['created_by_id'], ['users.id']),
+        sa.PrimaryKeyConstraint('id'),
+        sa.UniqueConstraint('opportunity_id', 'version', name='uq_estimate_version')
+    )
+    op.create_index('ix_estimates_opportunity_id', 'estimates', ['opportunity_id'])
+
+    # Estimate Line Items table
+    op.create_table('estimate_line_items',
+        sa.Column('id', sa.Integer(), nullable=False),
+        sa.Column('estimate_id', sa.Integer(), nullable=False),
+        sa.Column('line_type', sa.String(50), nullable=False),  # labor, material
+        sa.Column('description', sa.String(500), nullable=False),
+        sa.Column('quantity', sa.Numeric(15, 4), nullable=False, server_default='1'),
+        sa.Column('unit', sa.String(50), nullable=True),
+        sa.Column('unit_cost', sa.Numeric(15, 4), nullable=False, server_default='0'),
+        sa.Column('total', sa.Numeric(15, 2), nullable=False, server_default='0'),
+        sa.Column('sort_order', sa.Integer(), nullable=False, server_default='0'),
+        sa.Column('notes', sa.Text(), nullable=True),
+        sa.Column('created_at', sa.DateTime(), nullable=False, server_default=sa.func.now()),
+        sa.Column('updated_at', sa.DateTime(), nullable=False, server_default=sa.func.now()),
+        sa.ForeignKeyConstraint(['estimate_id'], ['estimates.id'], ondelete='CASCADE'),
+        sa.PrimaryKeyConstraint('id')
+    )
+    op.create_index('ix_estimate_line_items_estimate_id', 'estimate_line_items', ['estimate_id'])
+
+    # Activities table
+    op.create_table('activities',
+        sa.Column('id', sa.Integer(), nullable=False),
+        sa.Column('opportunity_id', sa.Integer(), nullable=False),
+        sa.Column('activity_type', sa.String(50), nullable=False),  # call, meeting, email, note
+        sa.Column('subject', sa.String(255), nullable=False),
+        sa.Column('description', sa.Text(), nullable=True),
+        sa.Column('activity_date', sa.DateTime(), nullable=False),
+        sa.Column('contact_id', sa.Integer(), nullable=True),
+        sa.Column('created_by_id', sa.Integer(), nullable=True),
+        sa.Column('created_at', sa.DateTime(), nullable=False, server_default=sa.func.now()),
+        sa.ForeignKeyConstraint(['opportunity_id'], ['opportunities.id'], ondelete='CASCADE'),
+        sa.ForeignKeyConstraint(['contact_id'], ['contacts.id']),
+        sa.ForeignKeyConstraint(['created_by_id'], ['users.id']),
+        sa.PrimaryKeyConstraint('id')
+    )
+    op.create_index('ix_activities_opportunity_id', 'activities', ['opportunity_id'])
+    op.create_index('ix_activities_activity_date', 'activities', ['activity_date'])
+
+    # Tasks table
+    op.create_table('tasks',
+        sa.Column('id', sa.Integer(), nullable=False),
+        sa.Column('opportunity_id', sa.Integer(), nullable=True),
+        sa.Column('title', sa.String(255), nullable=False),
+        sa.Column('description', sa.Text(), nullable=True),
+        sa.Column('due_date', sa.Date(), nullable=True),
+        sa.Column('priority', sa.String(20), nullable=False, server_default='Medium'),
+        sa.Column('status', sa.String(20), nullable=False, server_default='Open'),
+        sa.Column('assigned_to_id', sa.Integer(), nullable=True),
+        sa.Column('created_by_id', sa.Integer(), nullable=True),
+        sa.Column('completed_at', sa.DateTime(), nullable=True),
+        sa.Column('created_at', sa.DateTime(), nullable=False, server_default=sa.func.now()),
+        sa.Column('updated_at', sa.DateTime(), nullable=False, server_default=sa.func.now()),
+        sa.ForeignKeyConstraint(['opportunity_id'], ['opportunities.id'], ondelete='CASCADE'),
+        sa.ForeignKeyConstraint(['assigned_to_id'], ['users.id']),
+        sa.ForeignKeyConstraint(['created_by_id'], ['users.id']),
+        sa.PrimaryKeyConstraint('id')
+    )
+    op.create_index('ix_tasks_opportunity_id', 'tasks', ['opportunity_id'])
+    op.create_index('ix_tasks_status', 'tasks', ['status'])
+    op.create_index('ix_tasks_due_date', 'tasks', ['due_date'])
+
+    # Documents table
+    op.create_table('documents',
+        sa.Column('id', sa.Integer(), nullable=False),
+        sa.Column('opportunity_id', sa.Integer(), nullable=True),
+        sa.Column('estimate_id', sa.Integer(), nullable=True),
+        sa.Column('name', sa.String(255), nullable=False),
+        sa.Column('original_filename', sa.String(255), nullable=False),
+        sa.Column('file_path', sa.String(500), nullable=False),
+        sa.Column('file_size', sa.Integer(), nullable=True),
+        sa.Column('mime_type', sa.String(100), nullable=True),
+        sa.Column('document_type', sa.String(50), nullable=True),  # proposal, spec, drawing, quote, other
+        sa.Column('uploaded_by_id', sa.Integer(), nullable=True),
+        sa.Column('created_at', sa.DateTime(), nullable=False, server_default=sa.func.now()),
+        sa.ForeignKeyConstraint(['opportunity_id'], ['opportunities.id'], ondelete='CASCADE'),
+        sa.ForeignKeyConstraint(['estimate_id'], ['estimates.id'], ondelete='SET NULL'),
+        sa.ForeignKeyConstraint(['uploaded_by_id'], ['users.id']),
+        sa.PrimaryKeyConstraint('id')
+    )
+    op.create_index('ix_documents_opportunity_id', 'documents', ['opportunity_id'])
+
+    # Vendors table
+    op.create_table('vendors',
+        sa.Column('id', sa.Integer(), nullable=False),
+        sa.Column('name', sa.String(255), nullable=False),
+        sa.Column('contact_name', sa.String(255), nullable=True),
+        sa.Column('email', sa.String(255), nullable=True),
+        sa.Column('phone', sa.String(50), nullable=True),
+        sa.Column('address', sa.Text(), nullable=True),
+        sa.Column('specialty', sa.String(100), nullable=True),
+        sa.Column('notes', sa.Text(), nullable=True),
+        sa.Column('is_active', sa.Boolean(), nullable=False, server_default='true'),
+        sa.Column('created_at', sa.DateTime(), nullable=False, server_default=sa.func.now()),
+        sa.Column('updated_at', sa.DateTime(), nullable=False, server_default=sa.func.now()),
+        sa.PrimaryKeyConstraint('id')
+    )
+
+    # Vendor Quote Requests table
+    op.create_table('vendor_quote_requests',
+        sa.Column('id', sa.Integer(), nullable=False),
+        sa.Column('opportunity_id', sa.Integer(), nullable=False),
+        sa.Column('vendor_id', sa.Integer(), nullable=False),
+        sa.Column('description', sa.Text(), nullable=True),
+        sa.Column('status', sa.String(50), nullable=False, server_default='Pending'),
+        sa.Column('sent_date', sa.Date(), nullable=True),
+        sa.Column('due_date', sa.Date(), nullable=True),
+        sa.Column('received_date', sa.Date(), nullable=True),
+        sa.Column('quote_amount', sa.Numeric(15, 2), nullable=True),
+        sa.Column('notes', sa.Text(), nullable=True),
+        sa.Column('created_by_id', sa.Integer(), nullable=True),
+        sa.Column('created_at', sa.DateTime(), nullable=False, server_default=sa.func.now()),
+        sa.Column('updated_at', sa.DateTime(), nullable=False, server_default=sa.func.now()),
+        sa.ForeignKeyConstraint(['opportunity_id'], ['opportunities.id'], ondelete='CASCADE'),
+        sa.ForeignKeyConstraint(['vendor_id'], ['vendors.id']),
+        sa.ForeignKeyConstraint(['created_by_id'], ['users.id']),
+        sa.PrimaryKeyConstraint('id')
+    )
+    op.create_index('ix_vendor_quote_requests_opportunity_id', 'vendor_quote_requests', ['opportunity_id'])
+
+
+def downgrade() -> None:
+    op.drop_table('vendor_quote_requests')
+    op.drop_table('vendors')
+    op.drop_table('documents')
+    op.drop_table('tasks')
+    op.drop_table('activities')
+    op.drop_table('estimate_line_items')
+    op.drop_table('estimates')
+    op.drop_table('opportunity_scopes')
+    op.drop_table('opportunities')
+    op.drop_table('scope_packages')
+    op.drop_table('contacts')
+    op.drop_table('accounts')
+    op.drop_table('users')

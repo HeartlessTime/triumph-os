@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+
+{% block title %}{% if is_new %}New Contact{% else %}Edit {{ contact.full_name }}{% endif %} - Triumph OS{% endblock %}
+
+{% block content %}
+<div class="content-area">
+    <div class="page-header">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="/contacts">Contacts</a></li>
+                <li class="breadcrumb-item active">{% if is_new %}New{% else %}Edit{% endif %}</li>
+            </ol>
+        </nav>
+        <h1>{% if is_new %}New Contact{% else %}Edit Contact{% endif %}</h1>
+    </div>
+    
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-body">
+                    <form method="post" action="{% if is_new %}/contacts/new{% else %}/contacts/{{ contact.id }}/edit{% endif %}">
+                        <div class="row g-3">
+                            <div class="col-12">
+                                <label for="account_id" class="form-label">Account <span class="text-danger">*</span></label>
+                                <select class="form-select" id="account_id" name="account_id" required>
+                                    <option value="">Select Account</option>
+                                    {% for acc in accounts %}
+                                    <option value="{{ acc.id }}" {% if selected_account_id == acc.id %}selected{% endif %}>{{ acc.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label for="first_name" class="form-label">First Name <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="first_name" name="first_name" value="{{ contact.first_name if contact else '' }}" required>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label for="last_name" class="form-label">Last Name <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="last_name" name="last_name" value="{{ contact.last_name if contact else '' }}" required>
+                            </div>
+                            
+                            <div class="col-12">
+                                <label for="title" class="form-label">Title</label>
+                                <input type="text" class="form-control" id="title" name="title" value="{{ contact.title if contact else '' }}" placeholder="e.g., Project Manager">
+                            </div>
+                            
+                            <div class="col-12">
+                                <label for="email" class="form-label">Email</label>
+                                <input type="email" class="form-control" id="email" name="email" value="{{ contact.email if contact else '' }}">
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label for="phone" class="form-label">Office Phone</label>
+                                <input type="tel" class="form-control" id="phone" name="phone" value="{{ contact.phone if contact else '' }}">
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label for="mobile" class="form-label">Mobile</label>
+                                <input type="tel" class="form-control" id="mobile" name="mobile" value="{{ contact.mobile if contact else '' }}">
+                            </div>
+                            
+                            <div class="col-12">
+                                <div class="form-check">
+                                    <input type="checkbox" class="form-check-input" id="is_primary" name="is_primary" value="true" {% if contact and contact.is_primary %}checked{% endif %}>
+                                    <label class="form-check-label" for="is_primary">Primary contact for this account</label>
+                                </div>
+                            </div>
+                            
+                            <div class="col-12">
+                                <label for="notes" class="form-label">Notes</label>
+                                <textarea class="form-control" id="notes" name="notes" rows="3">{{ contact.notes if contact else '' }}</textarea>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-4 d-flex gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-check-lg me-1"></i> {% if is_new %}Create Contact{% else %}Save Changes{% endif %}
+                            </button>
+                            <a href="{% if is_new %}/contacts{% else %}/contacts/{{ contact.id }}{% endif %}" class="btn btn-outline-secondary">Cancel</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

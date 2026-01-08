@@ -1,0 +1,130 @@
+{% extends "base.html" %}
+
+{% block title %}Opportunities - Triumph OS{% endblock %}
+
+{% block content %}
+<div class="content-area">
+    <div class="page-header d-flex justify-content-between align-items-center">
+        <div>
+            <h1>Opportunities</h1>
+            <p class="text-muted mb-0">Track and manage your sales pipeline</p>
+        </div>
+        <a href="/opportunities/intake" class="btn btn-primary">
+            <i class="bi bi-plus-lg me-1"></i> New Opportunity
+        </a>
+    </div>
+    
+    <!-- Filters -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <div class="col-md-4">
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="bi bi-search"></i></span>
+                        <input type="text" class="form-control" name="search" value="{{ search or '' }}" placeholder="Search opportunities...">
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <select class="form-select" name="stage">
+                        <option value="">All Stages</option>
+                        {% for s in stages %}
+                        <option value="{{ s }}" {% if stage == s %}selected{% endif %}>{{ s }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <select class="form-select" name="owner_id">
+                        <option value="">All Owners</option>
+                        {% for u in users %}
+                        <option value="{{ u.id }}" {% if owner_id == u.id %}selected{% endif %}>{{ u.full_name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <select class="form-select" name="estimator_id">
+                        <option value="">All Estimators</option>
+                        {% for u in users %}
+                        <option value="{{ u.id }}" {% if estimator_id == u.id %}selected{% endif %}>{{ u.full_name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-secondary w-100">Filter</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Opportunities Table -->
+    <div class="card">
+        <div class="card-body p-0">
+            {% if opportunities %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Opportunity</th>
+                            <th>Stage</th>
+                            <th>Value</th>
+                            <th>Bid Date</th>
+                            <th>Owner</th>
+                            <th>Next Follow-up</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for opp in opportunities %}
+                        <tr>
+                            <td>
+                                <a href="/opportunities/{{ opp.id }}" class="text-decoration-none fw-medium">
+                                    {{ opp.name }}
+                                </a>
+                                <div class="text-muted small">{{ opp.account.name }}</div>
+                            </td>
+                            <td>
+                                <span class="badge badge-stage badge-{{ opp.stage|lower|replace(' ', '-') }}">
+                                    {{ opp.stage }}
+                                </span>
+                            </td>
+                            <td class="currency">{{ opp.value or 0 }}</td>
+                            <td>
+                                {% if opp.bid_date %}
+                                <span class="{% if opp.is_past_bid_date %}text-danger{% elif opp.days_until_bid <= 7 %}text-warning{% endif %}">
+                                    {{ opp.bid_date.strftime('%b %d') }}
+                                </span>
+                                {% else %}—{% endif %}
+                            </td>
+                            <td>{{ opp.owner.full_name if opp.owner else '—' }}</td>
+                            <td>
+                                {% if opp.next_followup %}
+                                <span class="{{ opp.followup_status.css_class }}">
+                                    {{ opp.next_followup.strftime('%b %d') }}
+                                </span>
+                                {% else %}—{% endif %}
+                            </td>
+                            <td class="text-end">
+                                <a href="/opportunities/{{ opp.id }}" class="btn btn-sm btn-outline-primary">
+                                    View
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="empty-state py-5">
+                <i class="bi bi-bullseye"></i>
+                <h5>No opportunities found</h5>
+                <p>{% if search or stage or owner_id %}Try adjusting your filters{% else %}Create your first opportunity{% endif %}</p>
+                {% if not search and not stage %}
+                <a href="/opportunities/intake" class="btn btn-primary">
+                    <i class="bi bi-plus-lg me-1"></i> New Opportunity
+                </a>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

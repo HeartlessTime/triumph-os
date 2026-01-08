@@ -1,0 +1,246 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Triumph OS{% endblock %}
+
+{% block content %}
+<div class="content-area">
+    <div class="page-header d-flex justify-content-between align-items-center">
+        <div>
+            <h1>Dashboard</h1>
+            <p class="text-muted mb-0">Welcome back, {{ user.full_name }}</p>
+        </div>
+        <div>
+            <a href="/opportunities/intake" class="btn btn-primary">
+                <i class="bi bi-plus-lg me-1"></i> New Opportunity
+            </a>
+        </div>
+    </div>
+    
+    <!-- Stats Row -->
+    <div class="row g-4 mb-4">
+        <div class="col-md-6 col-xl-3">
+            <div class="stat-card">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <div class="stat-value currency">{{ pipeline_value }}</div>
+                        <div class="stat-label">Pipeline Value</div>
+                    </div>
+                    <div class="stat-icon bg-primary bg-opacity-10 text-primary">
+                        <i class="bi bi-cash-stack"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 col-xl-3">
+            <div class="stat-card">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <div class="stat-value currency">{{ weighted_pipeline }}</div>
+                        <div class="stat-label">Weighted Pipeline</div>
+                    </div>
+                    <div class="stat-icon bg-success bg-opacity-10 text-success">
+                        <i class="bi bi-graph-up"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 col-xl-3">
+            <div class="stat-card">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <div class="stat-value">{{ open_opportunities }}</div>
+                        <div class="stat-label">Open Opportunities</div>
+                    </div>
+                    <div class="stat-icon bg-info bg-opacity-10 text-info">
+                        <i class="bi bi-bullseye"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 col-xl-3">
+            <div class="stat-card">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <div class="stat-value currency">{{ won_this_month }}</div>
+                        <div class="stat-label">Won This Month</div>
+                    </div>
+                    <div class="stat-icon bg-warning bg-opacity-10 text-warning">
+                        <i class="bi bi-trophy"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row g-4">
+        <!-- Follow-ups Needed -->
+        <div class="col-lg-6">
+            <div class="card h-100">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <span><i class="bi bi-telephone me-2"></i>Follow-ups Needed</span>
+                    <span class="badge bg-danger">{{ followup_opps|length }}</span>
+                </div>
+                <div class="card-body p-0">
+                    {% if followup_opps %}
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <tbody>
+                                {% for opp in followup_opps %}
+                                <tr>
+                                    <td>
+                                        <a href="/opportunities/{{ opp.id }}" class="text-decoration-none fw-medium">
+                                            {{ opp.name }}
+                                        </a>
+                                        <div class="text-muted small">{{ opp.account.name }}</div>
+                                    </td>
+                                    <td class="text-end">
+                                        <span class="{{ opp.followup_status.css_class }}">
+                                            {% if opp.followup_status.status == 'overdue' %}
+                                                {{ opp.followup_status.days_until|abs }} days overdue
+                                            {% elif opp.followup_status.status == 'due_today' %}
+                                                Due today
+                                            {% else %}
+                                                In {{ opp.followup_status.days_until }} days
+                                            {% endif %}
+                                        </span>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="empty-state">
+                        <i class="bi bi-check-circle"></i>
+                        <p>All caught up! No follow-ups needed.</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Upcoming Bids -->
+        <div class="col-lg-6">
+            <div class="card h-100">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <span><i class="bi bi-calendar-event me-2"></i>Upcoming Bids</span>
+                    <span class="badge bg-primary">{{ upcoming_bids|length }}</span>
+                </div>
+                <div class="card-body p-0">
+                    {% if upcoming_bids %}
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <tbody>
+                                {% for opp in upcoming_bids %}
+                                <tr>
+                                    <td>
+                                        <a href="/opportunities/{{ opp.id }}" class="text-decoration-none fw-medium">
+                                            {{ opp.name }}
+                                        </a>
+                                        <div class="text-muted small">{{ opp.account.name }}</div>
+                                    </td>
+                                    <td class="text-end">
+                                        <span class="{% if opp.days_until_bid <= 3 %}text-danger fw-bold{% elif opp.days_until_bid <= 7 %}text-warning{% endif %}">
+                                            {{ opp.bid_date.strftime('%b %d') }}
+                                            <span class="text-muted small">({{ opp.days_until_bid }}d)</span>
+                                        </span>
+                                    </td>
+                                    <td class="text-end">
+                                        <span class="currency">{{ opp.value or 0 }}</span>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="empty-state">
+                        <i class="bi bi-calendar"></i>
+                        <p>No bids in the next 2 weeks.</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- My Tasks -->
+        <div class="col-lg-6">
+            <div class="card h-100">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <span><i class="bi bi-check2-square me-2"></i>My Tasks</span>
+                    <span class="badge bg-secondary">{{ my_tasks|length }}</span>
+                </div>
+                <div class="card-body p-0">
+                    {% if my_tasks %}
+                    <div class="list-group list-group-flush">
+                        {% for task in my_tasks %}
+                        <div class="list-group-item d-flex justify-content-between align-items-center">
+                            <div>
+                                <div class="fw-medium">{{ task.title }}</div>
+                                {% if task.opportunity %}
+                                <a href="/opportunities/{{ task.opportunity.id }}" class="text-muted small text-decoration-none">
+                                    {{ task.opportunity.name }}
+                                </a>
+                                {% endif %}
+                            </div>
+                            <div class="text-end">
+                                <span class="badge" style="background-color: {{ task.priority_color }}20; color: {{ task.priority_color }}">
+                                    {{ task.priority }}
+                                </span>
+                                {% if task.due_date %}
+                                <div class="small {% if task.is_overdue %}text-danger{% else %}text-muted{% endif %}">
+                                    {{ task.due_date.strftime('%b %d') }}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="empty-state">
+                        <i class="bi bi-check-all"></i>
+                        <p>No open tasks.</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Recent Activity -->
+        <div class="col-lg-6">
+            <div class="card h-100">
+                <div class="card-header">
+                    <i class="bi bi-clock-history me-2"></i>Recent Activity
+                </div>
+                <div class="card-body">
+                    {% if recent_activities %}
+                    <div class="activity-timeline">
+                        {% for activity in recent_activities[:5] %}
+                        <div class="activity-item">
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <span class="me-1">{{ activity.icon }}</span>
+                                    <strong>{{ activity.subject }}</strong>
+                                </div>
+                                <small class="text-muted">
+                                    {{ activity.activity_date.strftime('%b %d, %H:%M') }}
+                                </small>
+                            </div>
+                            <a href="/opportunities/{{ activity.opportunity_id }}" class="text-muted small text-decoration-none">
+                                {{ activity.opportunity.name }}
+                            </a>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="empty-state">
+                        <i class="bi bi-clock"></i>
+                        <p>No recent activity.</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

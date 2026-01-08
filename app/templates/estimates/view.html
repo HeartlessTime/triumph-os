@@ -1,0 +1,384 @@
+{% extends "base.html" %}
+
+{% block title %}Estimate {{ estimate.display_name }} - Triumph OS{% endblock %}
+
+{% block content %}
+<div class="content-area">
+    <div class="page-header">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="/opportunities">Opportunities</a></li>
+                <li class="breadcrumb-item"><a href="/opportunities/{{ opportunity.id }}">{{ opportunity.name }}</a></li>
+                <li class="breadcrumb-item active">Estimate {{ estimate.display_name }}</li>
+            </ol>
+        </nav>
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h1>Estimate {{ estimate.display_name }}</h1>
+                <p class="text-muted mb-0">{{ opportunity.name }} — {{ opportunity.account.name }}</p>
+            </div>
+            <div class="d-flex gap-2">
+                <form method="post" action="/estimates/{{ estimate.id }}/copy" class="d-inline">
+                    <button type="submit" class="btn btn-outline-secondary">
+                        <i class="bi bi-copy me-1"></i> Copy to New Version
+                    </button>
+                </form>
+                <form method="post" action="/estimates/{{ estimate.id }}/generate-proposal" class="d-inline">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-file-pdf me-1"></i> Generate Proposal
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row g-4">
+        <!-- Line Items -->
+        <div class="col-lg-8">
+            <!-- Labor Section -->
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <span><i class="bi bi-people me-2"></i>Labor</span>
+                    <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#addLaborModal">
+                        <i class="bi bi-plus-lg me-1"></i> Add Labor
+                    </button>
+                </div>
+                <div class="card-body p-0">
+                    {% if estimate.labor_items %}
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead>
+                                <tr>
+                                    <th style="width: 40%">Description</th>
+                                    <th>Qty</th>
+                                    <th>Unit</th>
+                                    <th>Unit Cost</th>
+                                    <th>Total</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in estimate.labor_items %}
+                                <tr>
+                                    <td>{{ item.description }}</td>
+                                    <td>{{ item.quantity }}</td>
+                                    <td>{{ item.unit or '—' }}</td>
+                                    <td class="currency">{{ item.unit_cost }}</td>
+                                    <td class="fw-medium currency">{{ item.total }}</td>
+                                    <td class="text-end">
+                                        <button class="btn btn-sm btn-outline-secondary" onclick="editLineItem({{ item.id }}, 'labor', '{{ item.description }}', '{{ item.quantity }}', '{{ item.unit }}', '{{ item.unit_cost }}', '{{ item.notes or '' }}')">
+                                            <i class="bi bi-pencil"></i>
+                                        </button>
+                                        <form method="post" action="/estimates/{{ estimate.id }}/line-items/{{ item.id }}/delete" class="d-inline">
+                                            <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Delete this line item?')">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                            <tfoot>
+                                <tr class="table-light">
+                                    <td colspan="4" class="text-end fw-bold">Labor Total:</td>
+                                    <td class="fw-bold currency">{{ estimate.labor_total }}</td>
+                                    <td></td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="empty-state py-4">
+                        <i class="bi bi-people"></i>
+                        <p>No labor items</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Materials Section -->
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <span><i class="bi bi-box-seam me-2"></i>Materials</span>
+                    <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#addMaterialModal">
+                        <i class="bi bi-plus-lg me-1"></i> Add Material
+                    </button>
+                </div>
+                <div class="card-body p-0">
+                    {% if estimate.material_items %}
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead>
+                                <tr>
+                                    <th style="width: 40%">Description</th>
+                                    <th>Qty</th>
+                                    <th>Unit</th>
+                                    <th>Unit Cost</th>
+                                    <th>Total</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in estimate.material_items %}
+                                <tr>
+                                    <td>{{ item.description }}</td>
+                                    <td>{{ item.quantity }}</td>
+                                    <td>{{ item.unit or '—' }}</td>
+                                    <td class="currency">{{ item.unit_cost }}</td>
+                                    <td class="fw-medium currency">{{ item.total }}</td>
+                                    <td class="text-end">
+                                        <button class="btn btn-sm btn-outline-secondary" onclick="editLineItem({{ item.id }}, 'material', '{{ item.description }}', '{{ item.quantity }}', '{{ item.unit }}', '{{ item.unit_cost }}', '{{ item.notes or '' }}')">
+                                            <i class="bi bi-pencil"></i>
+                                        </button>
+                                        <form method="post" action="/estimates/{{ estimate.id }}/line-items/{{ item.id }}/delete" class="d-inline">
+                                            <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Delete this line item?')">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                            <tfoot>
+                                <tr class="table-light">
+                                    <td colspan="4" class="text-end fw-bold">Materials Total:</td>
+                                    <td class="fw-bold currency">{{ estimate.material_total }}</td>
+                                    <td></td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="empty-state py-4">
+                        <i class="bi bi-box-seam"></i>
+                        <p>No material items</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Summary Sidebar -->
+        <div class="col-lg-4">
+            <!-- Estimate Settings -->
+            <div class="card mb-4">
+                <div class="card-header">Estimate Settings</div>
+                <div class="card-body">
+                    <form method="post" action="/estimates/{{ estimate.id }}/update">
+                        <div class="mb-3">
+                            <label for="name" class="form-label">Name</label>
+                            <input type="text" class="form-control" id="name" name="name" value="{{ estimate.name or '' }}" placeholder="e.g., Final Bid">
+                        </div>
+                        <div class="mb-3">
+                            <label for="status" class="form-label">Status</label>
+                            <select class="form-select" id="status" name="status">
+                                {% for s in statuses %}
+                                <option value="{{ s }}" {% if estimate.status == s %}selected{% endif %}>{{ s }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="margin_percent" class="form-label">Margin %</label>
+                            <input type="number" class="form-control" id="margin_percent" name="margin_percent" value="{{ estimate.margin_percent }}" step="0.01" min="0" max="99">
+                        </div>
+                        <div class="mb-3">
+                            <label for="notes" class="form-label">Notes</label>
+                            <textarea class="form-control" id="notes" name="notes" rows="2">{{ estimate.notes or '' }}</textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100">Save Settings</button>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Totals Summary -->
+            <div class="card">
+                <div class="card-header">Estimate Summary</div>
+                <div class="card-body">
+                    <table class="table table-sm mb-0">
+                        <tbody>
+                            <tr>
+                                <td>Labor:</td>
+                                <td class="text-end currency">{{ estimate.labor_total }}</td>
+                            </tr>
+                            <tr>
+                                <td>Materials:</td>
+                                <td class="text-end currency">{{ estimate.material_total }}</td>
+                            </tr>
+                            <tr class="border-top">
+                                <td class="fw-medium">Subtotal:</td>
+                                <td class="text-end fw-medium currency">{{ estimate.subtotal }}</td>
+                            </tr>
+                            <tr>
+                                <td>Margin ({{ estimate.margin_percent }}%):</td>
+                                <td class="text-end currency">{{ estimate.margin_amount }}</td>
+                            </tr>
+                            <tr class="border-top">
+                                <td class="fw-bold fs-5">Total:</td>
+                                <td class="text-end fw-bold fs-5 text-primary currency">{{ estimate.total }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Labor Modal -->
+<div class="modal fade" id="addLaborModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="post" action="/estimates/{{ estimate.id }}/line-items/add">
+                <input type="hidden" name="line_type" value="labor">
+                <div class="modal-header">
+                    <h5 class="modal-title">Add Labor Item</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="labor_description" class="form-label">Description</label>
+                        <input type="text" class="form-control" id="labor_description" name="description" required placeholder="e.g., Electrical installation">
+                    </div>
+                    <div class="row g-3">
+                        <div class="col-4">
+                            <label for="labor_quantity" class="form-label">Quantity</label>
+                            <input type="number" class="form-control" id="labor_quantity" name="quantity" value="1" step="0.01" min="0" required>
+                        </div>
+                        <div class="col-4">
+                            <label for="labor_unit" class="form-label">Unit</label>
+                            <select class="form-select" id="labor_unit" name="unit">
+                                {% for u in units %}
+                                <option value="{{ u }}" {% if u == 'hour' %}selected{% endif %}>{{ u }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-4">
+                            <label for="labor_cost" class="form-label">Unit Cost</label>
+                            <input type="number" class="form-control" id="labor_cost" name="unit_cost" value="0" step="0.01" min="0" required>
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <label for="labor_notes" class="form-label">Notes</label>
+                        <textarea class="form-control" id="labor_notes" name="notes" rows="2"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Add Item</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Add Material Modal -->
+<div class="modal fade" id="addMaterialModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="post" action="/estimates/{{ estimate.id }}/line-items/add">
+                <input type="hidden" name="line_type" value="material">
+                <div class="modal-header">
+                    <h5 class="modal-title">Add Material Item</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="material_description" class="form-label">Description</label>
+                        <input type="text" class="form-control" id="material_description" name="description" required placeholder="e.g., Copper wiring">
+                    </div>
+                    <div class="row g-3">
+                        <div class="col-4">
+                            <label for="material_quantity" class="form-label">Quantity</label>
+                            <input type="number" class="form-control" id="material_quantity" name="quantity" value="1" step="0.01" min="0" required>
+                        </div>
+                        <div class="col-4">
+                            <label for="material_unit" class="form-label">Unit</label>
+                            <select class="form-select" id="material_unit" name="unit">
+                                {% for u in units %}
+                                <option value="{{ u }}" {% if u == 'each' %}selected{% endif %}>{{ u }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-4">
+                            <label for="material_cost" class="form-label">Unit Cost</label>
+                            <input type="number" class="form-control" id="material_cost" name="unit_cost" value="0" step="0.01" min="0" required>
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <label for="material_notes" class="form-label">Notes</label>
+                        <textarea class="form-control" id="material_notes" name="notes" rows="2"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Add Item</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Line Item Modal -->
+<div class="modal fade" id="editLineItemModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="editLineItemForm" method="post" action="">
+                <input type="hidden" id="edit_line_type" name="line_type" value="">
+                <div class="modal-header">
+                    <h5 class="modal-title">Edit Line Item</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="edit_description" class="form-label">Description</label>
+                        <input type="text" class="form-control" id="edit_description" name="description" required>
+                    </div>
+                    <div class="row g-3">
+                        <div class="col-4">
+                            <label for="edit_quantity" class="form-label">Quantity</label>
+                            <input type="number" class="form-control" id="edit_quantity" name="quantity" step="0.01" min="0" required>
+                        </div>
+                        <div class="col-4">
+                            <label for="edit_unit" class="form-label">Unit</label>
+                            <select class="form-select" id="edit_unit" name="unit">
+                                {% for u in units %}
+                                <option value="{{ u }}">{{ u }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-4">
+                            <label for="edit_unit_cost" class="form-label">Unit Cost</label>
+                            <input type="number" class="form-control" id="edit_unit_cost" name="unit_cost" step="0.01" min="0" required>
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <label for="edit_notes" class="form-label">Notes</label>
+                        <textarea class="form-control" id="edit_notes" name="notes" rows="2"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function editLineItem(itemId, lineType, description, quantity, unit, unitCost, notes) {
+    document.getElementById('editLineItemForm').action = '/estimates/{{ estimate.id }}/line-items/' + itemId + '/update';
+    document.getElementById('edit_line_type').value = lineType;
+    document.getElementById('edit_description').value = description;
+    document.getElementById('edit_quantity').value = quantity;
+    document.getElementById('edit_unit').value = unit;
+    document.getElementById('edit_unit_cost').value = unitCost;
+    document.getElementById('edit_notes').value = notes;
+    
+    new bootstrap.Modal(document.getElementById('editLineItemModal')).show();
+}
+</script>
+{% endblock %}

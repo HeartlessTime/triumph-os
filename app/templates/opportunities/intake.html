@@ -1,0 +1,298 @@
+{% extends "base.html" %}
+
+{% block title %}New Opportunity - Triumph OS{% endblock %}
+
+{% block content %}
+<div class="content-area">
+    <div class="page-header">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="/opportunities">Opportunities</a></li>
+                <li class="breadcrumb-item active">New Opportunity</li>
+            </ol>
+        </nav>
+        <h1>Opportunity Intake</h1>
+    </div>
+    
+    <form method="post" action="/opportunities/intake" enctype="multipart/form-data">
+        <div class="row g-4">
+            <div class="col-lg-8">
+                <div class="card mb-4">
+                    <div class="card-header">Basic Information</div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label for="account_id" class="form-label">Account <span class="text-danger">*</span></label>
+                                <select class="form-select" id="account_id" name="account_id" required>
+                                    <option value="">Select Account</option>
+                                    {% for account in accounts %}
+                                    <option value="{{ account.id }}" {% if selected_account_id == account.id %}selected{% endif %}>{{ account.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="primary_contact_id" class="form-label">Primary Contact</label>
+                                <select class="form-select" id="primary_contact_id" name="primary_contact_id">
+                                    <option value="">Select Contact</option>
+                                    {% for contact in contacts %}
+                                    <option value="{{ contact.id }}">{{ contact.full_name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-12">
+                                <label for="name" class="form-label">Opportunity Name <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="name" name="name" required placeholder="e.g., Office Building Renovation">
+                            </div>
+                            <div class="col-12">
+                                <label for="description" class="form-label">Description</label>
+                                <textarea class="form-control" id="description" name="description" rows="3" placeholder="Project details, requirements, notes..."></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card mb-4">
+                    <div class="card-header">Low-Voltage Scope Packages</div>
+                    <div class="card-body">
+                        <p class="text-muted small mb-3">Select all that apply (Low-Voltage specific):</p>
+                        <div class="row g-2">
+                            {% set LV_SCOPES = [
+                                'Horizontal Cabling (Copper)',
+                                'Backbone Cabling (Fiber/Copper)',
+                                'Site / Campus Fiber',
+                                'IDF / MDF Closet Buildout',
+                                'Security / Access Control',
+                                'Cameras / Surveillance',
+                                'Wireless / Access Points',
+                                'AV / Paging / Intercom',
+                                'Other'
+                            ] %}
+                            {% for s in LV_SCOPES %}
+                            <div class="col-md-6">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="scope_names" value="{{ s }}" id="scope_{{ loop.index }}">
+                                    <label class="form-check-label" for="scope_{{ loop.index }}">{{ s }}</label>
+                                </div>
+                                {% if s == 'Other' %}
+                                <div class="mt-2">
+                                    <input type="text" class="form-control" name="scope_other_text" placeholder="Other (describe)">
+                                </div>
+                                {% endif %}
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card mb-4">
+                    <div class="card-header">Bid Instructions</div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label for="bid_type" class="form-label">Bid Type</label>
+                                <select class="form-select" id="bid_type" name="bid_type">
+                                    <option value="">Select</option>
+                                    <option value="Hard Bid">Hard Bid</option>
+                                    <option value="Budgetary">Budgetary</option>
+                                    <option value="Design-Assist">Design-Assist</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="submission_method" class="form-label">Submission Method</label>
+                                <select class="form-select" id="submission_method" name="submission_method">
+                                    <option value="">Select</option>
+                                    <option value="Email">Email</option>
+                                    <option value="GC Portal">GC Portal</option>
+                                    <option value="Public Portal">Public Portal</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="bid_date" class="form-label">Bid Date</label>
+                                <input type="date" class="form-control" id="bid_date" name="bid_date">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="bid_time" class="form-label">Bid Time</label>
+                                <input type="time" class="form-control" id="bid_time" name="bid_time">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Bid Form Required?</label>
+                                <select class="form-select" id="bid_form_required" name="bid_form_required">
+                                    <option value="">Select</option>
+                                    <option value="true">Yes</option>
+                                    <option value="false">No</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Bond Required?</label>
+                                <select class="form-select" id="bond_required" name="bond_required">
+                                    <option value="">Select</option>
+                                    <option value="true">Yes</option>
+                                    <option value="false">No</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Prevailing Wage?</label>
+                                <select class="form-select" id="prevailing_wage" name="prevailing_wage">
+                                    <option value="">Select</option>
+                                    <option value="Yes">Yes</option>
+                                    <option value="No">No</option>
+                                    <option value="Unknown">Unknown</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card mb-4">
+                    <div class="card-header">Plans & Documents</div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label for="plans" class="form-label">Upload Plans / Specs / RFP</label>
+                            <input type="file" class="form-control" id="plans" name="plans">
+                        </div>
+                        <div class="mb-3">
+                            <label for="addenda" class="form-label">Upload Addenda</label>
+                            <input type="file" class="form-control" id="addenda" name="addenda">
+                        </div>
+                        <div class="mb-3">
+                            <label for="previous_estimate_file" class="form-label">Upload Previous Estimate (optional)</label>
+                            <input type="file" class="form-control" id="previous_estimate_file" name="previous_estimate_file">
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card mb-4">
+                    <div class="card-header">Known Risks / Constraints / Special Notes</div>
+                    <div class="card-body">
+                        <p class="text-muted small">e.g., Tight schedule, partial design, union site, GC history, owner-furnished equipment, etc.</p>
+                        <div class="mb-3">
+                            <textarea class="form-control" id="known_risks" name="known_risks" rows="4"></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">Additional Details</div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label for="source" class="form-label">Lead Source</label>
+                                <select class="form-select" id="source" name="source">
+                                    <option value="">Select Source</option>
+                                    {% for src in sources %}
+                                    <option value="{{ src }}">{{ src }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="stage" class="form-label">Initial Stage</label>
+                                <select class="form-select" id="stage" name="stage">
+                                    {% for stg, prob in stages %}
+                                    <option value="{{ stg }}" {% if stg == 'Prospecting' %}selected{% endif %}>{{ stg }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-12">
+                                <label for="notes" class="form-label">Internal Notes</label>
+                                <textarea class="form-control" id="notes" name="notes" rows="2"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-lg-4">
+                <div class="card mb-4">
+                    <div class="card-header">Dates & Value</div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label for="lv_value" class="form-label">Estimated LV Contract Value ($)</label>
+                            <input type="text" class="form-control numeric-format" id="lv_value" name="lv_value" placeholder="0">
+                        </div>
+                        <div class="mb-3">
+                            <label for="hdd_value" class="form-label">Estimated HDD / Underground Value ($)</label>
+                            <input type="text" class="form-control numeric-format" id="hdd_value" name="hdd_value" placeholder="0">
+                        </div>
+                        <div class="mb-3">
+                            <label for="project_type" class="form-label">Project Type</label>
+                            <select class="form-select" id="project_type" name="project_type">
+                                <option value="">Select</option>
+                                <option value="Education / ISD">Education / ISD</option>
+                                <option value="Healthcare">Healthcare</option>
+                                <option value="Office">Office</option>
+                                <option value="Religious">Religious</option>
+                                <option value="Industrial">Industrial</option>
+                                <option value="Multi-Family">Multi-Family</option>
+                                <option value="Government">Government</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                        <div class="mb-3 form-check">
+                            <input class="form-check-input" type="checkbox" id="rebid" name="rebid" value="true">
+                            <label class="form-check-label" for="rebid">Rebid / Revision?</label>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card mb-4">
+                    <div class="card-header">Assignment</div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label for="owner_id" class="form-label">Sales Owner</label>
+                            <select class="form-select" id="owner_id" name="owner_id">
+                                <option value="">Assign to me</option>
+                                {% for u in sales_users %}
+                                <option value="{{ u.id }}">{{ u.full_name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div>
+                            <label for="assigned_estimator_id" class="form-label">Estimator</label>
+                            <select class="form-select" id="assigned_estimator_id" name="assigned_estimator_id">
+                                <option value="">Select Estimator</option>
+                                {% for u in estimators %}
+                                <option value="{{ u.id }}">{{ u.full_name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="d-grid gap-2">
+                    <button type="submit" class="btn btn-primary btn-lg">
+                        <i class="bi bi-check-lg me-1"></i> Create Opportunity
+                    </button>
+                    <a href="/opportunities" class="btn btn-outline-secondary">Cancel</a>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function formatWithCommas(s){
+    if(!s) return '';
+    const neg = s.startsWith('-');
+    s = s.replace(/[^0-9.\-]/g,'');
+    const parts = s.split('.');
+    parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    return (neg?'-':'') + parts.join('.')
+}
+
+function setupNumericFormatting(){
+    document.querySelectorAll('.numeric-format').forEach(function(el){
+        el.addEventListener('input', function(e){
+            const caret = el.selectionStart;
+            const raw = el.value.replace(/,/g,'');
+            const formatted = formatWithCommas(raw);
+            el.value = formatted;
+        });
+        // on load, format existing value
+        if(el.value){ el.value = formatWithCommas(el.value); }
+    });
+}
+document.addEventListener('DOMContentLoaded', setupNumericFormatting);
+</script>
+{% endblock %}

@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+
+{% block title %}Accounts - Triumph OS{% endblock %}
+
+{% block content %}
+<div class="content-area">
+    <div class="page-header d-flex justify-content-between align-items-center">
+        <div>
+            <h1>Accounts</h1>
+            <p class="text-muted mb-0">Manage customer accounts</p>
+        </div>
+        <a href="/accounts/new" class="btn btn-primary">
+            <i class="bi bi-plus-lg me-1"></i> New Account
+        </a>
+    </div>
+    
+    <!-- Filters -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <div class="col-md-6">
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="bi bi-search"></i></span>
+                        <input type="text" class="form-control" name="search" value="{{ search or '' }}" placeholder="Search accounts...">
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <select class="form-select" name="industry">
+                        <option value="">All Industries</option>
+                        {% for ind in industries %}
+                        <option value="{{ ind }}" {% if industry == ind %}selected{% endif %}>{{ ind }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-secondary w-100">Filter</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Accounts Table -->
+    <div class="card">
+        <div class="card-body p-0">
+            {% if accounts %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Account Name</th>
+                            <th>Industry</th>
+                            <th>Location</th>
+                            <th>Contacts</th>
+                            <th>Open Opps</th>
+                            <th>Pipeline</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for account in accounts %}
+                        <tr>
+                            <td>
+                                <a href="/accounts/{{ account.id }}" class="text-decoration-none fw-medium">
+                                    {{ account.name }}
+                                </a>
+                            </td>
+                            <td>
+                                {% if account.industry %}
+                                <span class="badge bg-secondary bg-opacity-10 text-secondary">{{ account.industry }}</span>
+                                {% else %}
+                                <span class="text-muted">—</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if account.city %}
+                                {{ account.city }}{% if account.state %}, {{ account.state }}{% endif %}
+                                {% else %}
+                                <span class="text-muted">—</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ account.contacts|length }}</td>
+                            <td>
+                                {% if account.open_opportunities_count > 0 %}
+                                <span class="badge bg-primary">{{ account.open_opportunities_count }}</span>
+                                {% else %}
+                                <span class="text-muted">0</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span class="currency">{{ account.total_pipeline_value }}</span>
+                            </td>
+                            <td class="text-end">
+                                <a href="/accounts/{{ account.id }}" class="btn btn-sm btn-outline-secondary">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="empty-state py-5">
+                <i class="bi bi-building"></i>
+                <h5>No accounts found</h5>
+                <p>{% if search or industry %}Try adjusting your filters{% else %}Create your first account to get started{% endif %}</p>
+                {% if not search and not industry %}
+                <a href="/accounts/new" class="btn btn-primary">
+                    <i class="bi bi-plus-lg me-1"></i> New Account
+                </a>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

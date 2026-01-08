@@ -1,0 +1,520 @@
+{% extends "base.html" %}
+
+{% block title %}{{ opportunity.name }} - Triumph OS{% endblock %}
+
+{% block content %}
+<div class="content-area">
+    <div class="page-header">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="/opportunities">Opportunities</a></li>
+                <li class="breadcrumb-item active">{{ opportunity.name }}</li>
+            </ol>
+        </nav>
+        <div class="d-flex justify-content-between align-items-start">
+            <div>
+                <h1 class="mb-1">{{ opportunity.name }}</h1>
+                <a href="/accounts/{{ opportunity.account.id }}" class="text-muted text-decoration-none">
+                    <i class="bi bi-building me-1"></i>{{ opportunity.account.name }}
+                </a>
+            </div>
+            <div class="d-flex gap-2">
+                <a href="/opportunities/{{ opportunity.id }}/edit" class="btn btn-outline-secondary">
+                    <i class="bi bi-pencil me-1"></i> Edit
+                </a>
+                <form method="post" action="/opportunities/{{ opportunity.id }}/log-contact" class="d-inline">
+                    <button type="submit" class="btn btn-outline-primary">
+                        <i class="bi bi-telephone me-1"></i> Log Contact
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row g-4">
+        <!-- Left Column - Key Info -->
+        <div class="col-lg-4">
+            <!-- Stage & Status Card -->
+            <div class="card mb-4">
+                <div class="card-header">Deal Status</div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label class="text-muted small d-block">Stage</label>
+                        <span class="badge badge-stage badge-{{ opportunity.stage|lower|replace(' ', '-') }} fs-6">
+                            {{ opportunity.stage }}
+                        </span>
+                    </div>
+                    <div class="row g-3">
+                        <div class="col-6">
+                            <label class="text-muted small d-block">Estimated LV</label>
+                            <span class="h5 currency">{{ opportunity.lv_value or 0 }}</span>
+                        </div>
+                        <div class="col-6">
+                            <label class="text-muted small d-block">Estimated HDD/Underground</label>
+                            <span class="h5 currency">{{ opportunity.hdd_value or 0 }}</span>
+                        </div>
+                    </div>
+                    <hr>
+                    <div class="row g-3">
+                        <div class="col-6">
+                            <label class="text-muted small d-block">Bid Date</label>
+                            {% if opportunity.bid_date %}
+                            <span class="{% if opportunity.is_past_bid_date %}text-danger fw-bold{% elif opportunity.days_until_bid <= 7 %}text-warning{% endif %}">
+                                {{ opportunity.bid_date.strftime('%b %d, %Y') }}
+                            </span>
+                            {% if opportunity.days_until_bid is not none %}
+                            <span class="small text-muted">({{ opportunity.days_until_bid }}d)</span>
+                            {% endif %}
+                            {% else %}
+                            <span class="text-muted">Not set</span>
+                            {% endif %}
+                        </div>
+                        <div class="col-6">
+                            <label class="text-muted small d-block">Next Follow-up</label>
+                            {% if opportunity.next_followup %}
+                            <span class="{{ opportunity.followup_status.css_class }}">
+                                {{ opportunity.next_followup.strftime('%b %d, %Y') }}
+                            </span>
+                            {% else %}
+                            <span class="text-muted">—</span>
+                            {% endif %}
+                        </div>
+                        <div class="col-6">
+                            <label class="text-muted small d-block">Last Contacted</label>
+                            {{ opportunity.last_contacted.strftime('%b %d, %Y') if opportunity.last_contacted else '—' }}
+                        </div>
+                        <div class="col-6">
+                            <label class="text-muted small d-block">Owner</label>
+                            {{ opportunity.owner.full_name if opportunity.owner else '—' }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Bid Instructions & Project Info -->
+            <div class="card mb-4">
+                <div class="card-header">Bid Instructions</div>
+                <div class="card-body">
+                    <div class="mb-2">
+                        <label class="text-muted small d-block">Bid Type</label>
+                        <div>{{ opportunity.bid_type or '—' }}</div>
+                    </div>
+                    <div class="mb-2">
+                        <label class="text-muted small d-block">Submission</label>
+                        <div>{{ opportunity.submission_method or '—' }} {% if opportunity.bid_time %} at {{ opportunity.bid_time.strftime('%H:%M') }}{% endif %}</div>
+                    </div>
+                    <div class="mb-2">
+                        <label class="text-muted small d-block">Bid Form / Bond</label>
+                        <div>{{ 'Form required' if opportunity.bid_form_required else 'Form not required' }} · {{ 'Bond required' if opportunity.bond_required else 'Bond not required' }}</div>
+                    </div>
+                    <div class="mb-2">
+                        <label class="text-muted small d-block">Prevailing Wage</label>
+                        <div>{{ opportunity.prevailing_wage or '—' }}</div>
+                    </div>
+                    <hr>
+                    <div class="mb-2">
+                        <label class="text-muted small d-block">Project Type</label>
+                        <div>{{ opportunity.project_type or '—' }}</div>
+                    </div>
+                    <div class="mb-2">
+                        <label class="text-muted small d-block">Known Risks / Constraints</label>
+                        <div class="small text-muted">{{ opportunity.known_risks or '—' }}</div>
+                    </div>
+                    <div class="mb-2">
+                        <label class="text-muted small d-block">Estimated LV Contract</label>
+                        <div class="currency">{{ opportunity.lv_value or 0 }}</div>
+                    </div>
+                    <div class="mb-2">
+                        <label class="text-muted small d-block">Rebid / Revision</label>
+                        <div>{{ 'Yes' if opportunity.rebid else 'No' }}</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Estimating Status -->
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <span>Estimating</span>
+                    <span class="badge bg-{{ 'success' if opportunity.estimating_status == 'Complete' else 'warning' if opportunity.estimating_status == 'In Progress' else 'secondary' }}">
+                        {{ opportunity.estimating_status }}
+                    </span>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label class="text-muted small d-block">Assigned Estimator</label>
+                        {{ opportunity.assigned_estimator.full_name if opportunity.assigned_estimator else 'Not assigned' }}
+                    </div>
+                    
+                    {% if opportunity.estimating_checklist %}
+                    <label class="text-muted small d-block mb-2">Checklist ({{ opportunity.checklist_progress[0] }}/{{ opportunity.checklist_progress[1] }})</label>
+                    <form method="post" action="/opportunities/{{ opportunity.id }}/checklist">
+                        {% for item in opportunity.estimating_checklist %}
+                        <div class="checklist-item {% if item.done %}done{% endif %}">
+                            <input type="checkbox" class="form-check-input" name="checklist_{{ loop.index0 }}" 
+                                   {% if item.done %}checked{% endif %} onchange="this.form.submit()">
+                            <span>{{ item.item }}</span>
+                        </div>
+                        {% endfor %}
+                    </form>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Primary Contact -->
+            {% if opportunity.primary_contact %}
+            <div class="card mb-4">
+                <div class="card-header">Primary Contact</div>
+                <div class="card-body">
+                    <h6 class="mb-1">{{ opportunity.primary_contact.full_name }}</h6>
+                    {% if opportunity.primary_contact.title %}
+                    <p class="text-muted small mb-2">{{ opportunity.primary_contact.title }}</p>
+                    {% endif %}
+                    {% if opportunity.primary_contact.email %}
+                    <a href="mailto:{{ opportunity.primary_contact.email }}" class="d-block small">
+                        <i class="bi bi-envelope me-1"></i>{{ opportunity.primary_contact.email }}
+                    </a>
+                    {% endif %}
+                    {% if opportunity.primary_contact.phone %}
+                    <a href="tel:{{ opportunity.primary_contact.phone }}" class="d-block small">
+                        <i class="bi bi-telephone me-1"></i>{{ opportunity.primary_contact.phone }}
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+            
+            <!-- Scope Packages -->
+            {% if opportunity.scopes %}
+            <div class="card">
+                <div class="card-header">Scope Packages</div>
+                <div class="card-body">
+                    {% for scope in opportunity.scopes %}
+                    <span class="badge bg-secondary me-1 mb-1">{{ scope.name }}</span>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+        
+        <!-- Right Column - Details -->
+        <div class="col-lg-8">
+            <!-- Estimating (temporarily disabled) -->
+            <div class="card mb-4">
+                <div class="card-header">Estimating</div>
+                <div class="card-body">
+                    <p class="mb-0">Estimating module coming later. Estimates are temporarily hidden from the UI.</p>
+                </div>
+            </div>
+            
+            <!-- Documents Section -->
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <span><i class="bi bi-folder me-2"></i>Documents</span>
+                    <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#uploadModal">
+                        <i class="bi bi-upload me-1"></i> Upload
+                    </button>
+                </div>
+                <div class="card-body p-0">
+                    {% if opportunity.documents %}
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <tbody>
+                                {% for doc in opportunity.documents %}
+                                <tr>
+                                    <td>
+                                        <span class="me-2">{{ doc.icon }}</span>
+                                        {{ doc.name }}
+                                        <span class="badge bg-secondary bg-opacity-25 text-secondary ms-1">{{ doc.type_display }}</span>
+                                    </td>
+                                    <td class="text-muted small">{{ doc.file_size_display }}</td>
+                                    <td class="text-muted small">{{ doc.created_at.strftime('%b %d') }}</td>
+                                    <td class="text-end">
+                                        <a href="/documents/{{ doc.id }}/download" class="btn btn-sm btn-outline-secondary" title="Download">
+                                            <i class="bi bi-download"></i>
+                                        </a>
+                                        {% if doc.mime_type and 'pdf' in doc.mime_type %}
+                                        <a href="/documents/{{ doc.id }}/view" target="_blank" class="btn btn-sm btn-outline-secondary" title="View">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="empty-state py-4">
+                        <i class="bi bi-folder"></i>
+                        <p>No documents uploaded</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Tasks Section -->
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <span><i class="bi bi-check2-square me-2"></i>Tasks</span>
+                    <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#taskModal">
+                        <i class="bi bi-plus-lg me-1"></i> Add Task
+                    </button>
+                </div>
+                <div class="card-body p-0">
+                    {% if opportunity.tasks %}
+                    <div class="list-group list-group-flush">
+                        {% for task in opportunity.open_tasks %}
+                        <div class="list-group-item d-flex justify-content-between align-items-center">
+                            <div class="d-flex align-items-center">
+                                <form method="post" action="/tasks/{{ task.id }}/complete" class="me-3 d-inline">
+                                    <button type="submit" class="btn btn-sm btn-outline-secondary rounded-circle p-1" title="Complete">
+                                        <i class="bi bi-check"></i>
+                                    </button>
+                                </form>
+                                <a href="/tasks/{{ task.id }}/edit" class="btn btn-sm btn-outline-secondary me-2" title="Edit Task">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                                <form method="post" action="/tasks/{{ task.id }}/delete" class="d-inline" onsubmit="return confirm('Delete this task?');">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete Task">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </form>
+                                <div>
+                                    <span class="fw-medium">{{ task.title }}</span>
+                                    {% if task.assigned_to %}
+                                    <span class="text-muted small ms-2">→ {{ task.assigned_to.full_name }}</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div>
+                                <span class="badge" style="background-color: {{ task.priority_color }}20; color: {{ task.priority_color }}">
+                                    {{ task.priority }}
+                                </span>
+                                {% if task.due_date %}
+                                <span class="ms-2 small {% if task.is_overdue %}text-danger{% endif %}">
+                                    {{ task.due_date.strftime('%b %d') }}
+                                </span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                        {% for task in opportunity.completed_tasks %}
+                        <div class="list-group-item d-flex justify-content-between align-items-center text-muted" style="text-decoration: line-through;">
+                            <div class="d-flex align-items-center">
+                                <form method="post" action="/tasks/{{ task.id }}/reopen" class="me-3 d-inline">
+                                    <button type="submit" class="btn btn-sm btn-success rounded-circle p-1" title="Reopen">
+                                        <i class="bi bi-check"></i>
+                                    </button>
+                                </form>
+                                <a href="/tasks/{{ task.id }}/edit" class="btn btn-sm btn-outline-secondary me-2" title="Edit Task">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                                <form method="post" action="/tasks/{{ task.id }}/delete" class="d-inline" onsubmit="return confirm('Delete this task?');">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger me-2" title="Delete Task">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </form>
+                                <span class="ms-1">{{ task.title }}</span>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="empty-state py-4">
+                        <i class="bi bi-check2-square"></i>
+                        <p>No tasks</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Activity Timeline -->
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <span><i class="bi bi-clock-history me-2"></i>Activity Timeline</span>
+                    <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#activityModal">
+                        <i class="bi bi-plus-lg me-1"></i> Log Activity
+                    </button>
+                </div>
+                <div class="card-body">
+                    {% if opportunity.activities %}
+                    <div class="activity-timeline">
+                        {% for activity in opportunity.activities %}
+                        <div class="activity-item">
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <span class="me-1">{{ activity.icon }}</span>
+                                    <strong>{{ activity.subject }}</strong>
+                                    {% if activity.contact %}
+                                    <span class="text-muted">with {{ activity.contact.full_name }}</span>
+                                    {% endif %}
+                                </div>
+                                <small class="text-muted">{{ activity.activity_date.strftime('%b %d, %H:%M') }}</small>
+                            </div>
+                            {% if activity.description %}
+                            <p class="mb-0 mt-1 text-muted small">{{ activity.description }}</p>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="empty-state py-4">
+                        <i class="bi bi-clock"></i>
+                        <p>No activities logged</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Upload Document Modal -->
+<div class="modal fade" id="uploadModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="post" action="/documents/opportunity/{{ opportunity.id }}/upload" enctype="multipart/form-data">
+                <div class="modal-header">
+                    <h5 class="modal-title">Upload Document</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="file" class="form-label">File</label>
+                        <input type="file" class="form-control" id="file" name="file" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="doc_name" class="form-label">Name (optional)</label>
+                        <input type="text" class="form-control" id="doc_name" name="name" placeholder="Leave blank to use filename">
+                    </div>
+                    <div class="mb-3">
+                        <label for="document_type" class="form-label">Type</label>
+                        <select class="form-select" id="document_type" name="document_type">
+                            <option value="spec">Specification</option>
+                            <option value="drawing">Drawing</option>
+                            <option value="quote">Quote</option>
+                            <option value="proposal">Proposal</option>
+                            <option value="contract">Contract</option>
+                            <option value="photo">Photo</option>
+                            <option value="other" selected>Other</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Upload</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Add Task Modal -->
+<div class="modal fade" id="taskModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="post" action="/tasks/opportunity/{{ opportunity.id }}/add">
+                <div class="modal-header">
+                    <h5 class="modal-title">Add Task</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="task_title" class="form-label">Title</label>
+                        <input type="text" class="form-control" id="task_title" name="title" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="task_description" class="form-label">Description</label>
+                        <textarea class="form-control" id="task_description" name="description" rows="2"></textarea>
+                    </div>
+                    <div class="row g-3">
+                        <div class="col-6">
+                            <label for="task_due_date" class="form-label">Due Date</label>
+                            <input type="date" class="form-control" id="task_due_date" name="due_date">
+                        </div>
+                        <div class="col-6">
+                            <label for="task_priority" class="form-label">Priority</label>
+                            <select class="form-select" id="task_priority" name="priority">
+                                <option value="Low">Low</option>
+                                <option value="Medium" selected>Medium</option>
+                                <option value="High">High</option>
+                                <option value="Urgent">Urgent</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <label for="task_assigned" class="form-label">Assign To</label>
+                            <select class="form-select" id="task_assigned" name="assigned_to_id">
+                            <option value="">Unassigned</option>
+                            {% for u in estimators or [] %}
+                            <option value="{{ u.id }}">{{ u.full_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Add Task</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Log Activity Modal -->
+<div class="modal fade" id="activityModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="post" action="/activities/opportunity/{{ opportunity.id }}/add">
+                <div class="modal-header">
+                    <h5 class="modal-title">Log Activity</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="activity_type" class="form-label">Type</label>
+                        <select class="form-select" id="activity_type" name="activity_type" required>
+                            <option value="call">📞 Phone Call</option>
+                            <option value="meeting">🤝 Meeting</option>
+                            <option value="email">✉️ Email</option>
+                            <option value="site_visit">🏗️ Site Visit</option>
+                            <option value="note">📝 Note</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="activity_subject" class="form-label">Subject</label>
+                        <input type="text" class="form-control" id="activity_subject" name="subject" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="activity_description" class="form-label">Notes</label>
+                        <textarea class="form-control" id="activity_description" name="description" rows="3"></textarea>
+                    </div>
+                    <div class="row g-3">
+                        <div class="col-6">
+                            <label for="activity_date" class="form-label">Date/Time</label>
+                            <input type="datetime-local" class="form-control" id="activity_date" name="activity_date" value="{{ today.strftime('%Y-%m-%dT%H:%M') }}">
+                        </div>
+                        <div class="col-6">
+                            <label for="activity_contact" class="form-label">Contact</label>
+                            <select class="form-select" id="activity_contact" name="contact_id">
+                                <option value="">Select Contact</option>
+                                {% for contact in contacts %}
+                                <option value="{{ contact.id }}">{{ contact.full_name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="mt-3 form-check">
+                        <input type="checkbox" class="form-check-input" id="update_last_contacted" name="update_last_contacted" checked>
+                        <label class="form-check-label" for="update_last_contacted">Update "Last Contacted" date</label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Log Activity</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

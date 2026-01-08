@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+
+{% block title %}New Estimate - Triumph OS{% endblock %}
+
+{% block content %}
+<div class="content-area">
+    <div class="page-header">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="/opportunities">Opportunities</a></li>
+                <li class="breadcrumb-item"><a href="/opportunities/{{ opportunity.id }}">{{ opportunity.name }}</a></li>
+                <li class="breadcrumb-item active">New Estimate</li>
+            </ol>
+        </nav>
+        <h1>New Estimate</h1>
+        <p class="text-muted">{{ opportunity.name }} — {{ opportunity.account.name }}</p>
+    </div>
+    
+    <div class="row">
+        <div class="col-lg-6">
+            <div class="card">
+                <div class="card-body">
+                    <form method="post" action="/estimates/opportunity/{{ opportunity.id }}/new">
+                        <div class="mb-3">
+                            <label class="form-label">Version</label>
+                            <input type="text" class="form-control" value="v{{ next_version }}" disabled>
+                            <div class="form-text">Version numbers are automatically assigned</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="name" class="form-label">Name (optional)</label>
+                            <input type="text" class="form-control" id="name" name="name" placeholder="e.g., Initial Estimate, Final Bid">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="margin_percent" class="form-label">Default Margin %</label>
+                            <input type="number" class="form-control" id="margin_percent" name="margin_percent" value="20" step="0.01" min="0" max="99">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="notes" class="form-label">Notes</label>
+                            <textarea class="form-control" id="notes" name="notes" rows="3"></textarea>
+                        </div>
+                        
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-check-lg me-1"></i> Create Estimate
+                            </button>
+                            <a href="/opportunities/{{ opportunity.id }}" class="btn btn-outline-secondary">Cancel</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
