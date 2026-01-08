@@ -40,12 +40,17 @@ async def list_opportunities(
     request: Request,
     search: str = None,
     stage: str = None,
-    estimator_id: Optional[int] = None,
-    gc_id: Optional[int] = None,
-    end_user_account_id: Optional[int] = None,
+    estimator_id: str = None,
+    gc_id: str = None,
+    end_user_account_id: str = None,
     db: Session = Depends(get_db)
 ):
     """List all opportunities with optional filtering."""
+    # Convert empty strings to None for integer parameters
+    estimator_id = int(estimator_id) if estimator_id else None
+    gc_id = int(gc_id) if gc_id else None
+    end_user_account_id = int(end_user_account_id) if end_user_account_id else None
+    
     user = await get_current_user(request, db)
     if not user:
         return RedirectResponse(url="/login?next=/opportunities", status_code=303)

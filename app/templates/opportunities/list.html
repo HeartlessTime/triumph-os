@@ -68,6 +68,18 @@
             </form>
         </div>
     </div>
+
+    <script>
+        // Remove empty parameter values before form submission to avoid Pydantic parse errors
+        document.querySelector('form').addEventListener('submit', function(e) {
+            const selects = this.querySelectorAll('select[name="gc_id"], select[name="estimator_id"], select[name="end_user_account_id"]');
+            selects.forEach(select => {
+                if (select.value === '') {
+                    select.removeAttribute('name');
+                }
+            });
+        });
+    </script>
     
     <!-- Opportunities Table -->
     <div class="card">
