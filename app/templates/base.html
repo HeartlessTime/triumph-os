@@ -455,6 +455,14 @@
     </nav>
     {% endif %}
     
+    <!-- Mobile sidebar toggle + overlay -->
+    {% if user %}
+    <button id="sidebarToggle" class="btn btn-primary d-lg-none position-fixed" style="z-index:1101; left:1rem; top:1rem;">
+        <i class="bi bi-list"></i>
+    </button>
+    <div id="sidebarOverlay" class="mobile-overlay"></div>
+    {% endif %}
+
     <!-- Main Content -->
     <div class="main-content {% if not user %}ms-0{% endif %}">
         {% block content %}{% endblock %}
@@ -477,6 +485,33 @@
             }
         });
     </script>
+    <script>
+        // Mobile sidebar toggle
+        (function(){
+            const toggle = document.getElementById('sidebarToggle');
+            const sidebar = document.querySelector('.sidebar');
+            const overlay = document.getElementById('sidebarOverlay');
+            function open() {
+                if (sidebar) sidebar.classList.add('show');
+                if (overlay) overlay.classList.add('show');
+                document.body.style.overflow = 'hidden';
+            }
+            function close() {
+                if (sidebar) sidebar.classList.remove('show');
+                if (overlay) overlay.classList.remove('show');
+                document.body.style.overflow = '';
+            }
+            if (toggle) toggle.addEventListener('click', open);
+            if (overlay) overlay.addEventListener('click', close);
+            // close on escape
+            document.addEventListener('keydown', (e) => { if (e.key === 'Escape') close(); });
+        })();
+    </script>
+    <style>
+        /* Mobile overlay for sidebar */
+        .mobile-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 1100; display: none; }
+        .mobile-overlay.show { display: block; }
+    </style>
     
     {% block extra_js %}{% endblock %}
 </body>
