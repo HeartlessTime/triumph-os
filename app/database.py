@@ -1,19 +1,27 @@
 import os
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, declarative_base
+from sqlalchemy.pool import StaticPool
 from dotenv import load_dotenv
 
 load_dotenv()
 
-# Default to a local SQLite DB for easy development when DATABASE_URL is not set
-DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./revenueos_dev.db")
+# Demo-mode default: in-memory SQLite (no persistence beyond runtime)
+# This app has been converted to demo-only, so default to an in-memory DB.
+DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///:memory:")
 
-# Use SQLite specific connect args when appropriate
+# Use SQLite-specific connect args and a StaticPool so the in-memory DB
+# stays live for the lifetime of the process across connections.
 engine_kwargs = {}
 if DATABASE_URL.startswith("sqlite"):
     engine_kwargs["connect_args"] = {"check_same_thread": False}
+    engine_kwargs["poolclass"] = StaticPool
 
-engine = create_engine(DATABASE_URL, echo=os.getenv("DEBUG", "false").lower() == "true", **engine_kwargs)
+engine = create_engine(
+    DATABASE_URL,
+    echo=os.getenv("DEBUG", "false").lower() == "true",
+    **engine_kwargs,
+)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 Base = declarative_base()

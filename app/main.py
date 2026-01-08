@@ -8,7 +8,6 @@ from dotenv import load_dotenv
 load_dotenv()
 
 from app.routes import (
-    auth_router,
     dashboard_router,
     accounts_router,
     contacts_router,
@@ -19,6 +18,8 @@ from app.routes import (
 )
 from app.auth import get_current_user
 from app.database import get_db, init_db, DATABASE_URL
+from app.database import SessionLocal
+from app import seed
 import json
 
 # Create FastAPI app
@@ -35,8 +36,7 @@ app.mount("/static", StaticFiles(directory="app/static"), name="static")
 # Create uploads directory
 os.makedirs(os.getenv("UPLOAD_DIR", "./uploads"), exist_ok=True)
 
-# Include routers
-app.include_router(auth_router)
+# Include routers (auth removed for demo mode)
 app.include_router(dashboard_router)
 app.include_router(accounts_router)
 app.include_router(contacts_router)
@@ -59,6 +59,12 @@ def on_startup():
     try:
         # init_db will raise RuntimeError on failure
         init_db()
+        # Auto-load demo seed data into the in-memory DB
+        try:
+            seed.seed_database()
+        except Exception:
+            # If seeding fails, continue — routes will still run with minimal data
+            pass
     except Exception as e:
         # Re-raise as RuntimeError so the server fails loudly
         raise RuntimeError(
@@ -69,6 +75,14 @@ def on_startup():
 @app.middleware("http")
 async def add_user_to_templates(request: Request, call_next):
     """Add current user to all template contexts."""
+    # Attach a demo user to the request state so templates can access it.
+    db = SessionLocal()
+    try:
+        user = await get_current_user(request, db)
+        request.state.user = user
+    finally:
+        db.close()
+
     response = await call_next(request)
     return response
 
