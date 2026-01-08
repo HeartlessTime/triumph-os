@@ -22,7 +22,7 @@ from app.models import *  # noqa: Import all models
 config = context.config
 
 # Override sqlalchemy.url with environment variable
-config.set_main_option("sqlalchemy.url", os.getenv("DATABASE_URL", "sqlite:///./revenueos_dev.db"))
+config.set_main_option("sqlalchemy.url", os.getenv("DATABASE_URL", "sqlite:///./triumphos_dev.db"))
 
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.

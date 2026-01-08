@@ -51,8 +51,8 @@ brew services start postgresql@15
 
 1. **Extract the zip and navigate to the project**:
 ```bash
-unzip revenueos.zip
-cd revenueos
+unzip triumphos.zip
+cd triumphos
 ```
 
 2. **Create and activate virtual environment**:
@@ -69,7 +69,7 @@ pip install -r requirements.txt
 
 4. **Create the database**:
 ```bash
-createdb revenueos
+createdb triumphos
 ```
 
 > **Note**: If you get a "role does not exist" error, first create your user:
@@ -84,7 +84,7 @@ cp .env.example .env
 
 If your PostgreSQL uses a different user/password, edit `.env`:
 ```
-DATABASE_URL=postgresql://YOUR_USERNAME@localhost:5432/revenueos
+DATABASE_URL=postgresql://YOUR_USERNAME@localhost:5432/triumphos
 ```
 
 6. **Run database migrations**:
@@ -167,7 +167,7 @@ uvicorn app.main:app --reload --port 8080
 ## Project Structure
 
 ```
-revenueos/
+triumphos/
 ├── alembic/                 # Database migrations
 ├── app/
 │   ├── models/              # SQLAlchemy models
@@ -218,19 +218,19 @@ Proprietary - Internal Use Only
 **SQLite (quick dev) setup**
 
 If you don't have Postgres available, the project now defaults to a local
-SQLite DB for development. The SQLite DB file is `revenueos_dev.db` in the
+SQLite DB for development. The SQLite DB file is `triumphos_dev.db` in the
 project root by default (or use `DATABASE_URL` to override).
 
 Exact commands to use for SQLite dev:
 
 - Delete the sqlite DB file (start fresh):
 ```bash
-rm -f revenueos_dev.db
+rm -f triumphos_dev.db
 ```
 
 - (Optional) run Alembic migrations against the SQLite dev DB:
 ```bash
-# Ensure DATABASE_URL is not set or points to sqlite:///./revenueos_dev.db
+# Ensure DATABASE_URL is not set or points to sqlite:///./triumphos_dev.db
 source venv/bin/activate
 alembic upgrade head
 ```

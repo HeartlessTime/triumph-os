@@ -1,1 +1,1 @@
-# RevenueOS Tests
+# Triumph OS Tests
