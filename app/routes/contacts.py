@@ -79,9 +79,19 @@ async def new_contact_form(
     user = await get_current_user(request, db)
     if not user:
         return RedirectResponse(url="/login?next=/contacts/new", status_code=303)
-    
+
+    # DEMO MODE: Show notice
+    if DEMO_MODE or db is None:
+        return templates.TemplateResponse("demo_mode_notice.html", {
+            "request": request,
+            "user": user,
+            "feature": "Create New Contact",
+            "message": "Creating new contacts is disabled in demo mode. Explore the existing demo contacts instead.",
+            "back_url": "/contacts",
+        })
+
     accounts = db.query(Account).order_by(Account.name).all()
-    
+
     return templates.TemplateResponse("contacts/form.html", {
         "request": request,
         "user": user,
@@ -110,7 +120,11 @@ async def create_contact(
     user = await get_current_user(request, db)
     if not user:
         return RedirectResponse(url="/login", status_code=303)
-    
+
+    # DEMO MODE: Redirect to contacts list
+    if DEMO_MODE or db is None:
+        return RedirectResponse(url="/contacts", status_code=303)
+
     # Verify account exists
     account = db.query(Account).filter(Account.id == account_id).first()
     if not account:
@@ -153,11 +167,18 @@ async def view_contact(
     user = await get_current_user(request, db)
     if not user:
         return RedirectResponse(url=f"/login?next=/contacts/{contact_id}", status_code=303)
-    
-    contact = db.query(Contact).filter(Contact.id == contact_id).first()
-    if not contact:
-        raise HTTPException(status_code=404, detail="Contact not found")
-    
+
+    # DEMO MODE: Find contact in demo data
+    if DEMO_MODE or db is None:
+        contacts = get_all_demo_contacts()
+        contact = next((c for c in contacts if c.id == contact_id), None)
+        if not contact:
+            raise HTTPException(status_code=404, detail="Contact not found")
+    else:
+        contact = db.query(Contact).filter(Contact.id == contact_id).first()
+        if not contact:
+            raise HTTPException(status_code=404, detail="Contact not found")
+
     return templates.TemplateResponse("contacts/view.html", {
         "request": request,
         "user": user,
@@ -175,13 +196,23 @@ async def edit_contact_form(
     user = await get_current_user(request, db)
     if not user:
         return RedirectResponse(url=f"/login?next=/contacts/{contact_id}/edit", status_code=303)
-    
+
+    # DEMO MODE: Show notice
+    if DEMO_MODE or db is None:
+        return templates.TemplateResponse("demo_mode_notice.html", {
+            "request": request,
+            "user": user,
+            "feature": "Edit Contact",
+            "message": "Editing contacts is disabled in demo mode. This feature is view-only.",
+            "back_url": f"/contacts/{contact_id}",
+        })
+
     contact = db.query(Contact).filter(Contact.id == contact_id).first()
     if not contact:
         raise HTTPException(status_code=404, detail="Contact not found")
-    
+
     accounts = db.query(Account).order_by(Account.name).all()
-    
+
     return templates.TemplateResponse("contacts/form.html", {
         "request": request,
         "user": user,
@@ -211,6 +242,8 @@ async def update_contact(
     user = await get_current_user(request, db)
     if not user:
         return RedirectResponse(url="/login", status_code=303)
+    if DEMO_MODE or db is None:
+        return RedirectResponse(url=f"/contacts/{contact_id}", status_code=303)
     
     contact = db.query(Contact).filter(Contact.id == contact_id).first()
     if not contact:
@@ -249,6 +282,8 @@ async def delete_contact(
     user = await get_current_user(request, db)
     if not user:
         return RedirectResponse(url="/login", status_code=303)
+    if DEMO_MODE or db is None:
+        return RedirectResponse(url=f"/accounts/", status_code=303)
     
     contact = db.query(Contact).filter(Contact.id == contact_id).first()
     if not contact:

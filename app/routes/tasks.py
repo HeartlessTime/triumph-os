@@ -5,7 +5,7 @@ from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 
 from app.database import get_db
-from app.auth import get_current_user
+from app.auth import get_current_user, DEMO_MODE
 from app.models import Opportunity, Task, User
 
 router = APIRouter(prefix="/tasks", tags=["tasks"])
@@ -27,6 +27,9 @@ async def add_task(
     user = await get_current_user(request, db)
     if not user:
         return RedirectResponse(url="/login", status_code=303)
+    # If running without a DB connection, avoid modifying data and redirect
+    if DEMO_MODE or db is None:
+        return RedirectResponse(url=f"/opportunities/{opp_id}", status_code=303)
     
     opportunity = db.query(Opportunity).filter(Opportunity.id == opp_id).first()
     if not opportunity:
@@ -58,7 +61,8 @@ async def complete_task(
     user = await get_current_user(request, db)
     if not user:
         return RedirectResponse(url="/login", status_code=303)
-    
+    if DEMO_MODE or db is None:
+        return RedirectResponse(url="/", status_code=303)
     task = db.query(Task).filter(Task.id == task_id).first()
     if not task:
         raise HTTPException(status_code=404, detail="Task not found")
@@ -81,7 +85,8 @@ async def reopen_task(
     user = await get_current_user(request, db)
     if not user:
         return RedirectResponse(url="/login", status_code=303)
-    
+    if DEMO_MODE or db is None:
+        return RedirectResponse(url="/", status_code=303)
     task = db.query(Task).filter(Task.id == task_id).first()
     if not task:
         raise HTTPException(status_code=404, detail="Task not found")
@@ -104,7 +109,8 @@ async def edit_task_form(
     user = await get_current_user(request, db)
     if not user:
         return RedirectResponse(url="/login", status_code=303)
-    
+    if DEMO_MODE or db is None:
+        return RedirectResponse(url="/", status_code=303)
     task = db.query(Task).filter(Task.id == task_id).first()
     if not task:
         raise HTTPException(status_code=404, detail="Task not found")
@@ -135,7 +141,8 @@ async def update_task(
     user = await get_current_user(request, db)
     if not user:
         return RedirectResponse(url="/login", status_code=303)
-    
+    if DEMO_MODE or db is None:
+        return RedirectResponse(url="/", status_code=303)
     task = db.query(Task).filter(Task.id == task_id).first()
     if not task:
         raise HTTPException(status_code=404, detail="Task not found")

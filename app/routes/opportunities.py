@@ -206,6 +206,8 @@ async def create_opportunity(
     user = await get_current_user(request, db)
     if not user:
         return RedirectResponse(url="/login", status_code=303)
+    if DEMO_MODE or db is None:
+        return RedirectResponse(url="/opportunities", status_code=303)
     
     # Parse values (strip commas if present)
     def clean_num(s: Optional[str]):
@@ -416,6 +418,8 @@ async def update_opportunity(
     user = await get_current_user(request, db)
     if not user:
         return RedirectResponse(url="/login", status_code=303)
+    if DEMO_MODE or db is None:
+        return RedirectResponse(url=f"/opportunities/{opp_id}", status_code=303)
     
     opportunity = db.query(Opportunity).filter(Opportunity.id == opp_id).first()
     if not opportunity:
@@ -473,6 +477,8 @@ async def log_contact(
     user = await get_current_user(request, db)
     if not user:
         return RedirectResponse(url="/login", status_code=303)
+    if DEMO_MODE or db is None:
+        return RedirectResponse(url=f"/opportunities/{opp_id}", status_code=303)
     
     opportunity = db.query(Opportunity).filter(Opportunity.id == opp_id).first()
     if not opportunity:
@@ -496,6 +502,8 @@ async def update_checklist(
     user = await get_current_user(request, db)
     if not user:
         return RedirectResponse(url="/login", status_code=303)
+    if DEMO_MODE or db is None:
+        return RedirectResponse(url=f"/opportunities/{opp_id}", status_code=303)
     
     opportunity = db.query(Opportunity).filter(Opportunity.id == opp_id).first()
     if not opportunity:
@@ -528,20 +536,30 @@ async def edit_opportunity_form(
     user = await get_current_user(request, db)
     if not user:
         return RedirectResponse(url=f"/login?next=/opportunities/{opp_id}/edit", status_code=303)
-    
+
+    # DEMO MODE: Show notice
+    if DEMO_MODE or db is None:
+        return templates.TemplateResponse("demo_mode_notice.html", {
+            "request": request,
+            "user": user,
+            "feature": "Edit Opportunity",
+            "message": "Editing opportunities is disabled in demo mode. This feature is view-only.",
+            "back_url": f"/opportunities/{opp_id}",
+        })
+
     opportunity = db.query(Opportunity).filter(Opportunity.id == opp_id).first()
     if not opportunity:
         raise HTTPException(status_code=404, detail="Opportunity not found")
-    
+
     accounts = db.query(Account).order_by(Account.name).all()
     scope_packages = db.query(ScopePackage).filter(
         ScopePackage.is_active == True
     ).order_by(ScopePackage.sort_order).all()
-    
+
     users = db.query(User).filter(User.is_active == True).order_by(User.full_name).all()
     sales_users = [u for u in users if u.role in ('Sales', 'Admin')]
     estimators = [u for u in users if u.role in ('Estimator', 'Admin')]
-    
+
     contacts = db.query(Contact).filter(
         Contact.account_id == opportunity.account_id
     ).order_by(Contact.last_name).all()
@@ -616,6 +634,8 @@ async def save_opportunity_edit(
     user = await get_current_user(request, db)
     if not user:
         return RedirectResponse(url="/login", status_code=303)
+    if DEMO_MODE or db is None:
+        return RedirectResponse(url="/opportunities", status_code=303)
     
     opportunity = db.query(Opportunity).filter(Opportunity.id == opp_id).first()
     if not opportunity:
