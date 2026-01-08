@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+
+{% block title %}{{ feature }} - Demo Mode{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+        <div class="card shadow-sm mt-5">
+            <div class="card-body text-center py-5">
+                <div class="mb-4">
+                    <i class="bi bi-info-circle text-primary" style="font-size: 4rem;"></i>
+                </div>
+
+                <h3 class="mb-3">{{ feature }}</h3>
+
+                <div class="alert alert-info">
+                    <i class="bi bi-eye me-2"></i>
+                    <strong>Demo Mode Active</strong>
+                </div>
+
+                <p class="text-muted mb-4">
+                    {{ message }}
+                </p>
+
+                <div class="d-grid gap-2 col-md-6 mx-auto">
+                    <a href="{{ back_url }}" class="btn btn-primary">
+                        <i class="bi bi-arrow-left me-2"></i>Go Back
+                    </a>
+                    <a href="/how-to-use" class="btn btn-outline-secondary">
+                        <i class="bi bi-book me-2"></i>How to Use Guide
+                    </a>
+                </div>
+
+                <div class="mt-4 pt-4 border-top">
+                    <p class="small text-muted mb-0">
+                        <i class="bi bi-lightbulb me-1"></i>
+                        Demo mode lets you explore the system with sample data.
+                        To create real records, connect to a database and disable demo mode.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

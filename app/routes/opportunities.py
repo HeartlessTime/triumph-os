@@ -129,16 +129,26 @@ async def intake_form(
     user = await get_current_user(request, db)
     if not user:
         return RedirectResponse(url="/login?next=/opportunities/intake", status_code=303)
-    
+
+    # DEMO MODE: Show notice instead of form
+    if DEMO_MODE or db is None:
+        return templates.TemplateResponse("demo_mode_notice.html", {
+            "request": request,
+            "user": user,
+            "feature": "Create New Opportunity",
+            "message": "Creating new opportunities is disabled in demo mode. Explore the existing demo opportunities instead.",
+            "back_url": "/opportunities",
+        })
+
     accounts = db.query(Account).order_by(Account.name).all()
     scope_packages = db.query(ScopePackage).filter(
         ScopePackage.is_active == True
     ).order_by(ScopePackage.sort_order).all()
-    
+
     users = db.query(User).filter(User.is_active == True).order_by(User.full_name).all()
     sales_users = [u for u in users if u.role in ('Sales', 'Admin')]
     estimators = [u for u in users if u.role in ('Estimator', 'Admin')]
-    
+
     # Get contacts for selected account
     contacts = []
     if account_id:
@@ -342,23 +352,38 @@ async def command_center(
     user = await get_current_user(request, db)
     if not user:
         return RedirectResponse(url=f"/login?next=/opportunities/{opp_id}", status_code=303)
-    
-    opportunity = db.query(Opportunity).filter(Opportunity.id == opp_id).first()
-    if not opportunity:
-        raise HTTPException(status_code=404, detail="Opportunity not found")
-    
+
     today = date.today()
-    opportunity.followup_status = get_followup_status(opportunity.next_followup, today)
-    
-    # Get users for dropdowns
-    users = db.query(User).filter(User.is_active == True).order_by(User.full_name).all()
-    sales_users = [u for u in users if u.role in ('Sales', 'Admin')]
-    estimators = [u for u in users if u.role in ('Estimator', 'Admin')]
-    
-    # Get contacts for this account
-    contacts = db.query(Contact).filter(
-        Contact.account_id == opportunity.account_id
-    ).order_by(Contact.last_name).all()
+
+    # DEMO MODE: Find opportunity in demo data
+    if DEMO_MODE or db is None:
+        opportunities = get_all_demo_opportunities()
+        opportunity = next((o for o in opportunities if o.id == opp_id), None)
+        if not opportunity:
+            raise HTTPException(status_code=404, detail="Opportunity not found")
+
+        opportunity.followup_status = get_followup_status(opportunity.next_followup, today)
+
+        # Empty lists for demo mode
+        sales_users = []
+        estimators = []
+        contacts = []
+    else:
+        opportunity = db.query(Opportunity).filter(Opportunity.id == opp_id).first()
+        if not opportunity:
+            raise HTTPException(status_code=404, detail="Opportunity not found")
+
+        opportunity.followup_status = get_followup_status(opportunity.next_followup, today)
+
+        # Get users for dropdowns
+        users = db.query(User).filter(User.is_active == True).order_by(User.full_name).all()
+        sales_users = [u for u in users if u.role in ('Sales', 'Admin')]
+        estimators = [u for u in users if u.role in ('Estimator', 'Admin')]
+
+        # Get contacts for this account
+        contacts = db.query(Contact).filter(
+            Contact.account_id == opportunity.account_id
+        ).order_by(Contact.last_name).all()
     
     return templates.TemplateResponse("opportunities/command_center.html", {
         "request": request,

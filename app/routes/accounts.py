@@ -73,7 +73,17 @@ async def new_account_form(
     user = await get_current_user(request, db)
     if not user:
         return RedirectResponse(url="/login?next=/accounts/new", status_code=303)
-    
+
+    # DEMO MODE: Show info message instead of form
+    if DEMO_MODE or db is None:
+        return templates.TemplateResponse("demo_mode_notice.html", {
+            "request": request,
+            "user": user,
+            "feature": "Create New Account",
+            "message": "Creating new accounts is disabled in demo mode. Explore the existing demo accounts instead.",
+            "back_url": "/accounts",
+        })
+
     return templates.TemplateResponse("accounts/form.html", {
         "request": request,
         "user": user,
@@ -131,11 +141,18 @@ async def view_account(
     user = await get_current_user(request, db)
     if not user:
         return RedirectResponse(url=f"/login?next=/accounts/{account_id}", status_code=303)
-    
-    account = db.query(Account).filter(Account.id == account_id).first()
-    if not account:
-        raise HTTPException(status_code=404, detail="Account not found")
-    
+
+    # DEMO MODE: Find account in demo data
+    if DEMO_MODE or db is None:
+        accounts = get_all_demo_accounts()
+        account = next((a for a in accounts if a.id == account_id), None)
+        if not account:
+            raise HTTPException(status_code=404, detail="Account not found")
+    else:
+        account = db.query(Account).filter(Account.id == account_id).first()
+        if not account:
+            raise HTTPException(status_code=404, detail="Account not found")
+
     return templates.TemplateResponse("accounts/view.html", {
         "request": request,
         "user": user,
@@ -153,11 +170,21 @@ async def edit_account_form(
     user = await get_current_user(request, db)
     if not user:
         return RedirectResponse(url=f"/login?next=/accounts/{account_id}/edit", status_code=303)
-    
+
+    # DEMO MODE: Show notice instead of edit form
+    if DEMO_MODE or db is None:
+        return templates.TemplateResponse("demo_mode_notice.html", {
+            "request": request,
+            "user": user,
+            "feature": "Edit Account",
+            "message": "Editing accounts is disabled in demo mode. This feature is view-only.",
+            "back_url": f"/accounts/{account_id}",
+        })
+
     account = db.query(Account).filter(Account.id == account_id).first()
     if not account:
         raise HTTPException(status_code=404, detail="Account not found")
-    
+
     return templates.TemplateResponse("accounts/form.html", {
         "request": request,
         "user": user,
