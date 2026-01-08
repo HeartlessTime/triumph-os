@@ -16,7 +16,7 @@ from app.models import (
 )
 from app.models import Document as DocModel
 from app.services.followup import calculate_next_followup, get_followup_status
-from app.demo_data import get_all_demo_opportunities
+from app.demo_data import get_all_demo_opportunities, get_demo_accounts
 
 router = APIRouter(prefix="/opportunities", tags=["opportunities"])
 templates = Jinja2Templates(directory="app/templates")

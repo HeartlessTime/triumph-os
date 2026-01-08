@@ -66,8 +66,8 @@ class Opportunity(Base):
     updated_at = Column(DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     # Relationships
-    account = relationship("Account", back_populates="opportunities")
-    end_user_account = relationship("Account", foreign_keys=[end_user_account_id])
+    account = relationship("Account", back_populates="opportunities", foreign_keys=[account_id])
+    end_user_account = relationship("Account", back_populates="end_user_opportunities", foreign_keys=[end_user_account_id])
     owner = relationship("User", back_populates="owned_opportunities", foreign_keys=[owner_id])
     assigned_estimator = relationship("User", back_populates="assigned_estimates", foreign_keys=[assigned_estimator_id])
     primary_contact = relationship("Contact", back_populates="opportunities")

@@ -54,14 +54,14 @@ def calculate_estimate_totals(
     """
     # Sum labor items
     labor_total = sum(
-        Decimal(str(item.get('total', 0) or 0)) 
-        for item in labor_items
+        (Decimal(str(item.get('total', 0) or 0)) for item in labor_items),
+        Decimal('0')
     )
     
     # Sum material items
     material_total = sum(
-        Decimal(str(item.get('total', 0) or 0)) 
-        for item in material_items
+        (Decimal(str(item.get('total', 0) or 0)) for item in material_items),
+        Decimal('0')
     )
     
     # Calculate subtotal (cost)

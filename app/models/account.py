@@ -24,7 +24,8 @@ class Account(Base):
     # Relationships
     created_by = relationship("User", back_populates="created_accounts")
     contacts = relationship("Contact", back_populates="account", cascade="all, delete-orphan")
-    opportunities = relationship("Opportunity", back_populates="account", cascade="all, delete-orphan")
+    opportunities = relationship("Opportunity", back_populates="account", cascade="all, delete-orphan", foreign_keys='Opportunity.account_id')
+    end_user_opportunities = relationship("Opportunity", back_populates="end_user_account", foreign_keys='Opportunity.end_user_account_id')
 
     INDUSTRIES = [
         'Construction',
