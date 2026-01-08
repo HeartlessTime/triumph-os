@@ -9,9 +9,14 @@
             <h1>Opportunities</h1>
             <p class="text-muted mb-0">Track and manage your sales pipeline</p>
         </div>
-        <a href="/opportunities/intake" class="btn btn-primary">
-            <i class="bi bi-plus-lg me-1"></i> New Opportunity
-        </a>
+        <div class="d-flex gap-2">
+            <a href="/opportunities/calendar/view" class="btn btn-outline-secondary">
+                <i class="bi bi-calendar2-event me-1"></i> Calendar
+            </a>
+            <a href="/opportunities/intake" class="btn btn-primary">
+                <i class="bi bi-plus-lg me-1"></i> New Opportunity
+            </a>
+        </div>
     </div>
     
     <!-- Filters -->
@@ -33,14 +38,7 @@
                     </select>
                 </div>
                 <div class="col-md-2">
-                    <select class="form-select" name="owner_id">
-                        <option value="">All Owners</option>
-                        {% for u in users %}
-                        <option value="{{ u.id }}" {% if owner_id == u.id %}selected{% endif %}>{{ u.full_name }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <div class="col-md-2">
+
                     <select class="form-select" name="gc_id">
                         <option value="">All GCs</option>
                         {% for acc in accounts %}

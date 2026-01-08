@@ -40,10 +40,9 @@ async def list_opportunities(
     request: Request,
     search: str = None,
     stage: str = None,
-    owner_id: int = None,
-    estimator_id: int = None,
-    gc_id: int = None,
-    end_user_account_id: int = None,
+    estimator_id: Optional[int] = None,
+    gc_id: Optional[int] = None,
+    end_user_account_id: Optional[int] = None,
     db: Session = Depends(get_db)
 ):
     """List all opportunities with optional filtering."""
@@ -65,9 +64,6 @@ async def list_opportunities(
 
         if stage:
             opportunities = [o for o in opportunities if o.stage == stage]
-
-        if owner_id:
-            opportunities = [o for o in opportunities if o.owner_id == owner_id]
 
         if estimator_id:
             opportunities = [o for o in opportunities if o.assigned_estimator_id == estimator_id]
@@ -101,9 +97,6 @@ async def list_opportunities(
         if stage:
             query = query.filter(Opportunity.stage == stage)
 
-        if owner_id:
-            query = query.filter(Opportunity.owner_id == owner_id)
-
         if estimator_id:
             query = query.filter(Opportunity.assigned_estimator_id == estimator_id)
 
@@ -131,7 +124,6 @@ async def list_opportunities(
         "stages": Opportunity.STAGE_NAMES,
         "search": search,
         "stage": stage,
-        "owner_id": owner_id,
         "estimator_id": estimator_id,
         "gc_id": gc_id,
         "end_user_account_id": end_user_account_id,
@@ -367,6 +359,60 @@ async def create_opportunity(
     save_upload(previous_estimate_file, 'previous_estimate')
     
     return RedirectResponse(url=f"/opportunities/{opportunity.id}", status_code=303)
+
+
+@router.get("/calendar/view", response_class=HTMLResponse)
+async def calendar_view(
+    request: Request,
+    db: Session = Depends(get_db)
+):
+    """Display calendar view of bid opportunities."""
+    user = await get_current_user(request, db)
+    if not user:
+        return RedirectResponse(url="/login?next=/opportunities/calendar/view", status_code=303)
+
+    return templates.TemplateResponse("opportunities/calendar.html", {
+        "request": request,
+        "user": user,
+    })
+
+
+@router.get("/calendar/events")
+async def calendar_events(
+    request: Request,
+    db: Session = Depends(get_db)
+):
+    """Return bid opportunities as calendar events (JSON)."""
+    from fastapi.responses import JSONResponse
+    
+    user = await get_current_user(request, db)
+    if not user:
+        return JSONResponse([], status_code=401)
+
+    events = []
+
+    # DEMO MODE: Use demo data
+    if DEMO_MODE or db is None:
+        opportunities = get_all_demo_opportunities()
+    else:
+        opportunities = db.query(Opportunity).all()
+
+    for opp in opportunities:
+        if opp.bid_date:
+            event = {
+                "id": str(opp.id),
+                "title": opp.name,
+                "start": opp.bid_date.isoformat(),
+                "url": f"/opportunities/{opp.id}",
+                "extendedProps": {
+                    "stage": opp.stage,
+                    "account": opp.account.name if opp.account else "",
+                    "value": str(opp.lv_value or 0),
+                },
+            }
+            events.append(event)
+
+    return JSONResponse(events)
 
 
 @router.get("/{opp_id}", response_class=HTMLResponse)

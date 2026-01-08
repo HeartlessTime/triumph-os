@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+
+{% block title %}Bid Calendar - Triumph OS{% endblock %}
+
+{% block content %}
+<div class="content-area">
+    <div class="page-header">
+        <div>
+            <h1>Bid Calendar</h1>
+            <p class="text-muted mb-0">Interactive calendar view of all bid opportunities</p>
+        </div>
+        <a href="/opportunities" class="btn btn-outline-secondary">
+            <i class="bi bi-list me-1"></i> Back to List
+        </a>
+    </div>
+    
+    <div class="card">
+        <div class="card-body">
+            <div id="calendar"></div>
+        </div>
+    </div>
+</div>
+
+<!-- FullCalendar CSS -->
+<link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.css" rel="stylesheet">
+
+<!-- FullCalendar JS -->
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const calendarEl = document.getElementById('calendar');
+    const calendar = new FullCalendar.Calendar(calendarEl, {
+        initialView: 'dayGridMonth',
+        headerToolbar: {
+            left: 'prev,next today',
+            center: 'title',
+            right: 'dayGridMonth,timeGridWeek,timeGridDay,listMonth'
+        },
+        events: '/opportunities/calendar/events',
+        eventClick: function(info) {
+            window.location.href = info.event.url;
+        },
+        height: 'auto',
+        contentHeight: 'auto',
+    });
+    calendar.render();
+});
+</script>
+
+<style>
+#calendar {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+.fc {
+    --fc-border-color: #e2e8f0;
+    --fc-button-bg-color: #2563eb;
+    --fc-button-border-color: #2563eb;
+    --fc-button-hover-bg-color: #1d4ed8;
+    --fc-button-active-bg-color: #1d4ed8;
+    --fc-today-bg-color: #f0f9ff;
+}
+
+.fc .fc-button-primary:not(:disabled) {
+    background-color: var(--fc-button-bg-color);
+    border-color: var(--fc-button-border-color);
+}
+
+.fc .fc-button-primary:not(:disabled):hover {
+    background-color: var(--fc-button-hover-bg-color);
+}
+
+.fc .fc-button-primary:not(:disabled).fc-button-active {
+    background-color: var(--fc-button-active-bg-color);
+}
+
+.fc .fc-daygrid-day.fc-day-today {
+    background-color: var(--fc-today-bg-color);
+}
+
+.fc .fc-event {
+    background-color: #2563eb;
+    border-color: #1d4ed8;
+}
+
+.fc .fc-event:hover {
+    background-color: #1d4ed8;
+    cursor: pointer;
+}
+</style>
+{% endblock %}

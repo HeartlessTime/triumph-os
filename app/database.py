@@ -10,7 +10,10 @@ Base = declarative_base()
 
 def get_database_url() -> str:
     """Get database URL from environment."""
-    url = os.getenv("DATABASE_URL", "postgresql://postgres:postgres@localhost:5432/revenueos")
+    url = os.getenv("DATABASE_URL", "").strip()
+    # If DATABASE_URL is empty, use in-memory SQLite for demo mode
+    if not url:
+        return "sqlite:///:memory:"
     # Ensure psycopg (v3) driver is used
     if url.startswith("postgresql://"):
         url = url.replace("postgresql://", "postgresql+psycopg://", 1)
@@ -22,6 +25,10 @@ def get_database_url() -> str:
 def get_engine():
     """Get or create database engine."""
     DATABASE_URL = get_database_url()
+    # For in-memory SQLite, use StaticPool to keep data alive
+    if DATABASE_URL == "sqlite:///:memory:":
+        from sqlalchemy.pool import StaticPool
+        return create_engine(DATABASE_URL, connect_args={"check_same_thread": False}, poolclass=StaticPool, echo=os.getenv("DEBUG", "false").lower() == "true")
     return create_engine(DATABASE_URL, echo=os.getenv("DEBUG", "false").lower() == "true")
 
 
