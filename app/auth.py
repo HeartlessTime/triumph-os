@@ -12,14 +12,7 @@ from app.database import get_db
 from app.models.user import User
 
 # Password hashing
-# Use a compatible hashing scheme for SQLite/dev when bcrypt may be unavailable
-from app.database import DATABASE_URL
-
-if DATABASE_URL.startswith("sqlite"):
-    # pbkdf2_sha256 is widely available and avoids compiled bcrypt issues in dev
-    pwd_context = CryptContext(schemes=["pbkdf2_sha256"], deprecated="auto")
-else:
-    pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 # Session serializer
 SECRET_KEY = os.getenv("SECRET_KEY", "your-super-secret-key-change-in-production-min-32-chars")
@@ -69,35 +62,35 @@ def get_session_user_id(request: Request) -> Optional[int]:
 
 
 async def get_current_user(request: Request, db: Session = Depends(get_db)) -> Optional[User]:
-    """Return a current demo user. Authentication is disabled in demo mode.
-
-    This will return the first active user in the DB if present, or create
-    a lightweight demo user in-memory when none exist.
-    """
-    # Prefer any existing active user (seed creates users at startup)
-    user = db.query(User).filter(User.is_active == True).first()
-    if user:
-        return user
-
-    # Fallback: create an ephemeral demo user (not persisted beyond runtime)
-    demo = User(email="demo@triumphos.local", full_name="Demo User", role="Admin", is_active=True)
-    # Do not set password_hash; this user is not authenticated via login
-    return demo
+    """Get current user from session."""
+    user_id = get_session_user_id(request)
+    if not user_id:
+        return None
+    
+    user = db.query(User).filter(User.id == user_id, User.is_active == True).first()
+    return user
 
 
 async def require_auth(request: Request, db: Session = Depends(get_db)) -> User:
-    """Return a user without performing authentication checks (demo mode)."""
+    """Require authenticated user, redirect to login if not."""
     user = await get_current_user(request, db)
     if not user:
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="No demo user available")
+        raise HTTPException(
+            status_code=status.HTTP_303_SEE_OTHER,
+            headers={"Location": "/login?next=" + str(request.url.path)}
+        )
     return user
 
 
 def require_role(*roles):
     """Decorator to require specific roles."""
     async def dependency(request: Request, db: Session = Depends(get_db)) -> User:
-        # In demo mode, allow access and return a demo user
         user = await require_auth(request, db)
+        if user.role not in roles:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You don't have permission to access this resource"
+            )
         return user
     return Depends(dependency)
 
