@@ -2,6 +2,7 @@ import os
 from fastapi import FastAPI, Request
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+from fastapi.responses import JSONResponse
 from dotenv import load_dotenv
 
 # LOAD ENV FIRST — MUST BE HERE
@@ -18,6 +19,7 @@ from app.routes import (
     activities_router,
     tasks_router,
 )
+from app.auth import DEMO_MODE
 
 
 def create_app() -> FastAPI:
@@ -46,3 +48,12 @@ def create_app() -> FastAPI:
 app = create_app()
 
 templates = Jinja2Templates(directory="app/templates")
+
+
+@app.get("/__debug")
+async def debug_endpoint():
+    """Debug endpoint to check environment configuration."""
+    return JSONResponse({
+        "demo_mode": DEMO_MODE,
+        "database_url": os.getenv("DATABASE_URL")
+    })
