@@ -222,10 +222,11 @@ async def delete_contact(
 
 @router.post("/{contact_id}/log-contact")
 async def log_contact(
+    request: Request,
     contact_id: int,
     db: Session = Depends(get_db)
 ):
-    """Log contact - updates last_contacted to today and next_followup to 14 days from now."""
+    """Log contact - updates last_contacted to today and next_followup to 30 days from now."""
     contact = db.query(Contact).filter(Contact.id == contact_id).first()
     if not contact:
         raise HTTPException(status_code=404, detail="Contact not found")
@@ -234,5 +235,6 @@ async def log_contact(
     update_contact_followup(contact)
     db.commit()
 
-    # Check referer to redirect back to source page
-    return RedirectResponse(url=f"/contacts/{contact_id}", status_code=303)
+    # Redirect to 'next' param if provided, otherwise to contact detail
+    redirect_url = request.query_params.get("next", f"/contacts/{contact_id}")
+    return RedirectResponse(url=redirect_url, status_code=303)

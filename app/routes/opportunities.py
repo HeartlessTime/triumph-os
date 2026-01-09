@@ -183,6 +183,8 @@ async def create_opportunity(
     bid_date: str | None = Form(None),
     owner_id: int | None = Form(None),
     assigned_estimator_id: int | None = Form(None),
+    scope_names: List[str] = Form(default=[]),
+    scope_other_text: str | None = Form(None),
     db: Session = Depends(get_db)
 ):
     def clean_num(val: str | None):
@@ -204,6 +206,26 @@ async def create_opportunity(
     update_opportunity_followup(opportunity)
 
     db.add(opportunity)
+    db.flush()  # Get the opportunity.id
+
+    # Add scope packages
+    for scope_name in scope_names:
+        if scope_name == 'Other' and scope_other_text:
+            # Use the custom text instead of "Other"
+            scope_pkg = db.query(ScopePackage).filter(ScopePackage.name == scope_other_text).first()
+            if not scope_pkg:
+                scope_pkg = ScopePackage(name=scope_other_text, is_active=True)
+                db.add(scope_pkg)
+                db.flush()
+            db.add(OpportunityScope(opportunity_id=opportunity.id, scope_package_id=scope_pkg.id))
+        else:
+            scope_pkg = db.query(ScopePackage).filter(ScopePackage.name == scope_name).first()
+            if not scope_pkg:
+                scope_pkg = ScopePackage(name=scope_name, is_active=True)
+                db.add(scope_pkg)
+                db.flush()
+            db.add(OpportunityScope(opportunity_id=opportunity.id, scope_package_id=scope_pkg.id))
+
     db.commit()
 
     return RedirectResponse(
@@ -398,6 +420,8 @@ async def update_opportunity(
     known_risks: str = Form(None),
     last_contacted: str = Form(None),
     quick_links_text: str = Form(None),
+    scope_names: List[str] = Form(default=[]),
+    scope_other_text: str | None = Form(None),
     db: Session = Depends(get_db)
 ):
     opportunity = db.query(Opportunity).filter(Opportunity.id == opp_id).first()
@@ -439,6 +463,25 @@ async def update_opportunity(
         opportunity.quick_links = [link.strip() for link in quick_links_text.strip().split("\n") if link.strip()]
     else:
         opportunity.quick_links = None
+
+    # Update scope packages - clear existing and re-add
+    db.query(OpportunityScope).filter(OpportunityScope.opportunity_id == opp_id).delete()
+
+    for scope_name in scope_names:
+        if scope_name == 'Other' and scope_other_text:
+            scope_pkg = db.query(ScopePackage).filter(ScopePackage.name == scope_other_text).first()
+            if not scope_pkg:
+                scope_pkg = ScopePackage(name=scope_other_text, is_active=True)
+                db.add(scope_pkg)
+                db.flush()
+            db.add(OpportunityScope(opportunity_id=opp_id, scope_package_id=scope_pkg.id))
+        else:
+            scope_pkg = db.query(ScopePackage).filter(ScopePackage.name == scope_name).first()
+            if not scope_pkg:
+                scope_pkg = ScopePackage(name=scope_name, is_active=True)
+                db.add(scope_pkg)
+                db.flush()
+            db.add(OpportunityScope(opportunity_id=opp_id, scope_package_id=scope_pkg.id))
 
     update_opportunity_followup(opportunity)
     db.commit()
