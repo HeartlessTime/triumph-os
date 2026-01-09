@@ -25,8 +25,16 @@ async def list_accounts(
     if not user:
         return RedirectResponse(url="/login?next=/accounts", status_code=303)
 
-    # DEMO MODE: Use demo data
-    if DEMO_MODE or db is None:
+    # Try to use database, fallback to demo data if tables don't exist
+    use_demo = DEMO_MODE or db is None
+    if not use_demo:
+        try:
+            # Test database connectivity
+            db.query(Account).limit(1).all()
+        except Exception:
+            use_demo = True
+
+    if use_demo:
         accounts = get_all_demo_accounts()
 
         # Apply filters to demo data

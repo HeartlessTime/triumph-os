@@ -60,8 +60,16 @@ async def list_opportunities(
 
     today = date.today()
 
-    # DEMO MODE: Use demo data
-    if DEMO_MODE or db is None:
+    # Try to use database, fallback to demo data if tables don't exist
+    use_demo = DEMO_MODE or db is None
+    if not use_demo:
+        try:
+            # Test database connectivity
+            db.query(Opportunity).limit(1).all()
+        except Exception:
+            use_demo = True
+
+    if use_demo:
         opportunities = get_all_demo_opportunities()
         accounts = get_demo_accounts()
 
@@ -150,31 +158,32 @@ async def intake_form(
     if not user:
         return RedirectResponse(url="/login?next=/opportunities/intake", status_code=303)
 
-    # DEMO MODE: Show notice instead of form
-    if DEMO_MODE or db is None:
+    # Try to load form data, handle missing database tables
+    try:
+        accounts = db.query(Account).order_by(Account.name).all()
+        scope_packages = db.query(ScopePackage).filter(
+            ScopePackage.is_active == True
+        ).order_by(ScopePackage.sort_order).all()
+
+        users = db.query(User).filter(User.is_active == True).order_by(User.full_name).all()
+        sales_users = [u for u in users if u.role in ('Sales', 'Admin')]
+        estimators = [u for u in users if u.role in ('Estimator', 'Admin')]
+
+        # Get contacts for selected account
+        contacts = []
+        if account_id:
+            contacts = db.query(Contact).filter(
+                Contact.account_id == account_id
+            ).order_by(Contact.last_name).all()
+    except Exception:
+        # Database not initialized, show notice
         return templates.TemplateResponse("demo_mode_notice.html", {
             "request": request,
             "user": user,
             "feature": "Create New Opportunity",
-            "message": "Creating new opportunities is disabled in demo mode. Explore the existing demo opportunities instead.",
+            "message": "Database not initialized. Please set up your database first.",
             "back_url": "/opportunities",
         })
-
-    accounts = db.query(Account).order_by(Account.name).all()
-    scope_packages = db.query(ScopePackage).filter(
-        ScopePackage.is_active == True
-    ).order_by(ScopePackage.sort_order).all()
-
-    users = db.query(User).filter(User.is_active == True).order_by(User.full_name).all()
-    sales_users = [u for u in users if u.role in ('Sales', 'Admin')]
-    estimators = [u for u in users if u.role in ('Estimator', 'Admin')]
-
-    # Get contacts for selected account
-    contacts = []
-    if account_id:
-        contacts = db.query(Contact).filter(
-            Contact.account_id == account_id
-        ).order_by(Contact.last_name).all()
     
     return templates.TemplateResponse("opportunities/intake.html", {
         "request": request,
