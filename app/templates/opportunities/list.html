@@ -22,7 +22,7 @@
     <!-- Filters -->
     <div class="card mb-4">
         <div class="card-body">
-            <form method="get" class="row g-3">
+            <form method="get" class="row g-3 live-search">
                 <div class="col-md-4">
                     <div class="input-group">
                         <span class="input-group-text"><i class="bi bi-search"></i></span>
@@ -38,7 +38,6 @@
                     </select>
                 </div>
                 <div class="col-md-2">
-
                     <select class="form-select" name="gc_id">
                         <option value="">All GCs</option>
                         {% for acc in accounts %}
@@ -62,24 +61,9 @@
                         {% endfor %}
                     </select>
                 </div>
-                <div class="col-md-2">
-                    <button type="submit" class="btn btn-secondary w-100">Filter</button>
-                </div>
             </form>
         </div>
     </div>
-
-    <script>
-        // Remove empty parameter values before form submission to avoid Pydantic parse errors
-        document.querySelector('form').addEventListener('submit', function(e) {
-            const selects = this.querySelectorAll('select[name="gc_id"], select[name="estimator_id"], select[name="end_user_account_id"]');
-            selects.forEach(select => {
-                if (select.value === '') {
-                    select.removeAttribute('name');
-                }
-            });
-        });
-    </script>
     
     <!-- Opportunities Table -->
     <div class="card">

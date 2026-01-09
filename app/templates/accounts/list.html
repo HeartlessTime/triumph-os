@@ -17,23 +17,20 @@
     <!-- Filters -->
     <div class="card mb-4">
         <div class="card-body">
-            <form method="get" class="row g-3">
-                <div class="col-md-6">
+            <form method="get" class="row g-3 live-search">
+                <div class="col-md-7">
                     <div class="input-group">
                         <span class="input-group-text"><i class="bi bi-search"></i></span>
                         <input type="text" class="form-control" name="search" value="{{ search or '' }}" placeholder="Search accounts...">
                     </div>
                 </div>
-                <div class="col-md-4">
+                <div class="col-md-5">
                     <select class="form-select" name="industry">
                         <option value="">All Industries</option>
                         {% for ind in industries %}
                         <option value="{{ ind }}" {% if industry == ind %}selected{% endif %}>{{ ind }}</option>
                         {% endfor %}
                     </select>
-                </div>
-                <div class="col-md-2">
-                    <button type="submit" class="btn btn-secondary w-100">Filter</button>
                 </div>
             </form>
         </div>

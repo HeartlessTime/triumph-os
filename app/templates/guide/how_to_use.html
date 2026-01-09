@@ -140,7 +140,14 @@
                 <h6 class="mt-3">Opportunity Follow-ups:</h6>
                 <p>Opportunity follow-ups are separate from contact follow-ups and are based on the sales stage and bid date:</p>
                 <ul>
-                    <li>Follow-up dates are calculated based on when the opportunity was last contacted and the current stage</li>
+                    <li><strong>Stage-Based Follow-up Rules:</strong>
+                        <ul>
+                            <li>Prospecting, Proposal, Bid Sent → 14 days from last contact</li>
+                            <li>Qualification, Needs Analysis, Negotiation → 7 days from last contact</li>
+                            <li>Won, Lost → No automatic follow-up</li>
+                        </ul>
+                    </li>
+                    <li><strong>Past Bid Date:</strong> If a bid date has passed and the opportunity isn't Won/Lost, an urgent 2 business day follow-up is set</li>
                     <li>Use the "Log Contact" button on an opportunity to update its follow-up schedule</li>
                     <li>Opportunities needing follow-up appear on the dashboard</li>
                 </ul>
@@ -242,7 +249,16 @@
                 <h5 class="mb-0"><i class="bi bi-lightbulb me-2"></i>Tips for Success</h5>
             </div>
             <div class="card-body">
-                <h6>Daily Workflow:</h6>
+                <h6>Live Search:</h6>
+                <p>All list pages (Accounts, Contacts, Opportunities) feature live search that updates automatically as you type:</p>
+                <ul>
+                    <li>Start typing in any search box and results filter instantly</li>
+                    <li>Select dropdown filters and the list updates immediately</li>
+                    <li>No need to click a "Filter" or "Search" button</li>
+                    <li>There's a brief delay (300ms) to avoid unnecessary refreshes while typing</li>
+                </ul>
+
+                <h6 class="mt-3">Daily Workflow:</h6>
                 <ol>
                     <li>Check Dashboard for overdue follow-ups and upcoming bids</li>
                     <li>Review and complete high-priority tasks</li>

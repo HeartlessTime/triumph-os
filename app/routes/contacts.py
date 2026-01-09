@@ -20,10 +20,13 @@ templates = Jinja2Templates(directory="app/templates")
 async def list_contacts(
     request: Request,
     search: str = None,
-    account_id: int = None,
+    account_id: str = None,
     db: Session = Depends(get_db)
 ):
     """List all contacts with optional filtering."""
+    # Safely convert account_id (treat "" as None)
+    account_id_int = int(account_id) if account_id else None
+
     query = db.query(Contact).join(Account)
 
     if search:
@@ -35,8 +38,8 @@ async def list_contacts(
             (Account.name.ilike(search_term))
         )
 
-    if account_id:
-        query = query.filter(Contact.account_id == account_id)
+    if account_id_int:
+        query = query.filter(Contact.account_id == account_id_int)
 
     contacts = query.order_by(Contact.last_name, Contact.first_name).all()
     accounts = db.query(Account).order_by(Account.name).all()
@@ -46,24 +49,27 @@ async def list_contacts(
         "contacts": contacts,
         "accounts": accounts,
         "search": search,
-        "account_id": account_id,
+        "account_id": account_id_int,
     })
 
 
 @router.get("/new", response_class=HTMLResponse)
 async def new_contact_form(
     request: Request,
-    account_id: int = None,
+    account_id: str = None,
     db: Session = Depends(get_db)
 ):
     """Display new contact form."""
+    # Safely convert account_id (treat "" as None)
+    account_id_int = int(account_id) if account_id else None
+
     accounts = db.query(Account).order_by(Account.name).all()
 
     return templates.TemplateResponse("contacts/form.html", {
         "request": request,
         "contact": None,
         "accounts": accounts,
-        "selected_account_id": account_id,
+        "selected_account_id": account_id_int,
         "is_new": True,
     })
 

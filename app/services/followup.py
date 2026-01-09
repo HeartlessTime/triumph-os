@@ -1,10 +1,16 @@
 """
 Follow-up Engine Service
 
-Rules:
-1. Stage = Prospecting => next_followup = last_contacted + 14 days
-2. Stage = Bid Sent => next_followup = last_contacted + 14 days  
-3. If bid date has passed and status not Won/Lost => next_followup = today + 2 business days
+Rules for OPPORTUNITIES:
+- Prospecting => last_contacted + 14 days
+- Qualification => last_contacted + 7 days
+- Needs Analysis => last_contacted + 7 days
+- Proposal => last_contacted + 14 days
+- Bid Sent => last_contacted + 14 days
+- Negotiation => last_contacted + 7 days
+- Won / Lost => no follow-up
+
+If bid date has passed and status not Won/Lost => today + 2 business days
 
 Auto-update next_followup whenever last_contacted or stage changes.
 """
@@ -13,26 +19,37 @@ from datetime import date, timedelta
 from typing import Optional
 
 
+# Stage to follow-up days mapping
+STAGE_FOLLOWUP_DAYS = {
+    'Prospecting': 14,
+    'Qualification': 7,
+    'Needs Analysis': 7,
+    'Proposal': 14,
+    'Bid Sent': 14,
+    'Negotiation': 7,
+}
+
+
 def add_business_days(start_date: date, num_days: int) -> date:
     """
     Add business days (Monday-Friday) to a date.
-    
+
     Args:
         start_date: The starting date
         num_days: Number of business days to add
-        
+
     Returns:
         The resulting date after adding business days
     """
     current_date = start_date
     days_added = 0
-    
+
     while days_added < num_days:
         current_date += timedelta(days=1)
         # Monday = 0, Sunday = 6
         if current_date.weekday() < 5:  # Monday to Friday
             days_added += 1
-    
+
     return current_date
 
 
@@ -44,42 +61,42 @@ def calculate_next_followup(
 ) -> Optional[date]:
     """
     Calculate the next follow-up date based on opportunity stage and dates.
-    
+
     Rules (in priority order):
-    1. If bid date has passed and not Won/Lost => today + 2 business days
-    2. If stage is 'Prospecting' => last_contacted + 14 days
-    3. If stage is 'Bid Sent' => last_contacted + 14 days
-    4. Otherwise => None (no automatic follow-up)
-    
+    1. If Won/Lost => None (no follow-up)
+    2. If bid date has passed => today + 2 business days (urgent)
+    3. Stage-based: Prospecting/Proposal/Bid Sent = 14 days, others = 7 days
+
     Args:
         stage: The opportunity stage
         last_contacted: Date of last contact
         bid_date: Bid due date
         today: Current date (defaults to date.today())
-        
+
     Returns:
         The calculated next follow-up date, or None
     """
     if today is None:
         today = date.today()
-    
+
     # If opportunity is closed, no follow-up needed
     if stage in ('Won', 'Lost'):
         return None
-    
-    # Rule 3: If bid date has passed, urgent follow-up
+
+    # If bid date has passed, urgent follow-up
     if bid_date and bid_date < today:
         return add_business_days(today, 2)
-    
-    # Rules 1 & 2: Stage-based follow-up
-    if stage in ('Prospecting', 'Bid Sent'):
+
+    # Stage-based follow-up
+    followup_days = STAGE_FOLLOWUP_DAYS.get(stage)
+    if followup_days:
         if last_contacted:
-            return last_contacted + timedelta(days=14)
+            return last_contacted + timedelta(days=followup_days)
         else:
-            # If never contacted, follow up in 14 days from today
-            return today + timedelta(days=14)
-    
-    # No automatic follow-up for other stages
+            # If never contacted, follow up from today
+            return today + timedelta(days=followup_days)
+
+    # No automatic follow-up for unknown stages
     return None
 
 

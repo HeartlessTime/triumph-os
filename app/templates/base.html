@@ -520,6 +520,61 @@
     })();
     </script>
 
+    <!-- Live search with debounce -->
+    <script>
+    (function() {
+        let debounceTimer;
+
+        function debounce(func, delay) {
+            return function(...args) {
+                clearTimeout(debounceTimer);
+                debounceTimer = setTimeout(() => func.apply(this, args), delay);
+            };
+        }
+
+        function updateUrlAndReload() {
+            const form = document.querySelector('form.live-search');
+            if (!form) return;
+
+            const formData = new FormData(form);
+            const params = new URLSearchParams();
+
+            for (const [key, value] of formData.entries()) {
+                if (value && value.trim()) {
+                    params.set(key, value.trim());
+                }
+            }
+
+            const newUrl = window.location.pathname + (params.toString() ? '?' + params.toString() : '');
+            window.location.href = newUrl;
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const form = document.querySelector('form.live-search');
+            if (!form) return;
+
+            // Debounced handler for text inputs
+            const debouncedUpdate = debounce(updateUrlAndReload, 300);
+
+            // Apply to search text inputs
+            form.querySelectorAll('input[type="text"]').forEach(function(el) {
+                el.addEventListener('input', debouncedUpdate);
+            });
+
+            // Apply immediately to select dropdowns
+            form.querySelectorAll('select').forEach(function(el) {
+                el.addEventListener('change', updateUrlAndReload);
+            });
+
+            // Prevent default form submission
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+                updateUrlAndReload();
+            });
+        });
+    })();
+    </script>
+
     {% block extra_js %}{% endblock %}
 </body>
 </html>
