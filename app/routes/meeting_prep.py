@@ -37,21 +37,33 @@ async def get_meeting_prep(
     if not user:
         return RedirectResponse(url=f"/login?next=/meeting-prep/account/{account_id}", status_code=303)
 
-    # Get account
-    account = db.query(Account).filter(Account.id == account_id).first()
-    if not account:
-        raise HTTPException(status_code=404, detail="Account not found")
+    # Try to get account and cached brief, handle missing database tables
+    try:
+        # Get account
+        account = db.query(Account).filter(Account.id == account_id).first()
+        if not account:
+            raise HTTPException(status_code=404, detail="Account not found")
 
-    # Check for cached brief (less than 24 hours old)
-    cached_brief = None
-    if not force_refresh:
-        cached = db.query(MeetingBrief).filter(
-            MeetingBrief.account_id == account_id,
-            MeetingBrief.created_at > datetime.utcnow() - timedelta(hours=24)
-        ).order_by(MeetingBrief.created_at.desc()).first()
+        # Check for cached brief (less than 24 hours old)
+        cached_brief = None
+        if not force_refresh:
+            cached = db.query(MeetingBrief).filter(
+                MeetingBrief.account_id == account_id,
+                MeetingBrief.created_at > datetime.utcnow() - timedelta(hours=24)
+            ).order_by(MeetingBrief.created_at.desc()).first()
 
-        if cached:
-            cached_brief = cached.brief_data
+            if cached:
+                cached_brief = cached.brief_data
+    except HTTPException:
+        # Re-raise HTTP exceptions (like 404)
+        raise
+    except Exception:
+        # Database not initialized, show error
+        return templates.TemplateResponse("meeting_prep/error.html", {
+            "request": request,
+            "user": user,
+            "error_message": "Database not initialized. Please set up your database first."
+        })
 
     # If no cache or force refresh, generate new brief
     if not cached_brief:

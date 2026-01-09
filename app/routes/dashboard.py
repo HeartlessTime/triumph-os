@@ -75,9 +75,8 @@ async def dashboard(
         upcoming_bids.sort(key=lambda o: o.bid_date if o.bid_date else today + timedelta(days=999))
         upcoming_bids = upcoming_bids[:10]
 
-        # Add days_until_bid and value for each
+        # Add value for each (days_until_bid is already a property)
         for opp in upcoming_bids:
-            opp.days_until_bid = (opp.bid_date - today).days if opp.bid_date else 0
             opp.value = (opp.lv_value or Decimal(0)) + (opp.hdd_value or Decimal(0))
 
         # My tasks
@@ -145,9 +144,8 @@ async def dashboard(
             .limit(10)\
             .all()
 
-        # Add days_until_bid and value for each
+        # Add value for each (days_until_bid is already a property)
         for opp in upcoming_bids:
-            opp.days_until_bid = (opp.bid_date - today).days if opp.bid_date else 0
             opp.value = (opp.lv_value or Decimal(0)) + (opp.hdd_value or Decimal(0))
 
         # My tasks

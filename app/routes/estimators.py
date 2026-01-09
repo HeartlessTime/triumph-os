@@ -27,13 +27,24 @@ def calculate_estimator_workload(db: Session, estimator_id: int) -> dict:
             - estimating_status_breakdown: Dict of status counts
             - opportunities: List of opportunity details
     """
-    # Get all open opportunities for this estimator
-    opportunities = db.query(Opportunity).filter(
-        and_(
-            Opportunity.assigned_estimator_id == estimator_id,
-            Opportunity.stage.notin_(['Won', 'Lost'])
-        )
-    ).all()
+    # Try to get opportunities, handle missing database tables
+    try:
+        # Get all open opportunities for this estimator
+        opportunities = db.query(Opportunity).filter(
+            and_(
+                Opportunity.assigned_estimator_id == estimator_id,
+                Opportunity.stage.notin_(['Won', 'Lost'])
+            )
+        ).all()
+    except Exception:
+        # Database not initialized, return empty metrics
+        return {
+            'active_opportunities': 0,
+            'total_pipeline_value': 0,
+            'upcoming_bids_count': 0,
+            'estimating_status_breakdown': {},
+            'opportunities': []
+        }
 
     # Calculate metrics
     active_count = len(opportunities)
@@ -89,8 +100,13 @@ async def estimator_dashboard(
     if not user:
         return RedirectResponse(url="/login?next=/estimators", status_code=303)
 
-    # Get all estimators (users with role=Estimator)
-    estimators = db.query(User).filter(User.role == 'Estimator').all()
+    # Try to get estimators, handle missing database tables
+    try:
+        # Get all estimators (users with role=Estimator)
+        estimators = db.query(User).filter(User.role == 'Estimator').all()
+    except Exception:
+        # Database not initialized, return empty list
+        estimators = []
 
     # Calculate workload for each
     estimator_workloads = []
@@ -155,8 +171,13 @@ async def suggest_estimator_assignment(
     if not user:
         raise HTTPException(status_code=401, detail="Not authenticated")
 
-    # Get all estimators
-    estimators = db.query(User).filter(User.role == 'Estimator').all()
+    # Try to get estimators, handle missing database tables
+    try:
+        # Get all estimators
+        estimators = db.query(User).filter(User.role == 'Estimator').all()
+    except Exception:
+        # Database not initialized
+        return JSONResponse({"suggested_estimator_id": None, "reason": "Database not initialized"})
 
     if not estimators:
         return JSONResponse({"suggested_estimator_id": None, "reason": "No estimators found"})
