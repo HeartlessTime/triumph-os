@@ -1,11 +1,11 @@
 from datetime import date, datetime
 from decimal import Decimal
 from fastapi import APIRouter, Request, Depends, Form, HTTPException, File, UploadFile
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 from sqlalchemy import or_
-from typing import List, Optional
+from typing import List, Optional, Union
 import os
 
 from app.database import get_db
@@ -22,7 +22,7 @@ templates = Jinja2Templates(directory="app/templates")
 # -----------------------------
 # Helpers
 # -----------------------------
-def update_opportunity_followup(opportunity: Opportunity, today: date | None = None):
+def update_opportunity_followup(opportunity: Opportunity, today: Union[date, None] = None):
     if today is None:
         today = date.today()
 
@@ -257,3 +257,190 @@ async def delete_opportunity(
     db.commit()
 
     return RedirectResponse("/opportunities", status_code=303)
+
+
+# -----------------------------
+# Log Contact (Quick Action)
+# -----------------------------
+@router.post("/{opp_id}/log-contact")
+async def log_contact(
+    opp_id: int,
+    db: Session = Depends(get_db)
+):
+    opportunity = db.query(Opportunity).filter(Opportunity.id == opp_id).first()
+    if not opportunity:
+        raise HTTPException(status_code=404, detail="Opportunity not found")
+
+    opportunity.last_contacted = date.today()
+    update_opportunity_followup(opportunity)
+    db.commit()
+
+    return RedirectResponse(url=f"/opportunities/{opp_id}", status_code=303)
+
+
+# -----------------------------
+# Edit Opportunity
+# -----------------------------
+@router.get("/{opp_id}/edit", response_class=HTMLResponse)
+async def edit_opportunity_form(
+    request: Request,
+    opp_id: int,
+    db: Session = Depends(get_db)
+):
+    opportunity = db.query(Opportunity).filter(Opportunity.id == opp_id).first()
+    if not opportunity:
+        raise HTTPException(status_code=404, detail="Opportunity not found")
+
+    accounts = db.query(Account).order_by(Account.name).all()
+    contacts = (
+        db.query(Contact)
+        .filter(Contact.account_id == opportunity.account_id)
+        .order_by(Contact.last_name)
+        .all()
+    )
+
+    users = (
+        db.query(User)
+        .filter(User.is_active == True)
+        .order_by(User.full_name)
+        .all()
+    )
+
+    sales_users = [u for u in users if u.role in ("Sales", "Admin")]
+    estimators = [u for u in users if u.role in ("Estimator", "Admin")]
+
+    selected_scope_names = [s.name for s in opportunity.scopes] if opportunity.scopes else []
+    selected_scope_other_text = ""
+    for s in opportunity.scopes or []:
+        if s.name not in [
+            'Horizontal Cabling (Copper)', 'Backbone Cabling (Fiber/Copper)',
+            'Site / Campus Fiber', 'IDF / MDF Closet Buildout',
+            'Security / Access Control', 'Cameras / Surveillance',
+            'Wireless / Access Points', 'AV / Paging / Intercom', 'Other'
+        ]:
+            selected_scope_other_text = s.name
+
+    return templates.TemplateResponse(
+        "opportunities/edit.html",
+        {
+            "request": request,
+            "opportunity": opportunity,
+            "accounts": accounts,
+            "contacts": contacts,
+            "sales_users": sales_users,
+            "estimators": estimators,
+            "stages": Opportunity.STAGES,
+            "sources": Opportunity.SOURCES,
+            "selected_scope_names": selected_scope_names,
+            "selected_scope_other_text": selected_scope_other_text,
+        }
+    )
+
+
+@router.post("/{opp_id}/edit")
+async def update_opportunity(
+    request: Request,
+    opp_id: int,
+    account_id: int = Form(...),
+    name: str = Form(...),
+    stage: str = Form("Prospecting"),
+    description: str = Form(None),
+    lv_value: str = Form(None),
+    hdd_value: str = Form(None),
+    bid_date: str = Form(None),
+    bid_time: str = Form(None),
+    owner_id: int = Form(None),
+    assigned_estimator_id: int = Form(None),
+    primary_contact_id: int = Form(None),
+    source: str = Form(None),
+    notes: str = Form(None),
+    bid_type: str = Form(None),
+    submission_method: str = Form(None),
+    bid_form_required: str = Form(None),
+    bond_required: str = Form(None),
+    prevailing_wage: str = Form(None),
+    project_type: str = Form(None),
+    rebid: str = Form(None),
+    known_risks: str = Form(None),
+    last_contacted: str = Form(None),
+    quick_links_text: str = Form(None),
+    db: Session = Depends(get_db)
+):
+    opportunity = db.query(Opportunity).filter(Opportunity.id == opp_id).first()
+    if not opportunity:
+        raise HTTPException(status_code=404, detail="Opportunity not found")
+
+    def clean_num(val):
+        if not val:
+            return None
+        return Decimal(str(val).replace(",", ""))
+
+    opportunity.account_id = account_id
+    opportunity.name = name
+    opportunity.stage = stage
+    opportunity.probability = Opportunity.STAGE_PROBABILITIES.get(stage, 0)
+    opportunity.description = description or None
+    opportunity.lv_value = clean_num(lv_value)
+    opportunity.hdd_value = clean_num(hdd_value)
+    opportunity.bid_date = datetime.strptime(bid_date, "%Y-%m-%d").date() if bid_date else None
+    opportunity.bid_time = datetime.strptime(bid_time, "%H:%M").time() if bid_time else None
+    opportunity.owner_id = owner_id or None
+    opportunity.assigned_estimator_id = assigned_estimator_id or None
+    opportunity.primary_contact_id = primary_contact_id or None
+    opportunity.source = source or None
+    opportunity.notes = notes or None
+    opportunity.bid_type = bid_type or None
+    opportunity.submission_method = submission_method or None
+    opportunity.bid_form_required = bid_form_required == "true" if bid_form_required else None
+    opportunity.bond_required = bond_required == "true" if bond_required else None
+    opportunity.prevailing_wage = prevailing_wage or None
+    opportunity.project_type = project_type or None
+    opportunity.rebid = rebid == "true" if rebid else False
+    opportunity.known_risks = known_risks or None
+
+    if last_contacted:
+        opportunity.last_contacted = datetime.strptime(last_contacted, "%Y-%m-%d").date()
+
+    if quick_links_text:
+        opportunity.quick_links = [link.strip() for link in quick_links_text.strip().split("\n") if link.strip()]
+    else:
+        opportunity.quick_links = None
+
+    update_opportunity_followup(opportunity)
+    db.commit()
+
+    return RedirectResponse(url=f"/opportunities/{opp_id}", status_code=303)
+
+
+# -----------------------------
+# Calendar View
+# -----------------------------
+@router.get("/calendar/view", response_class=HTMLResponse)
+async def calendar_view(request: Request, db: Session = Depends(get_db)):
+    return templates.TemplateResponse(
+        "opportunities/calendar.html",
+        {"request": request}
+    )
+
+
+@router.get("/calendar/events")
+async def calendar_events(db: Session = Depends(get_db)):
+    opportunities = (
+        db.query(Opportunity)
+        .filter(Opportunity.bid_date.isnot(None))
+        .filter(Opportunity.stage.notin_(["Won", "Lost"]))
+        .all()
+    )
+
+    events = []
+    for opp in opportunities:
+        events.append({
+            "id": opp.id,
+            "title": opp.name,
+            "start": opp.bid_date.isoformat(),
+            "url": f"/opportunities/{opp.id}",
+            "backgroundColor": "#0d6efd",
+            "borderColor": "#0d6efd",
+        })
+
+    return JSONResponse(content=events)

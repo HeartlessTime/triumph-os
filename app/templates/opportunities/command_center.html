@@ -386,7 +386,17 @@
                                     <span class="text-muted">with {{ activity.contact.full_name }}</span>
                                     {% endif %}
                                 </div>
-                                <small class="text-muted">{{ activity.activity_date.strftime('%b %d, %H:%M') }}</small>
+                                <div class="d-flex align-items-center gap-2">
+                                    <small class="text-muted">{{ activity.activity_date.strftime('%b %d, %H:%M') }}</small>
+                                    <a href="/activities/{{ activity.id }}/edit" class="btn btn-sm btn-outline-secondary" title="Edit">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                    <form method="post" action="/activities/{{ activity.id }}/delete" class="d-inline" onsubmit="return confirm('Delete this activity?');">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </form>
+                                </div>
                             </div>
                             {% if activity.description %}
                             <p class="mb-0 mt-1 text-muted small">{{ activity.description }}</p>
