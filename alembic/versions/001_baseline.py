@@ -1,23 +1,19 @@
-"""Initial migration - create all tables
+"""baseline schema - all tables
 
-Revision ID: 001_initial
-Revises: 
-Create Date: 2024-01-15
-
+Revision ID: 001_baseline
+Revises:
+Create Date: 2026-01-09
 """
-from typing import Sequence, Union
-
 from alembic import op
 import sqlalchemy as sa
 
-# revision identifiers, used by Alembic.
-revision: str = '001_initial'
-down_revision: Union[str, None] = None
-branch_labels: Union[str, Sequence[str], None] = None
-depends_on: Union[str, Sequence[str], None] = None
+revision = '001_baseline'
+down_revision = None
+branch_labels = None
+depends_on = None
 
 
-def upgrade() -> None:
+def upgrade():
     # Accounts table
     op.create_table('accounts',
         sa.Column('id', sa.Integer(), nullable=False),
@@ -56,7 +52,7 @@ def upgrade() -> None:
     op.create_index('ix_contacts_account_id', 'contacts', ['account_id'])
     op.create_index('ix_contacts_email', 'contacts', ['email'])
 
-    # Scope Packages table (predefined scopes for opportunities)
+    # Scope Packages table
     op.create_table('scope_packages',
         sa.Column('id', sa.Integer(), nullable=False),
         sa.Column('name', sa.String(100), nullable=False),
@@ -74,8 +70,7 @@ def upgrade() -> None:
         sa.Column('name', sa.String(255), nullable=False),
         sa.Column('description', sa.Text(), nullable=True),
         sa.Column('stage', sa.String(50), nullable=False, server_default='Prospecting'),
-        sa.Column('probability', sa.Integer(), nullable=False, server_default='10'),
-        sa.Column('value', sa.Numeric(15, 2), nullable=True),
+        sa.Column('probability', sa.Integer(), nullable=True),
         sa.Column('bid_date', sa.Date(), nullable=True),
         sa.Column('close_date', sa.Date(), nullable=True),
         sa.Column('last_contacted', sa.Date(), nullable=True),
@@ -85,10 +80,26 @@ def upgrade() -> None:
         sa.Column('primary_contact_id', sa.Integer(), nullable=True),
         sa.Column('source', sa.String(100), nullable=True),
         sa.Column('notes', sa.Text(), nullable=True),
+        sa.Column('bid_type', sa.String(50), nullable=True),
+        sa.Column('submission_method', sa.String(50), nullable=True),
+        sa.Column('bid_time', sa.Time(), nullable=True),
+        sa.Column('bid_form_required', sa.Boolean(), nullable=False, server_default='false'),
+        sa.Column('bond_required', sa.Boolean(), nullable=False, server_default='false'),
+        sa.Column('prevailing_wage', sa.String(20), nullable=True),
+        sa.Column('known_risks', sa.Text(), nullable=True),
+        sa.Column('project_type', sa.String(50), nullable=True),
+        sa.Column('rebid', sa.Boolean(), nullable=False, server_default='false'),
+        sa.Column('lv_value', sa.Numeric(15, 2), nullable=True),
+        sa.Column('hdd_value', sa.Numeric(15, 2), nullable=True),
+        sa.Column('gcs', sa.JSON(), nullable=True),
+        sa.Column('related_contact_ids', sa.JSON(), nullable=True),
+        sa.Column('quick_links', sa.JSON(), nullable=True),
+        sa.Column('end_user_account_id', sa.Integer(), nullable=True),
         sa.Column('created_at', sa.DateTime(), nullable=False, server_default=sa.func.now()),
         sa.Column('updated_at', sa.DateTime(), nullable=False, server_default=sa.func.now()),
         sa.ForeignKeyConstraint(['account_id'], ['accounts.id'], ondelete='CASCADE'),
         sa.ForeignKeyConstraint(['primary_contact_id'], ['contacts.id']),
+        sa.ForeignKeyConstraint(['end_user_account_id'], ['accounts.id']),
         sa.PrimaryKeyConstraint('id')
     )
     op.create_index('ix_opportunities_account_id', 'opportunities', ['account_id'])
@@ -131,7 +142,7 @@ def upgrade() -> None:
     op.create_table('estimate_line_items',
         sa.Column('id', sa.Integer(), nullable=False),
         sa.Column('estimate_id', sa.Integer(), nullable=False),
-        sa.Column('line_type', sa.String(50), nullable=False),  # labor, material
+        sa.Column('line_type', sa.String(50), nullable=False),
         sa.Column('description', sa.String(500), nullable=False),
         sa.Column('quantity', sa.Numeric(15, 4), nullable=False, server_default='1'),
         sa.Column('unit', sa.String(50), nullable=True),
@@ -150,7 +161,7 @@ def upgrade() -> None:
     op.create_table('activities',
         sa.Column('id', sa.Integer(), nullable=False),
         sa.Column('opportunity_id', sa.Integer(), nullable=False),
-        sa.Column('activity_type', sa.String(50), nullable=False),  # call, meeting, email, note
+        sa.Column('activity_type', sa.String(50), nullable=False),
         sa.Column('subject', sa.String(255), nullable=False),
         sa.Column('description', sa.Text(), nullable=True),
         sa.Column('activity_date', sa.DateTime(), nullable=False),
@@ -192,7 +203,7 @@ def upgrade() -> None:
         sa.Column('file_path', sa.String(500), nullable=False),
         sa.Column('file_size', sa.Integer(), nullable=True),
         sa.Column('mime_type', sa.String(100), nullable=True),
-        sa.Column('document_type', sa.String(50), nullable=True),  # proposal, spec, drawing, quote, other
+        sa.Column('document_type', sa.String(50), nullable=True),
         sa.Column('created_at', sa.DateTime(), nullable=False, server_default=sa.func.now()),
         sa.ForeignKeyConstraint(['opportunity_id'], ['opportunities.id'], ondelete='CASCADE'),
         sa.ForeignKeyConstraint(['estimate_id'], ['estimates.id'], ondelete='SET NULL'),
@@ -236,17 +247,45 @@ def upgrade() -> None:
     )
     op.create_index('ix_vendor_quote_requests_opportunity_id', 'vendor_quote_requests', ['opportunity_id'])
 
+    # Meeting Briefs table
+    op.create_table('meeting_briefs',
+        sa.Column('id', sa.Integer(), nullable=False),
+        sa.Column('account_id', sa.Integer(), nullable=False),
+        sa.Column('brief_data', sa.JSON(), nullable=False),
+        sa.Column('created_at', sa.DateTime(), nullable=False, server_default=sa.func.now()),
+        sa.PrimaryKeyConstraint('id')
+    )
+    op.create_index('ix_meeting_briefs_account_id', 'meeting_briefs', ['account_id'])
 
-def downgrade() -> None:
+
+def downgrade():
+    op.drop_index('ix_meeting_briefs_account_id', table_name='meeting_briefs')
+    op.drop_table('meeting_briefs')
+    op.drop_index('ix_vendor_quote_requests_opportunity_id', table_name='vendor_quote_requests')
     op.drop_table('vendor_quote_requests')
     op.drop_table('vendors')
+    op.drop_index('ix_documents_opportunity_id', table_name='documents')
     op.drop_table('documents')
+    op.drop_index('ix_tasks_due_date', table_name='tasks')
+    op.drop_index('ix_tasks_status', table_name='tasks')
+    op.drop_index('ix_tasks_opportunity_id', table_name='tasks')
     op.drop_table('tasks')
+    op.drop_index('ix_activities_activity_date', table_name='activities')
+    op.drop_index('ix_activities_opportunity_id', table_name='activities')
     op.drop_table('activities')
+    op.drop_index('ix_estimate_line_items_estimate_id', table_name='estimate_line_items')
     op.drop_table('estimate_line_items')
+    op.drop_index('ix_estimates_opportunity_id', table_name='estimates')
     op.drop_table('estimates')
     op.drop_table('opportunity_scopes')
+    op.drop_index('ix_opportunities_next_followup', table_name='opportunities')
+    op.drop_index('ix_opportunities_bid_date', table_name='opportunities')
+    op.drop_index('ix_opportunities_stage', table_name='opportunities')
+    op.drop_index('ix_opportunities_account_id', table_name='opportunities')
     op.drop_table('opportunities')
     op.drop_table('scope_packages')
+    op.drop_index('ix_contacts_email', table_name='contacts')
+    op.drop_index('ix_contacts_account_id', table_name='contacts')
     op.drop_table('contacts')
+    op.drop_index('ix_accounts_name', table_name='accounts')
     op.drop_table('accounts')
