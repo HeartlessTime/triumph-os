@@ -1,5 +1,4 @@
 from datetime import date, timedelta
-from decimal import Decimal
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 
@@ -51,9 +50,6 @@ def get_dashboard_data(db: Session, today: date) -> dict:
         .order_by(Opportunity.bid_date)\
         .limit(10)\
         .all()
-
-    for opp in upcoming_bids:
-        opp.value = (opp.lv_value or Decimal(0)) + (opp.hdd_value or Decimal(0))
 
     my_tasks = db.query(Task)\
         .filter(Task.status == 'Open')\

@@ -149,6 +149,11 @@ class Opportunity(Base):
         return [t for t in self.tasks if t.status == 'Complete']
 
     @property
+    def value(self):
+        """Total value = LV value + HDD value."""
+        return (self.lv_value or Decimal(0)) + (self.hdd_value or Decimal(0))
+
+    @property
     def weighted_value(self):
         """Weighted value disabled — return 0."""
         return Decimal(0)
