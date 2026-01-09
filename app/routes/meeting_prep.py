@@ -59,10 +59,12 @@ async def get_meeting_prep(
         raise
     except Exception:
         # Database not initialized, show error
-        return templates.TemplateResponse("meeting_prep/error.html", {
+        return templates.TemplateResponse("demo_mode_notice.html", {
             "request": request,
             "user": user,
-            "error_message": "Database not initialized. Please set up your database first."
+            "feature": "Meeting Prep Research",
+            "message": "Database not initialized. Please set up your database first.",
+            "back_url": "/accounts"
         })
 
     # If no cache or force refresh, generate new brief
