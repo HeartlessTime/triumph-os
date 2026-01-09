@@ -1,26 +1,31 @@
-"""add missing opportunity ownership fields
-
-Revision ID: 4d22e734184d
-Revises: 001_initial
-Create Date: 2026-01-08 22:15:50.736620
-
-"""
-from typing import Sequence, Union
-
 from alembic import op
 import sqlalchemy as sa
 
-
 # revision identifiers, used by Alembic.
-revision: str = '4d22e734184d'
-down_revision: Union[str, None] = '001_initial'
-branch_labels: Union[str, Sequence[str], None] = None
-depends_on: Union[str, Sequence[str], None] = None
+revision = "add_opportunity_ownership_fields"
+down_revision = "001_initial"
+branch_labels = None
+depends_on = None
 
 
-def upgrade() -> None:
-    pass
+def upgrade():
+    op.add_column(
+        "opportunities",
+        sa.Column("owner_id", sa.Integer(), nullable=True)
+    )
+
+    op.add_column(
+        "opportunities",
+        sa.Column("assigned_estimator_id", sa.Integer(), nullable=True)
+    )
+
+    op.add_column(
+        "opportunities",
+        sa.Column("hdd_value", sa.Numeric(15, 2), nullable=True)
+    )
 
 
-def downgrade() -> None:
-    pass
+def downgrade():
+    op.drop_column("opportunities", "hdd_value")
+    op.drop_column("opportunities", "assigned_estimator_id")
+    op.drop_column("opportunities", "owner_id")
