@@ -10,11 +10,10 @@ from decimal import Decimal
 
 from app.database import SessionLocal, engine, Base
 from app.models import (
-    User, Account, Contact, ScopePackage, 
+    Account, Contact, ScopePackage,
     Opportunity, OpportunityScope, Estimate, EstimateLineItem,
     Activity, Task, Document, Vendor
 )
-from app.auth import hash_password
 from app.services.followup import calculate_next_followup
 from app.services.estimate import recalculate_estimate
 
@@ -24,43 +23,10 @@ def seed_database():
     db = SessionLocal()
     # Ensure tables exist (useful for SQLite dev when migrations haven't been run)
     Base.metadata.create_all(bind=engine)
-    
+
     try:
-        print("Seeding database (ensuring default users exist)...")
+        print("Seeding database...")
 
-        # Ensure default users exist (create or update).
-        defaults = [
-            ("admin@triumphos.com", "admin123", "Alex Admin", "Admin"),
-            ("sarah.sales@triumphos.com", "sales123", "Sarah Sales", "Sales"),
-            ("mike.estimator@triumphos.com", "estimate123", "Mike Estimator", "Estimator"),
-        ]
-
-        created_users = []
-        for email, passwd, full_name, role in defaults:
-            user = db.query(User).filter(User.email == email).first()
-            if user:
-                # Update password and role to ensure credentials are known
-                user.password_hash = hash_password(passwd)
-                user.full_name = full_name
-                user.role = role
-                print(f"  Updated user: {email}")
-            else:
-                user = User(
-                    email=email,
-                    password_hash=hash_password(passwd),
-                    full_name=full_name,
-                    role=role,
-                )
-                db.add(user)
-                print(f"  Created user: {email}")
-            db.flush()
-            created_users.append((email, passwd))
-
-        # Refresh references to default users for use later in the seed
-        admin = db.query(User).filter(User.email == "admin@triumphos.com").first()
-        sales_user = db.query(User).filter(User.email == "sarah.sales@triumphos.com").first()
-        estimator = db.query(User).filter(User.email == "mike.estimator@triumphos.com").first()
-        
         # Create Low-Voltage Scope Packages (replace generic scopes for LV contractors)
         print("  Creating low-voltage scope packages...")
         lv_scopes = [
@@ -79,7 +45,7 @@ def seed_database():
             scopes.append(ScopePackage(name=name, description=None, sort_order=i))
         db.add_all(scopes)
         db.flush()
-        
+
         # Create Vendors
         print("  Creating vendors...")
         vendors = [
@@ -90,7 +56,7 @@ def seed_database():
         ]
         db.add_all(vendors)
         db.flush()
-        
+
         # Create Accounts
         print("  Creating accounts...")
         accounts = [
@@ -103,7 +69,6 @@ def seed_database():
                 city="Austin",
                 state="TX",
                 zip_code="78701",
-                created_by_id=sales_user.id,
             ),
             Account(
                 name="TechStart Inc",
@@ -114,7 +79,6 @@ def seed_database():
                 city="Austin",
                 state="TX",
                 zip_code="78702",
-                created_by_id=sales_user.id,
             ),
             Account(
                 name="City Hospital",
@@ -125,7 +89,6 @@ def seed_database():
                 city="Round Rock",
                 state="TX",
                 zip_code="78664",
-                created_by_id=admin.id,
             ),
             Account(
                 name="Summit Schools District",
@@ -135,12 +98,11 @@ def seed_database():
                 city="Cedar Park",
                 state="TX",
                 zip_code="78613",
-                created_by_id=sales_user.id,
             ),
         ]
         db.add_all(accounts)
         db.flush()
-        
+
         # Create Contacts
         print("  Creating contacts...")
         contacts = [
@@ -157,11 +119,11 @@ def seed_database():
         ]
         db.add_all(contacts)
         db.flush()
-        
+
         # Create Opportunities
         print("  Creating opportunities...")
         today = date.today()
-        
+
         opps = [
             # Acme - Prospecting
             Opportunity(
@@ -172,8 +134,6 @@ def seed_database():
                 lv_value=Decimal("850000"),
                 hdd_value=None,
                 bid_date=today + timedelta(days=45),
-                owner_id=sales_user.id,
-                assigned_estimator_id=estimator.id,
                 primary_contact_id=contacts[0].id,
                 source="Referral",
                 last_contacted=today - timedelta(days=3),
@@ -189,8 +149,6 @@ def seed_database():
                 lv_value=Decimal("425000"),
                 hdd_value=None,
                 bid_date=today + timedelta(days=7),
-                owner_id=sales_user.id,
-                assigned_estimator_id=estimator.id,
                 primary_contact_id=contacts[2].id,
                 source="Website",
                 last_contacted=today - timedelta(days=1),
@@ -213,8 +171,6 @@ def seed_database():
                 lv_value=Decimal("2150000"),
                 hdd_value=None,
                 bid_date=today - timedelta(days=5),
-                owner_id=admin.id,
-                assigned_estimator_id=estimator.id,
                 primary_contact_id=contacts[4].id,
                 source="Repeat Customer",
                 last_contacted=today,
@@ -237,8 +193,6 @@ def seed_database():
                 lv_value=Decimal("1800000"),
                 hdd_value=None,
                 bid_date=today + timedelta(days=21),
-                owner_id=sales_user.id,
-                assigned_estimator_id=estimator.id,
                 primary_contact_id=contacts[5].id,
                 source="Cold Call",
                 last_contacted=today - timedelta(days=7),
@@ -262,8 +216,6 @@ def seed_database():
                 hdd_value=None,
                 bid_date=today - timedelta(days=30),
                 close_date=today - timedelta(days=15),
-                owner_id=sales_user.id,
-                assigned_estimator_id=estimator.id,
                 primary_contact_id=contacts[0].id,
                 source="Repeat Customer",
                 last_contacted=today - timedelta(days=15),
@@ -278,7 +230,7 @@ def seed_database():
                 ],
             ),
         ]
-        
+
         # Calculate next_followup for each opportunity
         for opp in opps:
             opp.next_followup = calculate_next_followup(
@@ -287,10 +239,10 @@ def seed_database():
                 bid_date=opp.bid_date,
                 today=today
             )
-        
+
         db.add_all(opps)
         db.flush()
-        
+
         # Add scope packages to opportunities
         print("  Adding scope packages to opportunities...")
         scope_links = [
@@ -311,7 +263,7 @@ def seed_database():
         ]
         db.add_all(scope_links)
         db.flush()
-        
+
         # Create Estimates
         print("  Creating estimates...")
         estimates = [
@@ -322,7 +274,6 @@ def seed_database():
                 name="Initial Estimate",
                 status="Revised",
                 margin_percent=Decimal("20"),
-                created_by_id=estimator.id,
             ),
             Estimate(
                 opportunity_id=opps[1].id,
@@ -330,7 +281,6 @@ def seed_database():
                 name="Final Bid",
                 status="Sent",
                 margin_percent=Decimal("22"),
-                created_by_id=estimator.id,
             ),
             # Hospital ER Expansion
             Estimate(
@@ -339,12 +289,11 @@ def seed_database():
                 name="Full Scope",
                 status="Approved",
                 margin_percent=Decimal("18"),
-                created_by_id=estimator.id,
             ),
         ]
         db.add_all(estimates)
         db.flush()
-        
+
         # Create Line Items
         print("  Creating estimate line items...")
         line_items = [
@@ -354,7 +303,7 @@ def seed_database():
             EstimateLineItem(estimate_id=estimates[0].id, line_type="labor", description="HVAC installation", quantity=Decimal("160"), unit="hour", unit_cost=Decimal("90"), sort_order=3),
             EstimateLineItem(estimate_id=estimates[0].id, line_type="material", description="Electrical materials", quantity=Decimal("1"), unit="lot", unit_cost=Decimal("45000"), sort_order=4),
             EstimateLineItem(estimate_id=estimates[0].id, line_type="material", description="HVAC units and ductwork", quantity=Decimal("1"), unit="lot", unit_cost=Decimal("75000"), sort_order=5),
-            
+
             # TechStart v2 (adjusted)
             EstimateLineItem(estimate_id=estimates[1].id, line_type="labor", description="Demolition crew", quantity=Decimal("100"), unit="hour", unit_cost=Decimal("65"), sort_order=1),
             EstimateLineItem(estimate_id=estimates[1].id, line_type="labor", description="Electrical installation", quantity=Decimal("180"), unit="hour", unit_cost=Decimal("85"), sort_order=2),
@@ -363,7 +312,7 @@ def seed_database():
             EstimateLineItem(estimate_id=estimates[1].id, line_type="material", description="Electrical materials", quantity=Decimal("1"), unit="lot", unit_cost=Decimal("42000"), sort_order=5),
             EstimateLineItem(estimate_id=estimates[1].id, line_type="material", description="HVAC units and ductwork", quantity=Decimal("1"), unit="lot", unit_cost=Decimal("72000"), sort_order=6),
             EstimateLineItem(estimate_id=estimates[1].id, line_type="material", description="Drywall and paint", quantity=Decimal("15000"), unit="sf", unit_cost=Decimal("4.50"), sort_order=7),
-            
+
             # Hospital
             EstimateLineItem(estimate_id=estimates[2].id, line_type="labor", description="General construction", quantity=Decimal("2000"), unit="hour", unit_cost=Decimal("75"), sort_order=1),
             EstimateLineItem(estimate_id=estimates[2].id, line_type="labor", description="Electrical", quantity=Decimal("800"), unit="hour", unit_cost=Decimal("90"), sort_order=2),
@@ -375,39 +324,37 @@ def seed_database():
         ]
         db.add_all(line_items)
         db.flush()
-        
+
         # Recalculate estimate totals
         for est in estimates:
             recalculate_estimate(est)
-        
+
         # Create Activities
         print("  Creating activities...")
         activities = [
-            Activity(opportunity_id=opps[0].id, activity_type="call", subject="Initial discovery call", description="Discussed project scope and timeline", activity_date=datetime.now() - timedelta(days=3), contact_id=contacts[0].id, created_by_id=sales_user.id),
-            Activity(opportunity_id=opps[1].id, activity_type="meeting", subject="Site walkthrough", description="Toured the 3rd floor with Emily", activity_date=datetime.now() - timedelta(days=10), contact_id=contacts[3].id, created_by_id=sales_user.id),
-            Activity(opportunity_id=opps[1].id, activity_type="email", subject="Sent proposal", description="Emailed final proposal v2", activity_date=datetime.now() - timedelta(days=1), contact_id=contacts[2].id, created_by_id=sales_user.id),
-            Activity(opportunity_id=opps[2].id, activity_type="meeting", subject="Contract negotiation", description="Discussed final terms with Dr. Wilson", activity_date=datetime.now(), contact_id=contacts[4].id, created_by_id=admin.id),
-            Activity(opportunity_id=opps[3].id, activity_type="site_visit", subject="Site survey", description="Completed site measurements and soil analysis", activity_date=datetime.now() - timedelta(days=5), contact_id=contacts[5].id, created_by_id=estimator.id),
+            Activity(opportunity_id=opps[0].id, activity_type="call", subject="Initial discovery call", description="Discussed project scope and timeline", activity_date=datetime.now() - timedelta(days=3), contact_id=contacts[0].id),
+            Activity(opportunity_id=opps[1].id, activity_type="meeting", subject="Site walkthrough", description="Toured the 3rd floor with Emily", activity_date=datetime.now() - timedelta(days=10), contact_id=contacts[3].id),
+            Activity(opportunity_id=opps[1].id, activity_type="email", subject="Sent proposal", description="Emailed final proposal v2", activity_date=datetime.now() - timedelta(days=1), contact_id=contacts[2].id),
+            Activity(opportunity_id=opps[2].id, activity_type="meeting", subject="Contract negotiation", description="Discussed final terms with Dr. Wilson", activity_date=datetime.now(), contact_id=contacts[4].id),
+            Activity(opportunity_id=opps[3].id, activity_type="site_visit", subject="Site survey", description="Completed site measurements and soil analysis", activity_date=datetime.now() - timedelta(days=5), contact_id=contacts[5].id),
         ]
         db.add_all(activities)
         db.flush()
-        
+
         # Create Tasks
         print("  Creating tasks...")
         tasks = [
-            Task(opportunity_id=opps[0].id, title="Schedule site visit", description="Coordinate with facilities for site access", due_date=today + timedelta(days=3), priority="High", assigned_to_id=estimator.id, created_by_id=sales_user.id),
-            Task(opportunity_id=opps[0].id, title="Request drawings", description="Get existing building drawings from Acme", due_date=today + timedelta(days=5), priority="Medium", assigned_to_id=sales_user.id, created_by_id=sales_user.id),
-            Task(opportunity_id=opps[1].id, title="Follow up on proposal", description="Check if they have questions on v2", due_date=today + timedelta(days=2), priority="High", assigned_to_id=sales_user.id, created_by_id=sales_user.id),
-            Task(opportunity_id=opps[2].id, title="Finalize contract", description="Send final contract for signature", due_date=today + timedelta(days=1), priority="Urgent", assigned_to_id=admin.id, created_by_id=admin.id),
-            Task(opportunity_id=opps[3].id, title="Get steel quotes", description="Request quotes from 3 steel vendors", due_date=today + timedelta(days=7), priority="Medium", assigned_to_id=estimator.id, created_by_id=estimator.id),
+            Task(opportunity_id=opps[0].id, title="Schedule site visit", description="Coordinate with facilities for site access", due_date=today + timedelta(days=3), priority="High"),
+            Task(opportunity_id=opps[0].id, title="Request drawings", description="Get existing building drawings from Acme", due_date=today + timedelta(days=5), priority="Medium"),
+            Task(opportunity_id=opps[1].id, title="Follow up on proposal", description="Check if they have questions on v2", due_date=today + timedelta(days=2), priority="High"),
+            Task(opportunity_id=opps[2].id, title="Finalize contract", description="Send final contract for signature", due_date=today + timedelta(days=1), priority="Urgent"),
+            Task(opportunity_id=opps[3].id, title="Get steel quotes", description="Request quotes from 3 steel vendors", due_date=today + timedelta(days=7), priority="Medium"),
         ]
         db.add_all(tasks)
-        
+
         db.commit()
-        print("Database seeding complete. Default credentials:")
-        for email, passwd in created_users:
-            print(f"  {email} / {passwd}")
-        
+        print("Database seeding complete.")
+
     except Exception as e:
         db.rollback()
         print(f"Error seeding database: {e}")

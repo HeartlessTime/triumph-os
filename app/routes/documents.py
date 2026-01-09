@@ -7,7 +7,6 @@ from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 
 from app.database import get_db
-from app.auth import get_current_user, DEMO_MODE
 from app.models import Opportunity, Document
 
 router = APIRouter(prefix="/documents", tags=["documents"])
@@ -27,50 +26,41 @@ async def upload_document(
     db: Session = Depends(get_db)
 ):
     """Upload a document to an opportunity."""
-    user = await get_current_user(request, db)
-    if not user:
-        return RedirectResponse(url="/login", status_code=303)
-    
-    # Wrap database operations in try-except
-    try:
-        opportunity = db.query(Opportunity).filter(Opportunity.id == opp_id).first()
-        if not opportunity:
-            raise HTTPException(status_code=404, detail="Opportunity not found")
-        
-        # Create uploads directory if needed
-        os.makedirs(UPLOAD_DIR, exist_ok=True)
-        
-        # Generate unique filename
-        original_filename = file.filename
-        ext = os.path.splitext(original_filename)[1] if '.' in original_filename else ''
-        unique_filename = f"{uuid.uuid4().hex}{ext}"
-        file_path = os.path.join(UPLOAD_DIR, unique_filename)
-        
-        # Save file
-        with open(file_path, "wb") as buffer:
-            shutil.copyfileobj(file.file, buffer)
-        
-        # Get file size
-        file_size = os.path.getsize(file_path)
-        
-        # Create document record
-        document = Document(
-            opportunity_id=opp_id,
-            name=name or original_filename,
-            original_filename=original_filename,
-            file_path=file_path,
-            file_size=file_size,
-            mime_type=file.content_type,
-            document_type=document_type,
-            uploaded_by_id=user.id,
-        )
-        
-        db.add(document)
-        db.commit()
-        
-        return RedirectResponse(url=f"/opportunities/{opp_id}", status_code=303)
-    except Exception as e:
-        return RedirectResponse(url=f"/opportunities/{opp_id}", status_code=303)
+    opportunity = db.query(Opportunity).filter(Opportunity.id == opp_id).first()
+    if not opportunity:
+        raise HTTPException(status_code=404, detail="Opportunity not found")
+
+    # Create uploads directory if needed
+    os.makedirs(UPLOAD_DIR, exist_ok=True)
+
+    # Generate unique filename
+    original_filename = file.filename
+    ext = os.path.splitext(original_filename)[1] if '.' in original_filename else ''
+    unique_filename = f"{uuid.uuid4().hex}{ext}"
+    file_path = os.path.join(UPLOAD_DIR, unique_filename)
+
+    # Save file
+    with open(file_path, "wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
+
+    # Get file size
+    file_size = os.path.getsize(file_path)
+
+    # Create document record
+    document = Document(
+        opportunity_id=opp_id,
+        name=name or original_filename,
+        original_filename=original_filename,
+        file_path=file_path,
+        file_size=file_size,
+        mime_type=file.content_type,
+        document_type=document_type,
+    )
+
+    db.add(document)
+    db.commit()
+
+    return RedirectResponse(url=f"/opportunities/{opp_id}", status_code=303)
 
 
 @router.get("/{doc_id}/download")
@@ -80,34 +70,18 @@ async def download_document(
     db: Session = Depends(get_db)
 ):
     """Download a document."""
-    user = await get_current_user(request, db)
-    if not user:
-        return RedirectResponse(url="/login", status_code=303)
-    
-    # Wrap database operations in try-except
-    try:
-        document = db.query(Document).filter(Document.id == doc_id).first()
-        if not document:
-            raise HTTPException(status_code=404, detail="Document not found")
-        
-        if not os.path.exists(document.file_path):
-            raise HTTPException(status_code=404, detail="File not found on disk")
-        
-        return FileResponse(
-            path=document.file_path,
-            filename=document.original_filename,
-            media_type=document.mime_type or "application/octet-stream"
-        )
-    except HTTPException:
-        raise
-    except Exception as e:
-        return templates.TemplateResponse("demo_mode_notice.html", {
-            "request": request,
-            "user": user,
-            "feature": "Download Document",
-            "message": "Database error: Unable to load document. Please ensure your database is properly initialized.",
-            "back_url": "/opportunities",
-        })
+    document = db.query(Document).filter(Document.id == doc_id).first()
+    if not document:
+        raise HTTPException(status_code=404, detail="Document not found")
+
+    if not os.path.exists(document.file_path):
+        raise HTTPException(status_code=404, detail="File not found on disk")
+
+    return FileResponse(
+        path=document.file_path,
+        filename=document.original_filename,
+        media_type=document.mime_type or "application/octet-stream"
+    )
 
 
 @router.get("/{doc_id}/view")
@@ -117,35 +91,19 @@ async def view_document(
     db: Session = Depends(get_db)
 ):
     """View a document inline (for PDFs, images)."""
-    user = await get_current_user(request, db)
-    if not user:
-        return RedirectResponse(url="/login", status_code=303)
-    
-    # Wrap database operations in try-except
-    try:
-        document = db.query(Document).filter(Document.id == doc_id).first()
-        if not document:
-            raise HTTPException(status_code=404, detail="Document not found")
-        
-        if not os.path.exists(document.file_path):
-            raise HTTPException(status_code=404, detail="File not found on disk")
-        
-        # Return file for inline viewing
-        return FileResponse(
-            path=document.file_path,
-            media_type=document.mime_type or "application/octet-stream",
-            headers={"Content-Disposition": f"inline; filename=\"{document.original_filename}\""}
-        )
-    except HTTPException:
-        raise
-    except Exception as e:
-        return templates.TemplateResponse("demo_mode_notice.html", {
-            "request": request,
-            "user": user,
-            "feature": "View Document",
-            "message": "Database error: Unable to load document. Please ensure your database is properly initialized.",
-            "back_url": "/opportunities",
-        })
+    document = db.query(Document).filter(Document.id == doc_id).first()
+    if not document:
+        raise HTTPException(status_code=404, detail="Document not found")
+
+    if not os.path.exists(document.file_path):
+        raise HTTPException(status_code=404, detail="File not found on disk")
+
+    # Return file for inline viewing
+    return FileResponse(
+        path=document.file_path,
+        media_type=document.mime_type or "application/octet-stream",
+        headers={"Content-Disposition": f"inline; filename=\"{document.original_filename}\""}
+    )
 
 
 @router.post("/{doc_id}/delete")
@@ -155,29 +113,21 @@ async def delete_document(
     db: Session = Depends(get_db)
 ):
     """Delete a document."""
-    user = await get_current_user(request, db)
-    if not user:
-        return RedirectResponse(url="/login", status_code=303)
-    
-    # Wrap database operations in try-except
-    try:
-        document = db.query(Document).filter(Document.id == doc_id).first()
-        if not document:
-            raise HTTPException(status_code=404, detail="Document not found")
-        
-        opp_id = document.opportunity_id
-        
-        # Delete file from disk
-        if os.path.exists(document.file_path):
-            os.remove(document.file_path)
-        
-        # Delete record
-        db.delete(document)
-        db.commit()
-        
-        return RedirectResponse(url=f"/opportunities/{opp_id}", status_code=303)
-    except Exception as e:
-        return RedirectResponse(url="/opportunities", status_code=303)
+    document = db.query(Document).filter(Document.id == doc_id).first()
+    if not document:
+        raise HTTPException(status_code=404, detail="Document not found")
+
+    opp_id = document.opportunity_id
+
+    # Delete file from disk
+    if os.path.exists(document.file_path):
+        os.remove(document.file_path)
+
+    # Delete record
+    db.delete(document)
+    db.commit()
+
+    return RedirectResponse(url=f"/opportunities/{opp_id}", status_code=303)
 
 
 @router.post("/{doc_id}/update")
@@ -189,21 +139,13 @@ async def update_document(
     db: Session = Depends(get_db)
 ):
     """Update document metadata."""
-    user = await get_current_user(request, db)
-    if not user:
-        return RedirectResponse(url="/login", status_code=303)
-    
-    # Wrap database operations in try-except
-    try:
-        document = db.query(Document).filter(Document.id == doc_id).first()
-        if not document:
-            raise HTTPException(status_code=404, detail="Document not found")
-        
-        document.name = name
-        document.document_type = document_type
-        
-        db.commit()
-        
-        return RedirectResponse(url=f"/opportunities/{document.opportunity_id}", status_code=303)
-    except Exception as e:
-        return RedirectResponse(url="/opportunities", status_code=303)
+    document = db.query(Document).filter(Document.id == doc_id).first()
+    if not document:
+        raise HTTPException(status_code=404, detail="Document not found")
+
+    document.name = name
+    document.document_type = document_type
+
+    db.commit()
+
+    return RedirectResponse(url=f"/opportunities/{document.opportunity_id}", status_code=303)

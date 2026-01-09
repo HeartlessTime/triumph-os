@@ -8,7 +8,6 @@ from collections import defaultdict
 from decimal import Decimal
 
 from app.database import get_db
-from app.auth import get_current_user
 from app.models import User, Opportunity
 
 router = APIRouter(prefix="/estimators", tags=["estimators"])
@@ -27,24 +26,13 @@ def calculate_estimator_workload(db: Session, estimator_id: int) -> dict:
             - estimating_status_breakdown: Dict of status counts
             - opportunities: List of opportunity details
     """
-    # Try to get opportunities, handle missing database tables
-    try:
-        # Get all open opportunities for this estimator
-        opportunities = db.query(Opportunity).filter(
-            and_(
-                Opportunity.assigned_estimator_id == estimator_id,
-                Opportunity.stage.notin_(['Won', 'Lost'])
-            )
-        ).all()
-    except Exception:
-        # Database not initialized, return empty metrics
-        return {
-            'active_opportunities': 0,
-            'total_pipeline_value': 0,
-            'upcoming_bids_count': 0,
-            'estimating_status_breakdown': {},
-            'opportunities': []
-        }
+    # Get all open opportunities for this estimator
+    opportunities = db.query(Opportunity).filter(
+        and_(
+            Opportunity.assigned_estimator_id == estimator_id,
+            Opportunity.stage.notin_(['Won', 'Lost'])
+        )
+    ).all()
 
     # Calculate metrics
     active_count = len(opportunities)
@@ -96,17 +84,8 @@ async def estimator_dashboard(
     db: Session = Depends(get_db)
 ):
     """Estimator workload dashboard showing capacity and assignments."""
-    user = await get_current_user(request, db)
-    if not user:
-        return RedirectResponse(url="/login?next=/estimators", status_code=303)
-
-    # Try to get estimators, handle missing database tables
-    try:
-        # Get all estimators (users with role=Estimator)
-        estimators = db.query(User).filter(User.role == 'Estimator').all()
-    except Exception:
-        # Database not initialized, return empty list
-        estimators = []
+    # Get all estimators (users with role=Estimator)
+    estimators = db.query(User).filter(User.role == 'Estimator').all()
 
     # Calculate workload for each
     estimator_workloads = []
@@ -138,7 +117,6 @@ async def estimator_dashboard(
 
     return templates.TemplateResponse("estimators/dashboard.html", {
         "request": request,
-        "user": user,
         "estimator_workloads": estimator_workloads,
     })
 
@@ -150,10 +128,6 @@ async def get_estimator_workload_json(
     db: Session = Depends(get_db)
 ):
     """Get estimator workload as JSON (for AJAX calls)."""
-    user = await get_current_user(request, db)
-    if not user:
-        raise HTTPException(status_code=401, detail="Not authenticated")
-
     workload_data = calculate_estimator_workload(db, estimator_id)
     return JSONResponse(workload_data)
 
@@ -167,17 +141,8 @@ async def suggest_estimator_assignment(
     Suggest which estimator to assign a new opportunity to.
     Returns estimator with lowest current workload.
     """
-    user = await get_current_user(request, db)
-    if not user:
-        raise HTTPException(status_code=401, detail="Not authenticated")
-
-    # Try to get estimators, handle missing database tables
-    try:
-        # Get all estimators
-        estimators = db.query(User).filter(User.role == 'Estimator').all()
-    except Exception:
-        # Database not initialized
-        return JSONResponse({"suggested_estimator_id": None, "reason": "Database not initialized"})
+    # Get all estimators
+    estimators = db.query(User).filter(User.role == 'Estimator').all()
 
     if not estimators:
         return JSONResponse({"suggested_estimator_id": None, "reason": "No estimators found"})

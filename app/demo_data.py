@@ -1,4 +1,4 @@
-"""Demo data seeding for DEMO_MODE."""
+"""Demo data for fallback when database is unavailable."""
 from datetime import datetime, date, timedelta
 from decimal import Decimal
 from app.models import (

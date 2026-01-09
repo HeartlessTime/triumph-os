@@ -1,20 +1,14 @@
 from datetime import date, timedelta
 from decimal import Decimal
 from fastapi import APIRouter, Request, Depends
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 
 from app.database import get_db
-from app.auth import get_current_user, DEMO_MODE
 from app.models import Opportunity, Account, Task, Activity, User
 from app.services.followup import get_followup_status
-from app.demo_data import (
-    get_all_demo_opportunities,
-    get_all_demo_tasks,
-    get_all_demo_activities
-)
 
 router = APIRouter(tags=["dashboard"])
 templates = Jinja2Templates(directory="app/templates")
@@ -26,180 +20,101 @@ async def dashboard(
     db: Session = Depends(get_db)
 ):
     """Main dashboard page."""
-    user = await get_current_user(request, db)
-    if not user:
-        return RedirectResponse(url="/login", status_code=303)
-
     today = date.today()
 
     # Get pipeline stats
     open_stages = ['Prospecting', 'Qualification', 'Needs Analysis', 'Proposal', 'Bid Sent', 'Negotiation']
 
-    # Try to use database, fallback to demo data if tables don't exist
-    try:
-        use_demo = DEMO_MODE or db is None
-        # Test if database is accessible
-        if not use_demo:
-            db.query(Opportunity).limit(1).all()
-    except Exception:
-        # Database not initialized, use demo data
-        use_demo = True
+    # Pipeline value: sum of LV + HDD estimates
+    pipeline_value = db.query(
+        func.sum(func.coalesce(Opportunity.lv_value, 0) + func.coalesce(Opportunity.hdd_value, 0))
+    ).filter(Opportunity.stage.in_(open_stages)).scalar() or 0
 
-    if use_demo:
-        demo_opps = get_all_demo_opportunities()
-        demo_tasks_list = get_all_demo_tasks()
-        demo_activities_list = get_all_demo_activities()
+    # Weighted pipeline disabled (probability not used)
+    weighted_pipeline = 0
 
-        # Calculate pipeline stats from demo data
-        open_opps = [o for o in demo_opps if o.stage in open_stages]
-        pipeline_value = sum((o.lv_value or Decimal(0)) + (o.hdd_value or Decimal(0)) for o in open_opps)
-        weighted_pipeline = 0
-        open_opportunities = len(open_opps)
+    open_opportunities = db.query(func.count(Opportunity.id))\
+        .filter(Opportunity.stage.in_(open_stages))\
+        .scalar() or 0
 
-        # Won this month
-        first_of_month = today.replace(day=1)
-        won_opps = [o for o in demo_opps if o.stage == 'Won' and o.close_date and o.close_date >= first_of_month]
-        won_this_month = sum((o.lv_value or Decimal(0)) + (o.hdd_value or Decimal(0)) for o in won_opps)
+    # Won this month
+    first_of_month = today.replace(day=1)
+    won_this_month = db.query(func.sum(func.coalesce(Opportunity.lv_value, 0) + func.coalesce(Opportunity.hdd_value, 0)))\
+        .filter(
+            Opportunity.stage == 'Won',
+            Opportunity.close_date >= first_of_month
+        ).scalar() or 0
 
-        # Opportunities needing follow-up
-        followup_opps = [o for o in open_opps if o.next_followup and o.next_followup <= today]
-        followup_opps.sort(key=lambda o: o.next_followup if o.next_followup else today)
-        followup_opps = followup_opps[:10]
+    # Opportunities needing follow-up
+    followup_opps = db.query(Opportunity)\
+        .filter(
+            Opportunity.stage.in_(open_stages),
+            Opportunity.next_followup <= today
+        )\
+        .order_by(Opportunity.next_followup)\
+        .limit(10)\
+        .all()
 
-        # Add followup status
-        for opp in followup_opps:
-            opp.followup_status = get_followup_status(opp.next_followup, today)
+    # Add followup status to each opportunity
+    for opp in followup_opps:
+        opp.followup_status = get_followup_status(opp.next_followup, today)
 
-        # Upcoming bids
-        upcoming_bids = [o for o in open_opps if o.bid_date and today <= o.bid_date <= today + timedelta(days=14)]
-        upcoming_bids.sort(key=lambda o: o.bid_date if o.bid_date else today + timedelta(days=999))
-        upcoming_bids = upcoming_bids[:10]
+    # Upcoming bids
+    upcoming_bids = db.query(Opportunity)\
+        .filter(
+            Opportunity.stage.in_(open_stages),
+            Opportunity.bid_date >= today,
+            Opportunity.bid_date <= today + timedelta(days=14)
+        )\
+        .order_by(Opportunity.bid_date)\
+        .limit(10)\
+        .all()
 
-        # Add value for each (days_until_bid is already a property)
-        for opp in upcoming_bids:
-            opp.value = (opp.lv_value or Decimal(0)) + (opp.hdd_value or Decimal(0))
+    # Add value for each (days_until_bid is already a property)
+    for opp in upcoming_bids:
+        opp.value = (opp.lv_value or Decimal(0)) + (opp.hdd_value or Decimal(0))
 
-        # My tasks
-        my_tasks = [t for t in demo_tasks_list if t.status == 'Open']
-        my_tasks.sort(key=lambda t: (t.due_date if t.due_date else date(9999, 12, 31), -(['Low', 'Medium', 'High'].index(t.priority) if t.priority in ['Low', 'Medium', 'High'] else 0)))
-        my_tasks = my_tasks[:10]
+    # My tasks
+    my_tasks = db.query(Task)\
+        .filter(Task.status == 'Open')\
+        .order_by(Task.due_date.nullslast(), Task.priority.desc())\
+        .limit(10)\
+        .all()
 
-        # Recent activities
-        recent_activities = sorted(demo_activities_list, key=lambda a: a.activity_date, reverse=True)[:10]
+    # Recent activities
+    recent_activities = db.query(Activity)\
+        .order_by(Activity.activity_date.desc())\
+        .limit(10)\
+        .all()
 
-        # Stage distribution
-        stage_data = {}
-        for stage in open_stages:
-            stage_opps = [o for o in demo_opps if o.stage == stage]
-            if stage_opps:
-                count = len(stage_opps)
-                value = sum((o.lv_value or Decimal(0)) + (o.hdd_value or Decimal(0)) for o in stage_opps)
-                stage_data[stage] = {'count': count, 'value': float(value)}
+    # Stage distribution for pipeline chart
+    stage_counts = db.query(
+        Opportunity.stage,
+        func.count(Opportunity.id),
+        func.sum(func.coalesce(Opportunity.lv_value, 0) + func.coalesce(Opportunity.hdd_value, 0))
+    ).filter(
+        Opportunity.stage.in_(open_stages)
+    ).group_by(Opportunity.stage).all()
 
-        # Estimator capacity (empty for demo mode)
-        estimator_capacity = []
-    else:
-        # Pipeline value: sum of LV + HDD estimates
-        pipeline_value = db.query(
-            func.sum(func.coalesce(Opportunity.lv_value, 0) + func.coalesce(Opportunity.hdd_value, 0))
-        ).filter(Opportunity.stage.in_(open_stages)).scalar() or 0
+    stage_data = {row[0]: {'count': row[1], 'value': float(row[2] or 0)} for row in stage_counts}
 
-        # Weighted pipeline disabled (probability not used)
-        weighted_pipeline = 0
-
-        open_opportunities = db.query(func.count(Opportunity.id))\
-            .filter(Opportunity.stage.in_(open_stages))\
-            .scalar() or 0
-
-        # Won this month
-        first_of_month = today.replace(day=1)
-        won_this_month = db.query(func.sum(func.coalesce(Opportunity.lv_value, 0) + func.coalesce(Opportunity.hdd_value, 0)))\
-            .filter(
-                Opportunity.stage == 'Won',
-                Opportunity.close_date >= first_of_month
-            ).scalar() or 0
-
-        # Opportunities needing follow-up
-        followup_opps = db.query(Opportunity)\
-            .filter(
-                Opportunity.stage.in_(open_stages),
-                Opportunity.next_followup <= today
-            )\
-            .order_by(Opportunity.next_followup)\
-            .limit(10)\
-            .all()
-
-        # Add followup status to each opportunity
-        for opp in followup_opps:
-            opp.followup_status = get_followup_status(opp.next_followup, today)
-
-        # Upcoming bids
-        upcoming_bids = db.query(Opportunity)\
-            .filter(
-                Opportunity.stage.in_(open_stages),
-                Opportunity.bid_date >= today,
-                Opportunity.bid_date <= today + timedelta(days=14)
-            )\
-            .order_by(Opportunity.bid_date)\
-            .limit(10)\
-            .all()
-
-        # Add value for each (days_until_bid is already a property)
-        for opp in upcoming_bids:
-            opp.value = (opp.lv_value or Decimal(0)) + (opp.hdd_value or Decimal(0))
-
-        # My tasks
-        if user.is_admin:
-            my_tasks = db.query(Task)\
-                .filter(Task.status == 'Open')\
-                .order_by(Task.due_date.nullslast(), Task.priority.desc())\
-                .limit(10)\
-                .all()
-        else:
-            my_tasks = db.query(Task)\
-                .filter(
-                    Task.status == 'Open',
-                    Task.assigned_to_id == user.id
-                )\
-                .order_by(Task.due_date.nullslast(), Task.priority.desc())\
-                .limit(10)\
-                .all()
-
-        # Recent activities
-        recent_activities = db.query(Activity)\
-            .order_by(Activity.activity_date.desc())\
-            .limit(10)\
-            .all()
-
-        # Stage distribution for pipeline chart
-        stage_counts = db.query(
-            Opportunity.stage,
-            func.count(Opportunity.id),
-            func.sum(func.coalesce(Opportunity.lv_value, 0) + func.coalesce(Opportunity.hdd_value, 0))
-        ).filter(
+    # Estimator capacity summary
+    estimators = db.query(User).filter(User.role == 'Estimator').all()
+    estimator_capacity = []
+    for estimator in estimators:
+        active_count = db.query(func.count(Opportunity.id)).filter(
+            Opportunity.assigned_estimator_id == estimator.id,
             Opportunity.stage.in_(open_stages)
-        ).group_by(Opportunity.stage).all()
+        ).scalar() or 0
 
-        stage_data = {row[0]: {'count': row[1], 'value': float(row[2] or 0)} for row in stage_counts}
-
-        # Estimator capacity summary
-        estimators = db.query(User).filter(User.role == 'Estimator').all()
-        estimator_capacity = []
-        for estimator in estimators:
-            active_count = db.query(func.count(Opportunity.id)).filter(
-                Opportunity.assigned_estimator_id == estimator.id,
-                Opportunity.stage.in_(open_stages)
-            ).scalar() or 0
-
-            estimator_capacity.append({
-                'name': estimator.full_name,
-                'active_opportunities': active_count,
-                'capacity_level': 'green' if active_count <= 4 else ('yellow' if active_count <= 7 else 'red')
-            })
+        estimator_capacity.append({
+            'name': estimator.full_name,
+            'active_opportunities': active_count,
+            'capacity_level': 'green' if active_count <= 4 else ('yellow' if active_count <= 7 else 'red')
+        })
 
     return templates.TemplateResponse("dashboard/index.html", {
         "request": request,
-        "user": user,
         "pipeline_value": pipeline_value,
         "weighted_pipeline": weighted_pipeline,
         "open_opportunities": open_opportunities,

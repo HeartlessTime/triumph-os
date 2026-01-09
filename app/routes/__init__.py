@@ -1,4 +1,3 @@
-from app.routes.auth import router as auth_router
 from app.routes.dashboard import router as dashboard_router
 from app.routes.accounts import router as accounts_router
 from app.routes.contacts import router as contacts_router
@@ -13,7 +12,6 @@ from app.routes.email_sync import router as email_sync_router
 from app.routes.estimators import router as estimators_router
 
 __all__ = [
-    "auth_router",
     "dashboard_router",
     "accounts_router",
     "contacts_router",

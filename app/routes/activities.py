@@ -5,7 +5,6 @@ from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 
 from app.database import get_db
-from app.auth import get_current_user, DEMO_MODE
 from app.models import Opportunity, Activity, Contact
 from app.services.followup import calculate_next_followup
 
@@ -26,53 +25,39 @@ async def add_activity(
     db: Session = Depends(get_db)
 ):
     """Add an activity to an opportunity."""
-    user = await get_current_user(request, db)
-    if not user:
-        return RedirectResponse(url="/login", status_code=303)
-    
-    # Wrap database operations in try-except
-    try:
-        opportunity = db.query(Opportunity).filter(Opportunity.id == opp_id).first()
-        if not opportunity:
-            raise HTTPException(status_code=404, detail="Opportunity not found")
-        
-        # Parse activity date
-        if activity_date:
-            activity_dt = datetime.strptime(activity_date, "%Y-%m-%dT%H:%M")
+    opportunity = db.query(Opportunity).filter(Opportunity.id == opp_id).first()
+    if not opportunity:
+        raise HTTPException(status_code=404, detail="Opportunity not found")
+
+    # Parse activity date
+    if activity_date:
+        activity_dt = datetime.strptime(activity_date, "%Y-%m-%dT%H:%M")
+    else:
         activity_dt = datetime.now()
-        
-        activity = Activity(
-            opportunity_id=opp_id,
-            activity_type=activity_type,
-            subject=subject,
-            description=description or None,
-            activity_date=activity_dt,
-            contact_id=contact_id if contact_id else None,
-            created_by_id=user.id,
+
+    activity = Activity(
+        opportunity_id=opp_id,
+        activity_type=activity_type,
+        subject=subject,
+        description=description or None,
+        activity_date=activity_dt,
+        contact_id=contact_id if contact_id else None,
+    )
+
+    db.add(activity)
+
+    # Update last_contacted if requested and activity is today or in the past
+    if update_last_contacted and activity_dt.date() <= date.today():
+        opportunity.last_contacted = activity_dt.date()
+        # Recalculate followup
+        opportunity.next_followup = calculate_next_followup(
+            stage=opportunity.stage,
+            last_contacted=opportunity.last_contacted,
+            bid_date=opportunity.bid_date
         )
-        
-        db.add(activity)
-        
-        # Update last_contacted if requested and activity is today or in the past
-        if update_last_contacted and activity_dt.date() <= date.today():
-            opportunity.last_contacted = activity_dt.date()
-            # Recalculate followup
-            opportunity.next_followup = calculate_next_followup(
-                stage=opportunity.stage,
-                last_contacted=opportunity.last_contacted,
-                bid_date=opportunity.bid_date
-            )
-        
-        db.commit()
-    except Exception as e:
-        return templates.TemplateResponse("demo_mode_notice.html", {
-            "request": request,
-            "user": user,
-            "feature": "Add Activity",
-            "message": f"Database error: Unable to add activity. Please ensure your database is properly initialized.",
-            "back_url": f"/opportunities/{opp_id}",
-        })
-    
+
+    db.commit()
+
     return RedirectResponse(url=f"/opportunities/{opp_id}", status_code=303)
 
 
@@ -83,31 +68,16 @@ async def edit_activity_form(
     db: Session = Depends(get_db)
 ):
     """Display edit activity form."""
-    user = await get_current_user(request, db)
-    if not user:
-        return RedirectResponse(url="/login", status_code=303)
-    
-    # Wrap database operations in try-except
-    try:
-        activity = db.query(Activity).filter(Activity.id == activity_id).first()
-        if not activity:
-            raise HTTPException(status_code=404, detail="Activity not found")
-        
-        contacts = db.query(Contact).filter(
-            Contact.account_id == activity.opportunity.account_id
-        ).order_by(Contact.last_name).all()
-    except Exception as e:
-        return templates.TemplateResponse("demo_mode_notice.html", {
-            "request": request,
-            "user": user,
-            "feature": "Edit Activity",
-            "message": "Database error: Unable to load activity. Please ensure your database is properly initialized.",
-            "back_url": "/",
-        })
-    
+    activity = db.query(Activity).filter(Activity.id == activity_id).first()
+    if not activity:
+        raise HTTPException(status_code=404, detail="Activity not found")
+
+    contacts = db.query(Contact).filter(
+        Contact.account_id == activity.opportunity.account_id
+    ).order_by(Contact.last_name).all()
+
     return templates.TemplateResponse("activities/edit.html", {
         "request": request,
-        "user": user,
         "activity": activity,
         "contacts": contacts,
         "activity_types": Activity.ACTIVITY_TYPES,
@@ -126,27 +96,19 @@ async def update_activity(
     db: Session = Depends(get_db)
 ):
     """Update an activity."""
-    user = await get_current_user(request, db)
-    if not user:
-        return RedirectResponse(url="/login", status_code=303)
-    
-    # Wrap database operations in try-except
-    try:
-        activity = db.query(Activity).filter(Activity.id == activity_id).first()
-        if not activity:
-            raise HTTPException(status_code=404, detail="Activity not found")
-        
-        activity.activity_type = activity_type
-        activity.subject = subject
-        activity.description = description or None
-        activity.activity_date = datetime.strptime(activity_date, "%Y-%m-%dT%H:%M")
-        activity.contact_id = contact_id if contact_id else None
-        
-        db.commit()
-        
-        return RedirectResponse(url=f"/opportunities/{activity.opportunity_id}", status_code=303)
-    except Exception as e:
-        return RedirectResponse(url="/", status_code=303)
+    activity = db.query(Activity).filter(Activity.id == activity_id).first()
+    if not activity:
+        raise HTTPException(status_code=404, detail="Activity not found")
+
+    activity.activity_type = activity_type
+    activity.subject = subject
+    activity.description = description or None
+    activity.activity_date = datetime.strptime(activity_date, "%Y-%m-%dT%H:%M")
+    activity.contact_id = contact_id if contact_id else None
+
+    db.commit()
+
+    return RedirectResponse(url=f"/opportunities/{activity.opportunity_id}", status_code=303)
 
 
 @router.post("/{activity_id}/delete")
@@ -156,20 +118,12 @@ async def delete_activity(
     db: Session = Depends(get_db)
 ):
     """Delete an activity."""
-    user = await get_current_user(request, db)
-    if not user:
-        return RedirectResponse(url="/login", status_code=303)
-    
-    # Wrap database operations in try-except
-    try:
-        activity = db.query(Activity).filter(Activity.id == activity_id).first()
-        if not activity:
-            raise HTTPException(status_code=404, detail="Activity not found")
-        
-        opp_id = activity.opportunity_id
-        db.delete(activity)
-        db.commit()
-        
-        return RedirectResponse(url=f"/opportunities/{opp_id}", status_code=303)
-    except Exception as e:
-        return RedirectResponse(url="/", status_code=303)
+    activity = db.query(Activity).filter(Activity.id == activity_id).first()
+    if not activity:
+        raise HTTPException(status_code=404, detail="Activity not found")
+
+    opp_id = activity.opportunity_id
+    db.delete(activity)
+    db.commit()
+
+    return RedirectResponse(url=f"/opportunities/{opp_id}", status_code=303)

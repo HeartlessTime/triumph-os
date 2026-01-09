@@ -5,9 +5,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import or_
 
 from app.database import get_db
-from app.auth import get_current_user, DEMO_MODE
-from app.models import Account, User
-from app.demo_data import get_all_demo_accounts
+from app.models import Account
 
 router = APIRouter(prefix="/accounts", tags=["accounts"])
 templates = Jinja2Templates(directory="app/templates")
@@ -21,50 +19,23 @@ async def list_accounts(
     db: Session = Depends(get_db)
 ):
     """List all accounts with optional filtering."""
-    user = await get_current_user(request, db)
-    if not user:
-        return RedirectResponse(url="/login?next=/accounts", status_code=303)
+    query = db.query(Account)
 
-    # Try to use database, fallback to demo data if tables don't exist
-    use_demo = DEMO_MODE or db is None
-    if not use_demo:
-        try:
-            # Test database connectivity
-            db.query(Account).limit(1).all()
-        except Exception:
-            use_demo = True
-
-    if use_demo:
-        accounts = get_all_demo_accounts()
-
-        # Apply filters to demo data
-        if search:
-            search_lower = search.lower()
-            accounts = [a for a in accounts if search_lower in a.name.lower() or (a.city and search_lower in a.city.lower())]
-
-        if industry:
-            accounts = [a for a in accounts if a.industry == industry]
-
-        accounts.sort(key=lambda a: a.name)
-    else:
-        query = db.query(Account)
-
-        if search:
-            query = query.filter(
-                or_(
-                    Account.name.ilike(f"%{search}%"),
-                    Account.city.ilike(f"%{search}%"),
-                )
+    if search:
+        query = query.filter(
+            or_(
+                Account.name.ilike(f"%{search}%"),
+                Account.city.ilike(f"%{search}%"),
             )
+        )
 
-        if industry:
-            query = query.filter(Account.industry == industry)
+    if industry:
+        query = query.filter(Account.industry == industry)
 
-        accounts = query.order_by(Account.name).all()
+    accounts = query.order_by(Account.name).all()
 
     return templates.TemplateResponse("accounts/list.html", {
         "request": request,
-        "user": user,
         "accounts": accounts,
         "search": search,
         "industry": industry,
@@ -78,13 +49,8 @@ async def new_account_form(
     db: Session = Depends(get_db)
 ):
     """Display new account form."""
-    user = await get_current_user(request, db)
-    if not user:
-        return RedirectResponse(url="/login?next=/accounts/new", status_code=303)
-
     return templates.TemplateResponse("accounts/form.html", {
         "request": request,
-        "user": user,
         "account": None,
         "industries": Account.INDUSTRIES,
         "is_new": True,
@@ -106,10 +72,6 @@ async def create_account(
     db: Session = Depends(get_db)
 ):
     """Create a new account."""
-    user = await get_current_user(request, db)
-    if not user:
-        return RedirectResponse(url="/login", status_code=303)
-    
     account = Account(
         name=name,
         industry=industry or None,
@@ -120,12 +82,11 @@ async def create_account(
         state=state or None,
         zip_code=zip_code or None,
         notes=notes or None,
-        created_by_id=user.id,
     )
-    
+
     db.add(account)
     db.commit()
-    
+
     return RedirectResponse(url=f"/accounts/{account.id}", status_code=303)
 
 
@@ -136,33 +97,12 @@ async def view_account(
     db: Session = Depends(get_db)
 ):
     """View account details."""
-    user = await get_current_user(request, db)
-    if not user:
-        return RedirectResponse(url=f"/login?next=/accounts/{account_id}", status_code=303)
-
-    # Try to use database, fallback to demo data if tables don't exist
-    try:
-        use_demo = DEMO_MODE or db is None
-        # Test if database is accessible
-        if not use_demo:
-            db.query(Account).limit(1).all()
-    except Exception:
-        # Database not initialized, use demo data
-        use_demo = True
-
-    if use_demo:
-        accounts = get_all_demo_accounts()
-        account = next((a for a in accounts if a.id == account_id), None)
-        if not account:
-            raise HTTPException(status_code=404, detail="Account not found")
-    else:
-        account = db.query(Account).filter(Account.id == account_id).first()
-        if not account:
-            raise HTTPException(status_code=404, detail="Account not found")
+    account = db.query(Account).filter(Account.id == account_id).first()
+    if not account:
+        raise HTTPException(status_code=404, detail="Account not found")
 
     return templates.TemplateResponse("accounts/view.html", {
         "request": request,
-        "user": user,
         "account": account,
     })
 
@@ -174,17 +114,12 @@ async def edit_account_form(
     db: Session = Depends(get_db)
 ):
     """Display edit account form."""
-    user = await get_current_user(request, db)
-    if not user:
-        return RedirectResponse(url=f"/login?next=/accounts/{account_id}/edit", status_code=303)
-
     account = db.query(Account).filter(Account.id == account_id).first()
     if not account:
         raise HTTPException(status_code=404, detail="Account not found")
 
     return templates.TemplateResponse("accounts/form.html", {
         "request": request,
-        "user": user,
         "account": account,
         "industries": Account.INDUSTRIES,
         "is_new": False,
@@ -207,14 +142,10 @@ async def update_account(
     db: Session = Depends(get_db)
 ):
     """Update an existing account."""
-    user = await get_current_user(request, db)
-    if not user:
-        return RedirectResponse(url="/login", status_code=303)
-    
     account = db.query(Account).filter(Account.id == account_id).first()
     if not account:
         raise HTTPException(status_code=404, detail="Account not found")
-    
+
     account.name = name
     account.industry = industry or None
     account.website = website or None
@@ -224,9 +155,9 @@ async def update_account(
     account.state = state or None
     account.zip_code = zip_code or None
     account.notes = notes or None
-    
+
     db.commit()
-    
+
     return RedirectResponse(url=f"/accounts/{account_id}", status_code=303)
 
 
@@ -237,18 +168,11 @@ async def delete_account(
     db: Session = Depends(get_db)
 ):
     """Delete an account."""
-    user = await get_current_user(request, db)
-    if not user:
-        return RedirectResponse(url="/login", status_code=303)
-    
-    if not user.is_admin:
-        raise HTTPException(status_code=403, detail="Only admins can delete accounts")
-    
     account = db.query(Account).filter(Account.id == account_id).first()
     if not account:
         raise HTTPException(status_code=404, detail="Account not found")
-    
+
     db.delete(account)
     db.commit()
-    
+
     return RedirectResponse(url="/accounts", status_code=303)
