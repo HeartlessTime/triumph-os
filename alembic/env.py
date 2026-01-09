@@ -4,7 +4,7 @@ import sys
 from pathlib import Path
 
 from sqlalchemy import engine_from_config
-from sqlalchemy import pool, text
+from sqlalchemy import pool
 
 from alembic import context
 
@@ -37,34 +37,6 @@ target_metadata = Base.metadata
 # can be acquired:
 # my_important_option = config.get_main_option("my_important_option")
 # ... etc.
-
-
-def ensure_alembic_version_table(connection) -> None:
-    """Ensure alembic_version table exists with correct column type."""
-    try:
-        # Check if alembic_version table exists
-        result = connection.execute(text(
-            "SELECT column_name, character_maximum_length "
-            "FROM information_schema.columns "
-            "WHERE table_name = 'alembic_version' AND column_name = 'version_num'"
-        ))
-        row = result.fetchone()
-
-        if row is None:
-            # Table doesn't exist yet, Alembic will create it with correct type
-            return
-
-        current_length = row[1]
-        if current_length and current_length < 128:
-            # Need to alter the column type
-            # Don't commit - we're inside a transaction managed by Alembic
-            connection.execute(text(
-                "ALTER TABLE alembic_version "
-                "ALTER COLUMN version_num TYPE VARCHAR(128)"
-            ))
-    except Exception:
-        # If anything fails, let Alembic handle it normally
-        pass
 
 
 def run_migrations_offline() -> None:
@@ -103,11 +75,6 @@ def run_migrations_online() -> None:
         prefix="sqlalchemy.",
         poolclass=pool.NullPool,
     )
-
-    # Ensure alembic_version table has correct column type BEFORE opening transaction
-    with connectable.connect() as conn:
-        ensure_alembic_version_table(conn)
-        conn.commit()
 
     with connectable.connect() as connection:
         context.configure(
