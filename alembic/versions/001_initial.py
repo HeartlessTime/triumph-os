@@ -18,22 +18,6 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
-    # Users table
-    op.create_table('users',
-        sa.Column('id', sa.Integer(), nullable=False),
-        sa.Column('email', sa.String(255), nullable=False),
-        sa.Column('password_hash', sa.String(255), nullable=False),
-        sa.Column('full_name', sa.String(255), nullable=False),
-        sa.Column('role', sa.String(50), nullable=False),
-        sa.Column('is_active', sa.Boolean(), nullable=False, server_default='true'),
-        sa.Column('created_at', sa.DateTime(), nullable=False, server_default=sa.func.now()),
-        sa.Column('updated_at', sa.DateTime(), nullable=False, server_default=sa.func.now()),
-        sa.PrimaryKeyConstraint('id'),
-        sa.UniqueConstraint('email')
-    )
-    op.create_index('ix_users_email', 'users', ['email'])
-    op.create_index('ix_users_role', 'users', ['role'])
-
     # Accounts table
     op.create_table('accounts',
         sa.Column('id', sa.Integer(), nullable=False),
@@ -46,10 +30,8 @@ def upgrade() -> None:
         sa.Column('state', sa.String(100), nullable=True),
         sa.Column('zip_code', sa.String(20), nullable=True),
         sa.Column('notes', sa.Text(), nullable=True),
-        sa.Column('created_by_id', sa.Integer(), nullable=True),
         sa.Column('created_at', sa.DateTime(), nullable=False, server_default=sa.func.now()),
         sa.Column('updated_at', sa.DateTime(), nullable=False, server_default=sa.func.now()),
-        sa.ForeignKeyConstraint(['created_by_id'], ['users.id']),
         sa.PrimaryKeyConstraint('id')
     )
     op.create_index('ix_accounts_name', 'accounts', ['name'])
@@ -98,8 +80,6 @@ def upgrade() -> None:
         sa.Column('close_date', sa.Date(), nullable=True),
         sa.Column('last_contacted', sa.Date(), nullable=True),
         sa.Column('next_followup', sa.Date(), nullable=True),
-        sa.Column('owner_id', sa.Integer(), nullable=True),
-        sa.Column('assigned_estimator_id', sa.Integer(), nullable=True),
         sa.Column('estimating_status', sa.String(50), nullable=False, server_default='Not Started'),
         sa.Column('estimating_checklist', sa.JSON(), nullable=True),
         sa.Column('primary_contact_id', sa.Integer(), nullable=True),
@@ -108,8 +88,6 @@ def upgrade() -> None:
         sa.Column('created_at', sa.DateTime(), nullable=False, server_default=sa.func.now()),
         sa.Column('updated_at', sa.DateTime(), nullable=False, server_default=sa.func.now()),
         sa.ForeignKeyConstraint(['account_id'], ['accounts.id'], ondelete='CASCADE'),
-        sa.ForeignKeyConstraint(['owner_id'], ['users.id']),
-        sa.ForeignKeyConstraint(['assigned_estimator_id'], ['users.id']),
         sa.ForeignKeyConstraint(['primary_contact_id'], ['contacts.id']),
         sa.PrimaryKeyConstraint('id')
     )
@@ -141,11 +119,9 @@ def upgrade() -> None:
         sa.Column('margin_amount', sa.Numeric(15, 2), nullable=False, server_default='0'),
         sa.Column('total', sa.Numeric(15, 2), nullable=False, server_default='0'),
         sa.Column('notes', sa.Text(), nullable=True),
-        sa.Column('created_by_id', sa.Integer(), nullable=True),
         sa.Column('created_at', sa.DateTime(), nullable=False, server_default=sa.func.now()),
         sa.Column('updated_at', sa.DateTime(), nullable=False, server_default=sa.func.now()),
         sa.ForeignKeyConstraint(['opportunity_id'], ['opportunities.id'], ondelete='CASCADE'),
-        sa.ForeignKeyConstraint(['created_by_id'], ['users.id']),
         sa.PrimaryKeyConstraint('id'),
         sa.UniqueConstraint('opportunity_id', 'version', name='uq_estimate_version')
     )
@@ -179,11 +155,9 @@ def upgrade() -> None:
         sa.Column('description', sa.Text(), nullable=True),
         sa.Column('activity_date', sa.DateTime(), nullable=False),
         sa.Column('contact_id', sa.Integer(), nullable=True),
-        sa.Column('created_by_id', sa.Integer(), nullable=True),
         sa.Column('created_at', sa.DateTime(), nullable=False, server_default=sa.func.now()),
         sa.ForeignKeyConstraint(['opportunity_id'], ['opportunities.id'], ondelete='CASCADE'),
         sa.ForeignKeyConstraint(['contact_id'], ['contacts.id']),
-        sa.ForeignKeyConstraint(['created_by_id'], ['users.id']),
         sa.PrimaryKeyConstraint('id')
     )
     op.create_index('ix_activities_opportunity_id', 'activities', ['opportunity_id'])
@@ -198,14 +172,10 @@ def upgrade() -> None:
         sa.Column('due_date', sa.Date(), nullable=True),
         sa.Column('priority', sa.String(20), nullable=False, server_default='Medium'),
         sa.Column('status', sa.String(20), nullable=False, server_default='Open'),
-        sa.Column('assigned_to_id', sa.Integer(), nullable=True),
-        sa.Column('created_by_id', sa.Integer(), nullable=True),
         sa.Column('completed_at', sa.DateTime(), nullable=True),
         sa.Column('created_at', sa.DateTime(), nullable=False, server_default=sa.func.now()),
         sa.Column('updated_at', sa.DateTime(), nullable=False, server_default=sa.func.now()),
         sa.ForeignKeyConstraint(['opportunity_id'], ['opportunities.id'], ondelete='CASCADE'),
-        sa.ForeignKeyConstraint(['assigned_to_id'], ['users.id']),
-        sa.ForeignKeyConstraint(['created_by_id'], ['users.id']),
         sa.PrimaryKeyConstraint('id')
     )
     op.create_index('ix_tasks_opportunity_id', 'tasks', ['opportunity_id'])
@@ -223,11 +193,9 @@ def upgrade() -> None:
         sa.Column('file_size', sa.Integer(), nullable=True),
         sa.Column('mime_type', sa.String(100), nullable=True),
         sa.Column('document_type', sa.String(50), nullable=True),  # proposal, spec, drawing, quote, other
-        sa.Column('uploaded_by_id', sa.Integer(), nullable=True),
         sa.Column('created_at', sa.DateTime(), nullable=False, server_default=sa.func.now()),
         sa.ForeignKeyConstraint(['opportunity_id'], ['opportunities.id'], ondelete='CASCADE'),
         sa.ForeignKeyConstraint(['estimate_id'], ['estimates.id'], ondelete='SET NULL'),
-        sa.ForeignKeyConstraint(['uploaded_by_id'], ['users.id']),
         sa.PrimaryKeyConstraint('id')
     )
     op.create_index('ix_documents_opportunity_id', 'documents', ['opportunity_id'])
@@ -260,12 +228,10 @@ def upgrade() -> None:
         sa.Column('received_date', sa.Date(), nullable=True),
         sa.Column('quote_amount', sa.Numeric(15, 2), nullable=True),
         sa.Column('notes', sa.Text(), nullable=True),
-        sa.Column('created_by_id', sa.Integer(), nullable=True),
         sa.Column('created_at', sa.DateTime(), nullable=False, server_default=sa.func.now()),
         sa.Column('updated_at', sa.DateTime(), nullable=False, server_default=sa.func.now()),
         sa.ForeignKeyConstraint(['opportunity_id'], ['opportunities.id'], ondelete='CASCADE'),
         sa.ForeignKeyConstraint(['vendor_id'], ['vendors.id']),
-        sa.ForeignKeyConstraint(['created_by_id'], ['users.id']),
         sa.PrimaryKeyConstraint('id')
     )
     op.create_index('ix_vendor_quote_requests_opportunity_id', 'vendor_quote_requests', ['opportunity_id'])
@@ -284,4 +250,3 @@ def downgrade() -> None:
     op.drop_table('scope_packages')
     op.drop_table('contacts')
     op.drop_table('accounts')
-    op.drop_table('users')
