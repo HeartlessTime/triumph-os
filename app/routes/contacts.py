@@ -205,8 +205,17 @@ async def view_contact(
     if not user:
         return RedirectResponse(url=f"/login?next=/contacts/{contact_id}", status_code=303)
 
-    # DEMO MODE: Find contact in demo data
-    if DEMO_MODE or db is None:
+    # Try to use database, fallback to demo data if tables don't exist
+    try:
+        use_demo = DEMO_MODE or db is None
+        # Test if database is accessible
+        if not use_demo:
+            db.query(Contact).limit(1).all()
+    except Exception:
+        # Database not initialized, use demo data
+        use_demo = True
+
+    if use_demo:
         contacts = get_all_demo_contacts()
         contact = next((c for c in contacts if c.id == contact_id), None)
         if not contact:

@@ -150,8 +150,17 @@ async def view_account(
     if not user:
         return RedirectResponse(url=f"/login?next=/accounts/{account_id}", status_code=303)
 
-    # DEMO MODE: Find account in demo data
-    if DEMO_MODE or db is None:
+    # Try to use database, fallback to demo data if tables don't exist
+    try:
+        use_demo = DEMO_MODE or db is None
+        # Test if database is accessible
+        if not use_demo:
+            db.query(Account).limit(1).all()
+    except Exception:
+        # Database not initialized, use demo data
+        use_demo = True
+
+    if use_demo:
         accounts = get_all_demo_accounts()
         account = next((a for a in accounts if a.id == account_id), None)
         if not account:
