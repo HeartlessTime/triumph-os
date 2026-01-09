@@ -9,8 +9,8 @@ from app.models import Contact, Account
 
 
 def update_contact_followup(contact: Contact):
-    """Update next_followup to 14 days from today after logging contact."""
-    contact.next_followup = date.today() + timedelta(days=14)
+    """Update next_followup to 30 days from last_contacted after logging contact."""
+    contact.next_followup = contact.last_contacted + timedelta(days=30)
 
 router = APIRouter(prefix="/contacts", tags=["contacts"])
 templates = Jinja2Templates(directory="app/templates")
@@ -168,6 +168,7 @@ async def update_contact(
     mobile: str = Form(None),
     is_primary: bool = Form(False),
     notes: str = Form(None),
+    last_contacted: str = Form(None),
     db: Session = Depends(get_db)
 ):
     """Update an existing contact."""
@@ -192,6 +193,9 @@ async def update_contact(
     contact.mobile = mobile or None
     contact.is_primary = is_primary
     contact.notes = notes or None
+
+    if last_contacted:
+        contact.last_contacted = datetime.strptime(last_contacted, "%Y-%m-%d").date()
 
     db.commit()
 
