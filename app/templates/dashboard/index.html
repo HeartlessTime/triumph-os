@@ -25,6 +25,7 @@
                         <div>
                             <div class="stat-value currency">{{ pipeline_value }}</div>
                             <div class="stat-label">Pipeline Value</div>
+                            <div class="text-muted small mt-1">Review and update opportunities</div>
                         </div>
                         <div class="stat-icon bg-primary bg-opacity-10 text-primary">
                             <i class="bi bi-cash-stack"></i>
@@ -39,6 +40,7 @@
                     <div>
                         <div class="stat-value currency">{{ weighted_pipeline }}</div>
                         <div class="stat-label">Weighted Pipeline</div>
+                        <div class="text-muted small mt-1">Probability-adjusted value</div>
                     </div>
                     <div class="stat-icon bg-success bg-opacity-10 text-success">
                         <i class="bi bi-graph-up"></i>
@@ -53,6 +55,7 @@
                         <div>
                             <div class="stat-value">{{ open_opportunities }}</div>
                             <div class="stat-label">Open Opportunities</div>
+                            <div class="text-muted small mt-1">Follow up with active deals</div>
                         </div>
                         <div class="stat-icon bg-info bg-opacity-10 text-info">
                             <i class="bi bi-bullseye"></i>
@@ -68,6 +71,7 @@
                         <div>
                             <div class="stat-value currency">{{ won_this_month }}</div>
                             <div class="stat-label">Won This Month</div>
+                            <div class="text-muted small mt-1">View closed deals</div>
                         </div>
                         <div class="stat-icon bg-warning bg-opacity-10 text-warning">
                             <i class="bi bi-trophy"></i>
@@ -93,8 +97,8 @@
                             <tbody>
                                 {% for opp in followup_opps %}
                                 <tr>
-                                    <td class="position-relative">
-                                        <a href="/opportunities/{{ opp.id }}" class="text-decoration-none fw-medium stretched-link">
+                                    <td>
+                                        <a href="/opportunities/{{ opp.id }}" class="text-decoration-none fw-medium">
                                             {{ opp.name }}
                                         </a>
                                         <div class="text-muted small">{{ opp.account.name }}</div>
@@ -102,13 +106,26 @@
                                     <td class="text-end">
                                         <span class="{{ opp.followup_status.css_class }}">
                                             {% if opp.followup_status.status == 'overdue' %}
-                                                {{ opp.followup_status.days_until|abs }} days overdue
+                                                {{ opp.followup_status.days_until|abs }}d overdue
                                             {% elif opp.followup_status.status == 'due_today' %}
                                                 Due today
                                             {% else %}
-                                                In {{ opp.followup_status.days_until }} days
+                                                In {{ opp.followup_status.days_until }}d
                                             {% endif %}
                                         </span>
+                                    </td>
+                                    <td class="text-end" style="white-space: nowrap;">
+                                        <a href="/opportunities/{{ opp.id }}" class="btn btn-sm btn-outline-secondary" title="View">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                        <a href="/opportunities/{{ opp.id }}/edit" class="btn btn-sm btn-outline-secondary" title="Edit">
+                                            <i class="bi bi-pencil"></i>
+                                        </a>
+                                        <form method="post" action="/opportunities/{{ opp.id }}/log-contact" class="d-inline">
+                                            <button type="submit" class="btn btn-sm btn-outline-success" title="Log Contact">
+                                                Log
+                                            </button>
+                                        </form>
                                     </td>
                                 </tr>
                                 {% endfor %}
@@ -139,8 +156,8 @@
                             <tbody>
                                 {% for opp in upcoming_bids %}
                                 <tr>
-                                    <td class="position-relative">
-                                        <a href="/opportunities/{{ opp.id }}" class="text-decoration-none fw-medium stretched-link">
+                                    <td>
+                                        <a href="/opportunities/{{ opp.id }}" class="text-decoration-none fw-medium">
                                             {{ opp.name }}
                                         </a>
                                         <div class="text-muted small">{{ opp.account.name }}</div>
@@ -153,6 +170,14 @@
                                     </td>
                                     <td class="text-end">
                                         <span class="currency">{{ opp.value or 0 }}</span>
+                                    </td>
+                                    <td class="text-end" style="white-space: nowrap;">
+                                        <a href="/opportunities/{{ opp.id }}" class="btn btn-sm btn-outline-secondary" title="View">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                        <a href="/opportunities/{{ opp.id }}/edit" class="btn btn-sm btn-outline-secondary" title="Edit">
+                                            <i class="bi bi-pencil"></i>
+                                        </a>
                                     </td>
                                 </tr>
                                 {% endfor %}
