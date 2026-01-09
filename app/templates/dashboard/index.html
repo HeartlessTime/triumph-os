@@ -15,21 +15,23 @@
             </a>
         </div>
     </div>
-    
+
     <!-- Stats Row -->
     <div class="row g-4 mb-4">
         <div class="col-md-6 col-xl-3">
-            <div class="stat-card">
-                <div class="d-flex justify-content-between align-items-start">
-                    <div>
-                        <div class="stat-value currency">{{ pipeline_value }}</div>
-                        <div class="stat-label">Pipeline Value</div>
-                    </div>
-                    <div class="stat-icon bg-primary bg-opacity-10 text-primary">
-                        <i class="bi bi-cash-stack"></i>
+            <a href="/opportunities" class="text-decoration-none">
+                <div class="stat-card">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <div class="stat-value currency">{{ pipeline_value }}</div>
+                            <div class="stat-label">Pipeline Value</div>
+                        </div>
+                        <div class="stat-icon bg-primary bg-opacity-10 text-primary">
+                            <i class="bi bi-cash-stack"></i>
+                        </div>
                     </div>
                 </div>
-            </div>
+            </a>
         </div>
         <div class="col-md-6 col-xl-3">
             <div class="stat-card">
@@ -45,33 +47,37 @@
             </div>
         </div>
         <div class="col-md-6 col-xl-3">
-            <div class="stat-card">
-                <div class="d-flex justify-content-between align-items-start">
-                    <div>
-                        <div class="stat-value">{{ open_opportunities }}</div>
-                        <div class="stat-label">Open Opportunities</div>
-                    </div>
-                    <div class="stat-icon bg-info bg-opacity-10 text-info">
-                        <i class="bi bi-bullseye"></i>
+            <a href="/opportunities" class="text-decoration-none">
+                <div class="stat-card">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <div class="stat-value">{{ open_opportunities }}</div>
+                            <div class="stat-label">Open Opportunities</div>
+                        </div>
+                        <div class="stat-icon bg-info bg-opacity-10 text-info">
+                            <i class="bi bi-bullseye"></i>
+                        </div>
                     </div>
                 </div>
-            </div>
+            </a>
         </div>
         <div class="col-md-6 col-xl-3">
-            <div class="stat-card">
-                <div class="d-flex justify-content-between align-items-start">
-                    <div>
-                        <div class="stat-value currency">{{ won_this_month }}</div>
-                        <div class="stat-label">Won This Month</div>
-                    </div>
-                    <div class="stat-icon bg-warning bg-opacity-10 text-warning">
-                        <i class="bi bi-trophy"></i>
+            <a href="/opportunities?stage=Won" class="text-decoration-none">
+                <div class="stat-card">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <div class="stat-value currency">{{ won_this_month }}</div>
+                            <div class="stat-label">Won This Month</div>
+                        </div>
+                        <div class="stat-icon bg-warning bg-opacity-10 text-warning">
+                            <i class="bi bi-trophy"></i>
+                        </div>
                     </div>
                 </div>
-            </div>
+            </a>
         </div>
     </div>
-    
+
     <div class="row g-4">
         <!-- Follow-ups Needed -->
         <div class="col-lg-6">
@@ -87,8 +93,8 @@
                             <tbody>
                                 {% for opp in followup_opps %}
                                 <tr>
-                                    <td>
-                                        <a href="/opportunities/{{ opp.id }}" class="text-decoration-none fw-medium">
+                                    <td class="position-relative">
+                                        <a href="/opportunities/{{ opp.id }}" class="text-decoration-none fw-medium stretched-link">
                                             {{ opp.name }}
                                         </a>
                                         <div class="text-muted small">{{ opp.account.name }}</div>
@@ -118,7 +124,7 @@
                 </div>
             </div>
         </div>
-        
+
         <!-- Upcoming Bids -->
         <div class="col-lg-6">
             <div class="card h-100">
@@ -133,8 +139,8 @@
                             <tbody>
                                 {% for opp in upcoming_bids %}
                                 <tr>
-                                    <td>
-                                        <a href="/opportunities/{{ opp.id }}" class="text-decoration-none fw-medium">
+                                    <td class="position-relative">
+                                        <a href="/opportunities/{{ opp.id }}" class="text-decoration-none fw-medium stretched-link">
                                             {{ opp.name }}
                                         </a>
                                         <div class="text-muted small">{{ opp.account.name }}</div>
@@ -162,7 +168,7 @@
                 </div>
             </div>
         </div>
-        
+
         <!-- My Tasks -->
         <div class="col-lg-6">
             <div class="card h-100">
@@ -205,7 +211,7 @@
                 </div>
             </div>
         </div>
-        
+
         <!-- Recent Activity -->
         <div class="col-lg-6">
             <div class="card h-100">
