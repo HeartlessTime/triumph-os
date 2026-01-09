@@ -57,11 +57,11 @@ def ensure_alembic_version_table(connection) -> None:
         current_length = row[1]
         if current_length and current_length < 128:
             # Need to alter the column type
+            # Don't commit - we're inside a transaction managed by Alembic
             connection.execute(text(
                 "ALTER TABLE alembic_version "
                 "ALTER COLUMN version_num TYPE VARCHAR(128)"
             ))
-            connection.commit()
     except Exception:
         # If anything fails, let Alembic handle it normally
         pass
@@ -104,10 +104,12 @@ def run_migrations_online() -> None:
         poolclass=pool.NullPool,
     )
 
-    with connectable.connect() as connection:
-        # Ensure alembic_version table has correct column type before migrations
-        ensure_alembic_version_table(connection)
+    # Ensure alembic_version table has correct column type BEFORE opening transaction
+    with connectable.connect() as conn:
+        ensure_alembic_version_table(conn)
+        conn.commit()
 
+    with connectable.connect() as connection:
         context.configure(
             connection=connection, target_metadata=target_metadata
         )
