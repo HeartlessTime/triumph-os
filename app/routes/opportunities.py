@@ -51,7 +51,10 @@ async def list_opportunities(
 
     today = date.today()
 
+query = (
+    db.query(Opportunity)
     .join(Account, Opportunity.account_id == Account.id)
+)
 
 
     if search:
