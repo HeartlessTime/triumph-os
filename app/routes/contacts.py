@@ -2,10 +2,15 @@ from fastapi import APIRouter, Request, Depends, Form, HTTPException
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
-from datetime import datetime
+from datetime import datetime, date, timedelta
 
 from app.database import get_db
 from app.models import Contact, Account
+
+
+def update_contact_followup(contact: Contact):
+    """Update next_followup to 14 days from today after logging contact."""
+    contact.next_followup = date.today() + timedelta(days=14)
 
 router = APIRouter(prefix="/contacts", tags=["contacts"])
 templates = Jinja2Templates(directory="app/templates")
@@ -124,6 +129,7 @@ async def view_contact(
     return templates.TemplateResponse("contacts/view.html", {
         "request": request,
         "contact": contact,
+        "today": date.today(),
     })
 
 
@@ -208,3 +214,21 @@ async def delete_contact(
     db.commit()
 
     return RedirectResponse(url=f"/accounts/{account_id}", status_code=303)
+
+
+@router.post("/{contact_id}/log-contact")
+async def log_contact(
+    contact_id: int,
+    db: Session = Depends(get_db)
+):
+    """Log contact - updates last_contacted to today and next_followup to 14 days from now."""
+    contact = db.query(Contact).filter(Contact.id == contact_id).first()
+    if not contact:
+        raise HTTPException(status_code=404, detail="Contact not found")
+
+    contact.last_contacted = date.today()
+    update_contact_followup(contact)
+    db.commit()
+
+    # Check referer to redirect back to source page
+    return RedirectResponse(url=f"/contacts/{contact_id}", status_code=303)

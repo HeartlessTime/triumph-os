@@ -30,13 +30,60 @@
             </div>
         </div>
     </div>
+
+    <!-- Primary Contact Card (Top Section) -->
+    <div class="card mb-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <span><i class="bi bi-person me-2"></i>Primary Contact</span>
+            {% if opportunity.primary_contact %}
+            <form method="post" action="/contacts/{{ opportunity.primary_contact.id }}/log-contact" class="d-inline">
+                <button type="submit" class="btn btn-sm btn-outline-success">
+                    <i class="bi bi-telephone me-1"></i> Log Contact
+                </button>
+            </form>
+            {% endif %}
+        </div>
+        <div class="card-body">
+            {% if opportunity.primary_contact %}
+            <div class="row">
+                <div class="col-md-4">
+                    <label class="text-muted small d-block">Name</label>
+                    <a href="/contacts/{{ opportunity.primary_contact.id }}" class="text-decoration-none fw-medium">
+                        {{ opportunity.primary_contact.full_name }}
+                    </a>
+                    {% if opportunity.primary_contact.title %}
+                    <div class="text-muted small">{{ opportunity.primary_contact.title }}</div>
+                    {% endif %}
+                </div>
+                <div class="col-md-4">
+                    <label class="text-muted small d-block">Email</label>
+                    {% if opportunity.primary_contact.email %}
+                    <a href="mailto:{{ opportunity.primary_contact.email }}">{{ opportunity.primary_contact.email }}</a>
+                    {% else %}
+                    <span class="text-muted">—</span>
+                    {% endif %}
+                </div>
+                <div class="col-md-4">
+                    <label class="text-muted small d-block">Phone</label>
+                    {% if opportunity.primary_contact.best_phone %}
+                    <a href="tel:{{ opportunity.primary_contact.best_phone }}">{{ opportunity.primary_contact.best_phone }}</a>
+                    {% else %}
+                    <span class="text-muted">—</span>
+                    {% endif %}
+                </div>
+            </div>
+            {% else %}
+            <span class="text-muted">No primary contact assigned</span>
+            {% endif %}
+        </div>
+    </div>
     
     <div class="row g-4">
         <!-- Left Column - Key Info -->
         <div class="col-lg-4">
-            <!-- Stage & Status Card -->
+            <!-- Sales Info Card -->
             <div class="card mb-4">
-                <div class="card-header">Deal Status</div>
+                <div class="card-header">Sales Info</div>
                 <div class="card-body">
                     <div class="mb-3">
                         <label class="text-muted small d-block">Stage</label>
@@ -46,33 +93,21 @@
                     </div>
                     <div class="row g-3">
                         <div class="col-6">
-                            <label class="text-muted small d-block">Estimated LV</label>
-                            <span class="h5 currency">{{ opportunity.lv_value or 0 }}</span>
+                            <label class="text-muted small d-block">Owner</label>
+                            {{ opportunity.owner.full_name if opportunity.owner else '—' }}
                         </div>
                         <div class="col-6">
-                            <label class="text-muted small d-block">Estimated HDD/Underground</label>
-                            <span class="h5 currency">{{ opportunity.hdd_value or 0 }}</span>
+                            <label class="text-muted small d-block">Source</label>
+                            {{ opportunity.source or '—' }}
                         </div>
-                    </div>
-                    <hr>
-                    <div class="row g-3">
                         <div class="col-6">
-                            <label class="text-muted small d-block">Bid Date</label>
-                            {% if opportunity.bid_date %}
-                            <span class="{% if opportunity.is_past_bid_date %}text-danger fw-bold{% elif opportunity.days_until_bid <= 7 %}text-warning{% endif %}">
-                                {{ opportunity.bid_date.strftime('%b %d, %Y') }}
-                            </span>
-                            {% if opportunity.days_until_bid is not none %}
-                            <span class="small text-muted">({{ opportunity.days_until_bid }}d)</span>
-                            {% endif %}
-                            {% else %}
-                            <span class="text-muted">Not set</span>
-                            {% endif %}
+                            <label class="text-muted small d-block">Last Contacted</label>
+                            {{ opportunity.last_contacted.strftime('%b %d, %Y') if opportunity.last_contacted else '—' }}
                         </div>
                         <div class="col-6">
                             <label class="text-muted small d-block">Next Follow-up</label>
                             {% if opportunity.next_followup %}
-                            <span class="{{ opportunity.followup_status.css_class }}">
+                            <span class="{{ opportunity.followup_status.css_class if opportunity.followup_status else '' }}">
                                 {{ opportunity.next_followup.strftime('%b %d, %Y') }}
                             </span>
                             {% else %}
@@ -80,53 +115,103 @@
                             {% endif %}
                         </div>
                         <div class="col-6">
-                            <label class="text-muted small d-block">Last Contacted</label>
-                            {{ opportunity.last_contacted.strftime('%b %d, %Y') if opportunity.last_contacted else '—' }}
+                            <label class="text-muted small d-block">Close Date</label>
+                            {{ opportunity.close_date.strftime('%b %d, %Y') if opportunity.close_date else '—' }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Values Card -->
+            <div class="card mb-4">
+                <div class="card-header">Values</div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-6">
+                            <label class="text-muted small d-block">Estimated LV</label>
+                            <span class="h5 currency">{{ opportunity.lv_value or 0 }}</span>
                         </div>
                         <div class="col-6">
-                            <label class="text-muted small d-block">Owner</label>
-                            {{ opportunity.owner.full_name if opportunity.owner else '—' }}
+                            <label class="text-muted small d-block">Estimated HDD/Underground</label>
+                            <span class="h5 currency">{{ opportunity.hdd_value or 0 }}</span>
+                        </div>
+                        <div class="col-12">
+                            <label class="text-muted small d-block">Total Value</label>
+                            <span class="h4 currency text-primary">{{ opportunity.value or 0 }}</span>
                         </div>
                     </div>
                 </div>
             </div>
             
-            <!-- Bid Instructions & Project Info -->
+            <!-- Bid Details Card -->
             <div class="card mb-4">
-                <div class="card-header">Bid Instructions</div>
+                <div class="card-header">Bid Details</div>
                 <div class="card-body">
-                    <div class="mb-2">
-                        <label class="text-muted small d-block">Bid Type</label>
-                        <div>{{ opportunity.bid_type or '—' }}</div>
+                    <div class="row g-3">
+                        <div class="col-6">
+                            <label class="text-muted small d-block">Bid Date</label>
+                            {% if opportunity.bid_date %}
+                            <span class="{% if opportunity.is_past_bid_date %}text-danger fw-bold{% elif opportunity.days_until_bid is not none and opportunity.days_until_bid <= 7 %}text-warning{% endif %}">
+                                {{ opportunity.bid_date.strftime('%b %d, %Y') }}
+                            </span>
+                            {% if opportunity.days_until_bid is not none %}
+                            <span class="small text-muted">({{ opportunity.days_until_bid }}d)</span>
+                            {% endif %}
+                            {% else %}
+                            <span class="text-muted">—</span>
+                            {% endif %}
+                        </div>
+                        <div class="col-6">
+                            <label class="text-muted small d-block">Bid Time</label>
+                            {{ opportunity.bid_time.strftime('%I:%M %p') if opportunity.bid_time else '—' }}
+                        </div>
+                        <div class="col-6">
+                            <label class="text-muted small d-block">Bid Type</label>
+                            {{ opportunity.bid_type or '—' }}
+                        </div>
+                        <div class="col-6">
+                            <label class="text-muted small d-block">Submission Method</label>
+                            {{ opportunity.submission_method or '—' }}
+                        </div>
+                        <div class="col-6">
+                            <label class="text-muted small d-block">Bid Form Required</label>
+                            {{ 'Yes' if opportunity.bid_form_required else 'No' }}
+                        </div>
+                        <div class="col-6">
+                            <label class="text-muted small d-block">Bond Required</label>
+                            {{ 'Yes' if opportunity.bond_required else 'No' }}
+                        </div>
+                        <div class="col-6">
+                            <label class="text-muted small d-block">Prevailing Wage</label>
+                            {{ opportunity.prevailing_wage or '—' }}
+                        </div>
+                        <div class="col-6">
+                            <label class="text-muted small d-block">Rebid</label>
+                            {{ 'Yes' if opportunity.rebid else 'No' }}
+                        </div>
                     </div>
-                    <div class="mb-2">
-                        <label class="text-muted small d-block">Submission</label>
-                        <div>{{ opportunity.submission_method or '—' }} {% if opportunity.bid_time %} at {{ opportunity.bid_time.strftime('%H:%M') }}{% endif %}</div>
-                    </div>
-                    <div class="mb-2">
-                        <label class="text-muted small d-block">Bid Form / Bond</label>
-                        <div>{{ 'Form required' if opportunity.bid_form_required else 'Form not required' }} · {{ 'Bond required' if opportunity.bond_required else 'Bond not required' }}</div>
-                    </div>
-                    <div class="mb-2">
-                        <label class="text-muted small d-block">Prevailing Wage</label>
-                        <div>{{ opportunity.prevailing_wage or '—' }}</div>
-                    </div>
-                    <hr>
-                    <div class="mb-2">
+                </div>
+            </div>
+
+            <!-- Project Info Card -->
+            <div class="card mb-4">
+                <div class="card-header">Project Info</div>
+                <div class="card-body">
+                    <div class="mb-3">
                         <label class="text-muted small d-block">Project Type</label>
-                        <div>{{ opportunity.project_type or '—' }}</div>
+                        {{ opportunity.project_type or '—' }}
                     </div>
-                    <div class="mb-2">
+                    <div class="mb-3">
+                        <label class="text-muted small d-block">Description</label>
+                        <div class="small">{{ opportunity.description or '—' }}</div>
+                    </div>
+                    <div class="mb-3">
                         <label class="text-muted small d-block">Known Risks / Constraints</label>
-                        <div class="small text-muted">{{ opportunity.known_risks or '—' }}</div>
+                        <div class="small">{{ opportunity.known_risks or '—' }}</div>
                     </div>
-                    <div class="mb-2">
-                        <label class="text-muted small d-block">Estimated LV Contract</label>
-                        <div class="currency">{{ opportunity.lv_value or 0 }}</div>
-                    </div>
-                    <div class="mb-2">
-                        <label class="text-muted small d-block">Rebid / Revision</label>
-                        <div>{{ 'Yes' if opportunity.rebid else 'No' }}</div>
+                    <div>
+                        <label class="text-muted small d-block">Notes</label>
+                        <div class="small">{{ opportunity.notes or '—' }}</div>
                     </div>
                 </div>
             </div>
@@ -160,55 +245,44 @@
                 </div>
             </div>
             
-            <!-- Primary Contact -->
-            {% if opportunity.primary_contact %}
-            <div class="card mb-4">
-                <div class="card-header">Primary Contact</div>
-                <div class="card-body">
-                    <h6 class="mb-1">{{ opportunity.primary_contact.full_name }}</h6>
-                    {% if opportunity.primary_contact.title %}
-                    <p class="text-muted small mb-2">{{ opportunity.primary_contact.title }}</p>
-                    {% endif %}
-                    {% if opportunity.primary_contact.email %}
-                    <a href="mailto:{{ opportunity.primary_contact.email }}" class="d-block small">
-                        <i class="bi bi-envelope me-1"></i>{{ opportunity.primary_contact.email }}
-                    </a>
-                    {% endif %}
-                    {% if opportunity.primary_contact.phone %}
-                    <a href="tel:{{ opportunity.primary_contact.phone }}" class="d-block small">
-                        <i class="bi bi-telephone me-1"></i>{{ opportunity.primary_contact.phone }}
-                    </a>
-                    {% endif %}
-                </div>
-            </div>
-            {% endif %}
 
-            {% if gcs_accounts %}
+            <!-- Contacts & Relationships Card -->
             <div class="card mb-4">
-                <div class="card-header">General Contractors (GCs)</div>
+                <div class="card-header">Contacts & Relationships</div>
                 <div class="card-body">
-                    {% for gc in gcs_accounts %}
-                    <div class="mb-2">
-                        <a href="/accounts/{{ gc.id }}" class="text-decoration-none">{{ gc.name }}</a>
+                    <div class="mb-3">
+                        <label class="text-muted small d-block">End User / Owner</label>
+                        {% if opportunity.end_user_account %}
+                        <a href="/accounts/{{ opportunity.end_user_account.id }}" class="text-decoration-none">{{ opportunity.end_user_account.name }}</a>
+                        {% else %}
+                        <span class="text-muted">—</span>
+                        {% endif %}
                     </div>
-                    {% endfor %}
+                    <div class="mb-3">
+                        <label class="text-muted small d-block">General Contractors (GCs)</label>
+                        {% if gcs_accounts %}
+                        {% for gc in gcs_accounts %}
+                        <div><a href="/accounts/{{ gc.id }}" class="text-decoration-none">{{ gc.name }}</a></div>
+                        {% endfor %}
+                        {% else %}
+                        <span class="text-muted">—</span>
+                        {% endif %}
+                    </div>
+                    <div>
+                        <label class="text-muted small d-block">Related Contacts</label>
+                        {% if related_contacts %}
+                        {% for rc in related_contacts %}
+                        <div>
+                            <a href="/contacts/{{ rc.id }}" class="text-decoration-none">{{ rc.full_name }}</a>
+                            {% if rc.title %}<span class="text-muted small"> - {{ rc.title }}</span>{% endif %}
+                        </div>
+                        {% endfor %}
+                        {% else %}
+                        <span class="text-muted">—</span>
+                        {% endif %}
+                    </div>
                 </div>
             </div>
-            {% endif %}
-
-            {% if related_contacts %}
-            <div class="card mb-4">
-                <div class="card-header">Related Contacts</div>
-                <div class="card-body">
-                    {% for rc in related_contacts %}
-                    <div class="mb-2">
-                        <a href="/contacts/{{ rc.id }}" class="text-decoration-none">{{ rc.full_name }}</a>
-                        {% if rc.title %}<div class="small text-muted">{{ rc.title }}</div>{% endif %}
-                    </div>
-                    {% endfor %}
-                </div>
-            </div>
-            {% endif %}
             
             <!-- Scope Packages -->
             {% if opportunity.scopes %}

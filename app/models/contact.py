@@ -1,5 +1,5 @@
-from datetime import datetime
-from sqlalchemy import Column, Integer, String, Text, DateTime, Boolean, ForeignKey
+from datetime import datetime, date
+from sqlalchemy import Column, Integer, String, Text, DateTime, Date, Boolean, ForeignKey
 from sqlalchemy.orm import relationship
 from app.database import Base
 
@@ -17,6 +17,8 @@ class Contact(Base):
     mobile = Column(String(50), nullable=True)
     is_primary = Column(Boolean, nullable=False, default=False)
     notes = Column(Text, nullable=True)
+    last_contacted = Column(Date, nullable=True)
+    next_followup = Column(Date, nullable=True)
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
     updated_at = Column(DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
 

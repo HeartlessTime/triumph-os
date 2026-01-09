@@ -18,44 +18,83 @@
                     <i class="bi bi-building me-1"></i>{{ contact.account.name }}
                 </a>
             </div>
-            <a href="/contacts/{{ contact.id }}/edit" class="btn btn-outline-primary">
-                <i class="bi bi-pencil me-1"></i> Edit
-            </a>
+            <div class="d-flex gap-2">
+                <a href="/contacts/{{ contact.id }}/edit" class="btn btn-outline-secondary">
+                    <i class="bi bi-pencil me-1"></i> Edit
+                </a>
+                <form method="post" action="/contacts/{{ contact.id }}/log-contact" class="d-inline">
+                    <button type="submit" class="btn btn-outline-primary">
+                        <i class="bi bi-telephone me-1"></i> Log Contact
+                    </button>
+                </form>
+            </div>
         </div>
     </div>
-    
-    <div class="row">
+
+    <div class="row g-4">
         <div class="col-lg-6">
+            <!-- Follow-up Status Card -->
+            <div class="card mb-4">
+                <div class="card-header">Follow-up Status</div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-6">
+                            <label class="text-muted small d-block">Last Contacted</label>
+                            {{ contact.last_contacted.strftime('%b %d, %Y') if contact.last_contacted else '—' }}
+                        </div>
+                        <div class="col-6">
+                            <label class="text-muted small d-block">Next Follow-up</label>
+                            {% if contact.next_followup %}
+                            <span class="{% if contact.next_followup < today %}text-danger fw-bold{% elif contact.next_followup == today %}text-warning fw-bold{% endif %}">
+                                {{ contact.next_followup.strftime('%b %d, %Y') }}
+                            </span>
+                            {% else %}
+                            <span class="text-muted">—</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Contact Information Card -->
             <div class="card">
                 <div class="card-header">Contact Information</div>
                 <div class="card-body">
-                    <dl class="mb-0">
-                        {% if contact.title %}
-                        <dt class="text-muted small">Title</dt>
-                        <dd>{{ contact.title }}</dd>
-                        {% endif %}
-                        
-                        {% if contact.email %}
-                        <dt class="text-muted small">Email</dt>
-                        <dd><a href="mailto:{{ contact.email }}">{{ contact.email }}</a></dd>
-                        {% endif %}
-                        
-                        {% if contact.phone %}
-                        <dt class="text-muted small">Office Phone</dt>
-                        <dd><a href="tel:{{ contact.phone }}">{{ contact.phone }}</a></dd>
-                        {% endif %}
-                        
-                        {% if contact.mobile %}
-                        <dt class="text-muted small">Mobile</dt>
-                        <dd><a href="tel:{{ contact.mobile }}">{{ contact.mobile }}</a></dd>
-                        {% endif %}
-                        
-                        {% if contact.notes %}
-                        <dt class="text-muted small">Notes</dt>
-                        <dd>{{ contact.notes }}</dd>
-                        {% endif %}
-                    </dl>
-                    
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <label class="text-muted small d-block">Title</label>
+                            {{ contact.title or '—' }}
+                        </div>
+                        <div class="col-12">
+                            <label class="text-muted small d-block">Email</label>
+                            {% if contact.email %}
+                            <a href="mailto:{{ contact.email }}">{{ contact.email }}</a>
+                            {% else %}
+                            <span class="text-muted">—</span>
+                            {% endif %}
+                        </div>
+                        <div class="col-6">
+                            <label class="text-muted small d-block">Office Phone</label>
+                            {% if contact.phone %}
+                            <a href="tel:{{ contact.phone }}">{{ contact.phone }}</a>
+                            {% else %}
+                            <span class="text-muted">—</span>
+                            {% endif %}
+                        </div>
+                        <div class="col-6">
+                            <label class="text-muted small d-block">Mobile</label>
+                            {% if contact.mobile %}
+                            <a href="tel:{{ contact.mobile }}">{{ contact.mobile }}</a>
+                            {% else %}
+                            <span class="text-muted">—</span>
+                            {% endif %}
+                        </div>
+                        <div class="col-12">
+                            <label class="text-muted small d-block">Notes</label>
+                            <div class="small">{{ contact.notes or '—' }}</div>
+                        </div>
+                    </div>
+
                     {% if contact.is_primary %}
                     <div class="mt-3">
                         <span class="badge bg-primary">Primary Contact</span>
