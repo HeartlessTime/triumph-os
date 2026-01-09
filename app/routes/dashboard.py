@@ -35,8 +35,17 @@ async def dashboard(
     # Get pipeline stats
     open_stages = ['Prospecting', 'Qualification', 'Needs Analysis', 'Proposal', 'Bid Sent', 'Negotiation']
 
-    # DEMO MODE: Return demo data
-    if DEMO_MODE or db is None:
+    # Try to use database, fallback to demo data if tables don't exist
+    try:
+        use_demo = DEMO_MODE or db is None
+        # Test if database is accessible
+        if not use_demo:
+            db.query(Opportunity).limit(1).all()
+    except Exception:
+        # Database not initialized, use demo data
+        use_demo = True
+
+    if use_demo:
         demo_opps = get_all_demo_opportunities()
         demo_tasks_list = get_all_demo_tasks()
         demo_activities_list = get_all_demo_activities()
@@ -66,6 +75,11 @@ async def dashboard(
         upcoming_bids.sort(key=lambda o: o.bid_date if o.bid_date else today + timedelta(days=999))
         upcoming_bids = upcoming_bids[:10]
 
+        # Add days_until_bid and value for each
+        for opp in upcoming_bids:
+            opp.days_until_bid = (opp.bid_date - today).days if opp.bid_date else 0
+            opp.value = (opp.lv_value or Decimal(0)) + (opp.hdd_value or Decimal(0))
+
         # My tasks
         my_tasks = [t for t in demo_tasks_list if t.status == 'Open']
         my_tasks.sort(key=lambda t: (t.due_date if t.due_date else date(9999, 12, 31), -(['Low', 'Medium', 'High'].index(t.priority) if t.priority in ['Low', 'Medium', 'High'] else 0)))
@@ -82,6 +96,9 @@ async def dashboard(
                 count = len(stage_opps)
                 value = sum((o.lv_value or Decimal(0)) + (o.hdd_value or Decimal(0)) for o in stage_opps)
                 stage_data[stage] = {'count': count, 'value': float(value)}
+
+        # Estimator capacity (empty for demo mode)
+        estimator_capacity = []
     else:
         # Pipeline value: sum of LV + HDD estimates
         pipeline_value = db.query(
@@ -127,6 +144,11 @@ async def dashboard(
             .order_by(Opportunity.bid_date)\
             .limit(10)\
             .all()
+
+        # Add days_until_bid and value for each
+        for opp in upcoming_bids:
+            opp.days_until_bid = (opp.bid_date - today).days if opp.bid_date else 0
+            opp.value = (opp.lv_value or Decimal(0)) + (opp.hdd_value or Decimal(0))
 
         # My tasks
         if user.is_admin:
