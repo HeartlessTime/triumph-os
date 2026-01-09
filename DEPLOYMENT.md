@@ -67,10 +67,18 @@ Ensure DATABASE_URL is set in Render environment variables:
 ## Files Changed
 
 1. `alembic/versions/001_initial.py` - Removed users table and all user foreign keys
-2. `build.sh` - Runs pip install and Alembic migrations
-3. `render.yaml` - Configures Render to use build.sh
-4. `app/auth.py`, `app/routes/auth.py` - Deleted (authentication removed)
-5. All route files - Removed user checks and authentication
+2. `alembic/env.py` - Ensure alembic_version.version_num is VARCHAR(128) before migrations
+3. `build.sh` - Runs pip install and Alembic migrations
+4. `render.yaml` - Configures Render to use build.sh
+5. `app/auth.py`, `app/routes/auth.py` - Deleted (authentication removed)
+6. All route files - Removed user checks and authentication
+
+## Recent Fixes
+
+### Alembic Version Table Fix (Latest)
+- Updated `alembic/env.py` to automatically ensure `alembic_version.version_num` is VARCHAR(128)
+- This prevents errors with revision IDs longer than 32 characters
+- The check runs before every migration and safely alters the column if needed
 
 ## Next Steps
 
