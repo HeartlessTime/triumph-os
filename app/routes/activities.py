@@ -30,16 +30,6 @@ async def add_activity(
     if not user:
         return RedirectResponse(url="/login", status_code=303)
     
-    # DEMO MODE: Not supported
-    if DEMO_MODE or db is None:
-        return templates.TemplateResponse("demo_mode_notice.html", {
-            "request": request,
-            "user": user,
-            "feature": "Add Activity",
-            "message": "Adding activities is disabled in demo mode.",
-            "back_url": f"/opportunities/{opp_id}",
-        })
-    
     # Wrap database operations in try-except
     try:
         opportunity = db.query(Opportunity).filter(Opportunity.id == opp_id).first()
@@ -49,8 +39,7 @@ async def add_activity(
         # Parse activity date
         if activity_date:
             activity_dt = datetime.strptime(activity_date, "%Y-%m-%dT%H:%M")
-        else:
-            activity_dt = datetime.now()
+        activity_dt = datetime.now()
         
         activity = Activity(
             opportunity_id=opp_id,
@@ -98,16 +87,6 @@ async def edit_activity_form(
     if not user:
         return RedirectResponse(url="/login", status_code=303)
     
-    # DEMO MODE: Not supported
-    if DEMO_MODE or db is None:
-        return templates.TemplateResponse("demo_mode_notice.html", {
-            "request": request,
-            "user": user,
-            "feature": "Edit Activity",
-            "message": "Editing activities is disabled in demo mode.",
-            "back_url": "/",
-        })
-    
     # Wrap database operations in try-except
     try:
         activity = db.query(Activity).filter(Activity.id == activity_id).first()
@@ -151,10 +130,6 @@ async def update_activity(
     if not user:
         return RedirectResponse(url="/login", status_code=303)
     
-    # DEMO MODE: Not supported
-    if DEMO_MODE or db is None:
-        return RedirectResponse(url="/", status_code=303)
-    
     # Wrap database operations in try-except
     try:
         activity = db.query(Activity).filter(Activity.id == activity_id).first()
@@ -184,10 +159,6 @@ async def delete_activity(
     user = await get_current_user(request, db)
     if not user:
         return RedirectResponse(url="/login", status_code=303)
-    
-    # DEMO MODE: Not supported
-    if DEMO_MODE or db is None:
-        return RedirectResponse(url="/", status_code=303)
     
     # Wrap database operations in try-except
     try:

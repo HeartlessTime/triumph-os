@@ -31,16 +31,6 @@ async def upload_document(
     if not user:
         return RedirectResponse(url="/login", status_code=303)
     
-    # DEMO MODE: Not supported
-    if DEMO_MODE or db is None:
-        return templates.TemplateResponse("demo_mode_notice.html", {
-            "request": request,
-            "user": user,
-            "feature": "Upload Document",
-            "message": "Uploading documents is disabled in demo mode.",
-            "back_url": f"/opportunities/{opp_id}",
-        })
-    
     # Wrap database operations in try-except
     try:
         opportunity = db.query(Opportunity).filter(Opportunity.id == opp_id).first()
@@ -94,16 +84,6 @@ async def download_document(
     if not user:
         return RedirectResponse(url="/login", status_code=303)
     
-    # DEMO MODE: Not supported
-    if DEMO_MODE or db is None:
-        return templates.TemplateResponse("demo_mode_notice.html", {
-            "request": request,
-            "user": user,
-            "feature": "Download Document",
-            "message": "Downloading documents is disabled in demo mode.",
-            "back_url": "/opportunities",
-        })
-    
     # Wrap database operations in try-except
     try:
         document = db.query(Document).filter(Document.id == doc_id).first()
@@ -140,16 +120,6 @@ async def view_document(
     user = await get_current_user(request, db)
     if not user:
         return RedirectResponse(url="/login", status_code=303)
-    
-    # DEMO MODE: Not supported
-    if DEMO_MODE or db is None:
-        return templates.TemplateResponse("demo_mode_notice.html", {
-            "request": request,
-            "user": user,
-            "feature": "View Document",
-            "message": "Viewing documents is disabled in demo mode.",
-            "back_url": "/opportunities",
-        })
     
     # Wrap database operations in try-except
     try:
@@ -189,10 +159,6 @@ async def delete_document(
     if not user:
         return RedirectResponse(url="/login", status_code=303)
     
-    # DEMO MODE: Not supported
-    if DEMO_MODE or db is None:
-        return RedirectResponse(url="/opportunities", status_code=303)
-    
     # Wrap database operations in try-except
     try:
         document = db.query(Document).filter(Document.id == doc_id).first()
@@ -226,10 +192,6 @@ async def update_document(
     user = await get_current_user(request, db)
     if not user:
         return RedirectResponse(url="/login", status_code=303)
-    
-    # DEMO MODE: Not supported
-    if DEMO_MODE or db is None:
-        return RedirectResponse(url="/opportunities", status_code=303)
     
     # Wrap database operations in try-except
     try:

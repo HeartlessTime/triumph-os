@@ -35,16 +35,6 @@ async def new_estimate_form(
     if not user:
         return RedirectResponse(url=f"/login?next=/estimates/opportunity/{opp_id}/new", status_code=303)
     
-    # DEMO MODE: Not supported
-    if DEMO_MODE or db is None:
-        return templates.TemplateResponse("demo_mode_notice.html", {
-            "request": request,
-            "user": user,
-            "feature": "Create New Estimate",
-            "message": "Creating estimates is disabled in demo mode.",
-            "back_url": f"/opportunities/{opp_id}",
-        })
-    
     # Wrap database operations in try-except
     try:
         opportunity = db.query(Opportunity).filter(Opportunity.id == opp_id).first()
@@ -88,10 +78,6 @@ async def create_estimate(
     if not user:
         return RedirectResponse(url="/login", status_code=303)
     
-    # DEMO MODE: Not supported
-    if DEMO_MODE or db is None:
-        return RedirectResponse(url=f"/opportunities/{opp_id}", status_code=303)
-    
     # Wrap database operations in try-except
     try:
         opportunity = db.query(Opportunity).filter(Opportunity.id == opp_id).first()
@@ -127,16 +113,6 @@ async def view_estimate(
     user = await get_current_user(request, db)
     if not user:
         return RedirectResponse(url=f"/login?next=/estimates/{estimate_id}", status_code=303)
-    
-    # DEMO MODE: Not supported
-    if DEMO_MODE or db is None:
-        return templates.TemplateResponse("demo_mode_notice.html", {
-            "request": request,
-            "user": user,
-            "feature": "View Estimate",
-            "message": "Viewing estimates is disabled in demo mode.",
-            "back_url": "/opportunities",
-        })
     
     # Wrap database operations in try-except
     try:
@@ -177,10 +153,6 @@ async def update_estimate(
     user = await get_current_user(request, db)
     if not user:
         return RedirectResponse(url="/login", status_code=303)
-    
-    # DEMO MODE: Not supported
-    if DEMO_MODE or db is None:
-        return RedirectResponse(url="/opportunities", status_code=303)
     
     # Wrap database operations in try-except
     try:
@@ -223,10 +195,6 @@ async def add_line_item(
     user = await get_current_user(request, db)
     if not user:
         return RedirectResponse(url="/login", status_code=303)
-    
-    # DEMO MODE: Not supported
-    if DEMO_MODE or db is None:
-        return RedirectResponse(url=f"/estimates/{estimate_id}", status_code=303)
     
     # Wrap database operations in try-except
     try:
@@ -288,10 +256,6 @@ async def update_line_item(
     if not user:
         return RedirectResponse(url="/login", status_code=303)
     
-    # DEMO MODE: Not supported
-    if DEMO_MODE or db is None:
-        return RedirectResponse(url=f"/estimates/{estimate_id}", status_code=303)
-    
     # Wrap database operations in try-except
     try:
         estimate = db.query(Estimate).filter(Estimate.id == estimate_id).first()
@@ -336,10 +300,6 @@ async def delete_line_item(
     if not user:
         return RedirectResponse(url="/login", status_code=303)
     
-    # DEMO MODE: Not supported
-    if DEMO_MODE or db is None:
-        return RedirectResponse(url=f"/estimates/{estimate_id}", status_code=303)
-    
     # Wrap database operations in try-except
     try:
         estimate = db.query(Estimate).filter(Estimate.id == estimate_id).first()
@@ -377,10 +337,6 @@ async def copy_estimate(
     if not user:
         return RedirectResponse(url="/login", status_code=303)
     
-    # DEMO MODE: Not supported
-    if DEMO_MODE or db is None:
-        return RedirectResponse(url="/opportunities", status_code=303)
-    
     # Wrap database operations in try-except
     try:
         estimate = db.query(Estimate).filter(Estimate.id == estimate_id).first()
@@ -407,10 +363,6 @@ async def generate_proposal(
     user = await get_current_user(request, db)
     if not user:
         return RedirectResponse(url="/login", status_code=303)
-    
-    # DEMO MODE: Not supported
-    if DEMO_MODE or db is None:
-        return RedirectResponse(url="/opportunities", status_code=303)
     
     # Wrap database operations in try-except
     try:
@@ -467,10 +419,6 @@ async def delete_estimate(
     user = await get_current_user(request, db)
     if not user:
         return RedirectResponse(url="/login", status_code=303)
-    
-    # DEMO MODE: Not supported
-    if DEMO_MODE or db is None:
-        return RedirectResponse(url="/opportunities", status_code=303)
     
     # Wrap database operations in try-except
     try:
