@@ -316,6 +316,28 @@ async def delete_opportunity(
 
 
 # -----------------------------
+# Quick Stage Update
+# -----------------------------
+@router.post("/{opp_id}/update-stage")
+async def update_stage(
+    opp_id: int,
+    stage: str = Form(...),
+    db: Session = Depends(get_db)
+):
+    """Quick update opportunity stage without full edit form."""
+    opportunity = db.query(Opportunity).filter(Opportunity.id == opp_id).first()
+    if not opportunity:
+        raise HTTPException(status_code=404, detail="Opportunity not found")
+
+    opportunity.stage = stage
+    opportunity.probability = Opportunity.STAGE_PROBABILITIES.get(stage, 0)
+    update_opportunity_followup(opportunity)
+    db.commit()
+
+    return RedirectResponse(url=f"/opportunities/{opp_id}", status_code=303)
+
+
+# -----------------------------
 # Log Contact (Quick Action)
 # -----------------------------
 @router.post("/{opp_id}/log-contact")

@@ -239,11 +239,11 @@
                     <div class="card-body">
                         <div class="mb-3">
                             <label for="lv_value" class="form-label">Estimated LV Contract Value ($)</label>
-                            <input type="text" class="form-control numeric-format" id="lv_value" name="lv_value" placeholder="0">
+                            <input type="text" class="form-control currency-input" id="lv_value" name="lv_value" placeholder="0">
                         </div>
                         <div class="mb-3">
                             <label for="hdd_value" class="form-label">Estimated HDD / Underground Value ($)</label>
-                            <input type="text" class="form-control numeric-format" id="hdd_value" name="hdd_value" placeholder="0">
+                            <input type="text" class="form-control currency-input" id="hdd_value" name="hdd_value" placeholder="0">
                         </div>
                         <div class="mb-3">
                             <label for="project_type" class="form-label">Project Type</label>
@@ -302,29 +302,3 @@
 </div>
 {% endblock %}
 
-{% block scripts %}
-<script>
-function formatWithCommas(s){
-    if(!s) return '';
-    const neg = s.startsWith('-');
-    s = s.replace(/[^0-9.\-]/g,'');
-    const parts = s.split('.');
-    parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-    return (neg?'-':'') + parts.join('.')
-}
-
-function setupNumericFormatting(){
-    document.querySelectorAll('.numeric-format').forEach(function(el){
-        el.addEventListener('input', function(e){
-            const caret = el.selectionStart;
-            const raw = el.value.replace(/,/g,'');
-            const formatted = formatWithCommas(raw);
-            el.value = formatted;
-        });
-        // on load, format existing value
-        if(el.value){ el.value = formatWithCommas(el.value); }
-    });
-}
-document.addEventListener('DOMContentLoaded', setupNumericFormatting);
-</script>
-{% endblock %}

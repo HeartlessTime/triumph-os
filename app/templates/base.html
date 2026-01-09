@@ -454,6 +454,72 @@
         .mobile-overlay.show { display: block; }
     </style>
 
+    <!-- Phone number auto-formatting (XXX-XXX-XXXX) -->
+    <script>
+    (function() {
+        function formatPhone(value) {
+            // Strip all non-digits
+            const digits = value.replace(/\D/g, '');
+            // Format as XXX-XXX-XXXX
+            if (digits.length <= 3) return digits;
+            if (digits.length <= 6) return digits.slice(0, 3) + '-' + digits.slice(3);
+            return digits.slice(0, 3) + '-' + digits.slice(3, 6) + '-' + digits.slice(6, 10);
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            // Apply to all tel inputs
+            document.querySelectorAll('input[type="tel"]').forEach(function(el) {
+                el.addEventListener('input', function(e) {
+                    const cursorPos = el.selectionStart;
+                    const oldLen = el.value.length;
+                    el.value = formatPhone(el.value);
+                    const newLen = el.value.length;
+                    // Adjust cursor position
+                    el.setSelectionRange(cursorPos + (newLen - oldLen), cursorPos + (newLen - oldLen));
+                });
+            });
+        });
+    })();
+    </script>
+
+    <!-- Currency input auto-formatting (commas for thousands) -->
+    <script>
+    (function() {
+        function formatCurrency(value) {
+            if (!value) return '';
+            // Remove everything except digits and decimal
+            let cleaned = value.replace(/[^0-9.]/g, '');
+            // Handle multiple decimals - keep only first
+            const parts = cleaned.split('.');
+            if (parts.length > 2) {
+                cleaned = parts[0] + '.' + parts.slice(1).join('');
+            }
+            // Split on decimal
+            const [whole, decimal] = cleaned.split('.');
+            // Add commas to whole number part
+            const formatted = whole.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+            return decimal !== undefined ? formatted + '.' + decimal : formatted;
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            // Apply to all .currency-input fields
+            document.querySelectorAll('.currency-input').forEach(function(el) {
+                el.addEventListener('input', function(e) {
+                    const cursorPos = el.selectionStart;
+                    const oldLen = el.value.length;
+                    el.value = formatCurrency(el.value);
+                    const newLen = el.value.length;
+                    el.setSelectionRange(cursorPos + (newLen - oldLen), cursorPos + (newLen - oldLen));
+                });
+                // Format on load if has value
+                if (el.value) {
+                    el.value = formatCurrency(el.value);
+                }
+            });
+        });
+    })();
+    </script>
+
     {% block extra_js %}{% endblock %}
 </body>
 </html>

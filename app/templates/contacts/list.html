@@ -50,6 +50,7 @@
                             <th>Title</th>
                             <th>Email</th>
                             <th>Phone</th>
+                            <th>Last Contacted</th>
                             <th></th>
                         </tr>
                     </thead>
@@ -76,6 +77,7 @@
                                 {% else %}—{% endif %}
                             </td>
                             <td>{{ contact.best_phone or '—' }}</td>
+                            <td>{{ contact.last_contacted.strftime('%b %d, %Y') if contact.last_contacted else '—' }}</td>
                             <td class="text-end">
                                 <form method="post" action="/contacts/{{ contact.id }}/log-contact?next=/contacts" class="d-inline">
                                     <button type="submit" class="btn btn-sm btn-outline-primary" title="Log Contact">

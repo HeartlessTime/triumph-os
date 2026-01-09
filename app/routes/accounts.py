@@ -11,6 +11,16 @@ router = APIRouter(prefix="/accounts", tags=["accounts"])
 templates = Jinja2Templates(directory="app/templates")
 
 
+def normalize_url(url: str | None) -> str | None:
+    """Prepend https:// if URL doesn't start with http:// or https://."""
+    if not url:
+        return None
+    url = url.strip()
+    if url and not url.startswith(('http://', 'https://')):
+        return f'https://{url}'
+    return url
+
+
 @router.get("", response_class=HTMLResponse)
 async def list_accounts(
     request: Request,
@@ -75,7 +85,7 @@ async def create_account(
     account = Account(
         name=name,
         industry=industry or None,
-        website=website or None,
+        website=normalize_url(website),
         phone=phone or None,
         address=address or None,
         city=city or None,
@@ -148,7 +158,7 @@ async def update_account(
 
     account.name = name
     account.industry = industry or None
-    account.website = website or None
+    account.website = normalize_url(website)
     account.phone = phone or None
     account.address = address or None
     account.city = city or None
