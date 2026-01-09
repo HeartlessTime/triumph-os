@@ -15,17 +15,65 @@ depends_on = None
 
 
 def upgrade():
-    op.add_column('opportunities', sa.Column('bid_type', sa.String(length=50), nullable=True))
-    op.add_column('opportunities', sa.Column('submission_method', sa.String(length=50), nullable=True))
-    op.add_column('opportunities', sa.Column('bid_time', sa.Time(), nullable=True))
-    op.add_column('opportunities', sa.Column('bid_form_required', sa.Boolean(), nullable=False, server_default=sa.text('0')))
-    op.add_column('opportunities', sa.Column('bond_required', sa.Boolean(), nullable=False, server_default=sa.text('0')))
-    op.add_column('opportunities', sa.Column('prevailing_wage', sa.String(length=20), nullable=True))
-    op.add_column('opportunities', sa.Column('known_risks', sa.Text(), nullable=True))
-    op.add_column('opportunities', sa.Column('project_type', sa.String(length=50), nullable=True))
-    op.add_column('opportunities', sa.Column('rebid', sa.Boolean(), nullable=False, server_default=sa.text('0')))
-    op.add_column('opportunities', sa.Column('rebid_changes', sa.Text(), nullable=True))
-    op.add_column('opportunities', sa.Column('lv_value', sa.Numeric(15,2), nullable=True))
+    op.add_column(
+        'opportunities',
+        sa.Column('bid_type', sa.String(length=50), nullable=True)
+    )
+    op.add_column(
+        'opportunities',
+        sa.Column('submission_method', sa.String(length=50), nullable=True)
+    )
+    op.add_column(
+        'opportunities',
+        sa.Column('bid_time', sa.Time(), nullable=True)
+    )
+    op.add_column(
+        'opportunities',
+        sa.Column(
+            'bid_form_required',
+            sa.Boolean(),
+            nullable=False,
+            server_default=sa.text('false')
+        )
+    )
+    op.add_column(
+        'opportunities',
+        sa.Column(
+            'bond_required',
+            sa.Boolean(),
+            nullable=False,
+            server_default=sa.text('false')
+        )
+    )
+    op.add_column(
+        'opportunities',
+        sa.Column('prevailing_wage', sa.String(length=20), nullable=True)
+    )
+    op.add_column(
+        'opportunities',
+        sa.Column('known_risks', sa.Text(), nullable=True)
+    )
+    op.add_column(
+        'opportunities',
+        sa.Column('project_type', sa.String(length=50), nullable=True)
+    )
+    op.add_column(
+        'opportunities',
+        sa.Column(
+            'rebid',
+            sa.Boolean(),
+            nullable=False,
+            server_default=sa.text('false')
+        )
+    )
+    op.add_column(
+        'opportunities',
+        sa.Column('rebid_changes', sa.Text(), nullable=True)
+    )
+    op.add_column(
+        'opportunities',
+        sa.Column('lv_value', sa.Numeric(15, 2), nullable=True)
+    )
 
 
 def downgrade():
