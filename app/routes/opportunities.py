@@ -231,12 +231,46 @@ async def opportunity_detail(
         opportunity.next_followup, today
     )
 
+    # Query contacts for this opportunity's account
+    contacts = (
+        db.query(Contact)
+        .filter(Contact.account_id == opportunity.account_id)
+        .order_by(Contact.last_name)
+        .all()
+    )
+
+    # Query estimators for task assignment dropdown
+    estimators = (
+        db.query(User)
+        .filter(User.is_active == True, User.role.in_(["Estimator", "Admin"]))
+        .order_by(User.full_name)
+        .all()
+    )
+
+    # Load GC accounts if opportunity has GCs
+    gcs_accounts = []
+    if opportunity.gcs:
+        gcs_accounts = db.query(Account).filter(Account.id.in_(opportunity.gcs)).all()
+
+    # Load related contacts if opportunity has related_contact_ids
+    related_contacts = []
+    if opportunity.related_contact_ids:
+        related_contacts = db.query(Contact).filter(Contact.id.in_(opportunity.related_contact_ids)).all()
+
+    # Load quick links
+    quick_links = opportunity.quick_links or []
+
     return templates.TemplateResponse(
         "opportunities/command_center.html",
         {
             "request": request,
             "opportunity": opportunity,
             "today": today,
+            "contacts": contacts,
+            "estimators": estimators,
+            "gcs_accounts": gcs_accounts,
+            "related_contacts": related_contacts,
+            "quick_links": quick_links,
         }
     )
 
