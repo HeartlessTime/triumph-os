@@ -68,7 +68,7 @@ async def get_meeting_prep(
             'opportunities': [{
                 'name': opp.name,
                 'stage': opp.stage,
-                'value': float(opp.value) if opp.value else 0,
+                'value': float((opp.lv_value or 0) + (opp.hdd_value or 0)),
                 'bid_date': opp.bid_date.isoformat() if opp.bid_date else None
             } for opp in opportunities],
             'activities': [{
