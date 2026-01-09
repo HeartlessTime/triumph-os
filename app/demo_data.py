@@ -250,8 +250,8 @@ def get_demo_opportunities():
     o3.account_id = 3
     o3.name = "Regional Medical - Emergency Dept Expansion"
     o3.description = "New emergency department wing, nurse call, fire alarm, access control"
-    o3.stage = "Qualification"
-    o3.probability = 20
+    o3.stage = "Proposal"
+    o3.probability = 40
     o3.bid_date = today + timedelta(days=60)
     o3.lv_value = Decimal("320000.00")
     o3.hdd_value = Decimal("0.00")
@@ -275,8 +275,8 @@ def get_demo_opportunities():
     o4.account_id = 4
     o4.name = "Valley Schools - New High School Campus"
     o4.description = "New construction, full technology package plus underground fiber optic backbone between buildings"
-    o4.stage = "Needs Analysis"
-    o4.probability = 40
+    o4.stage = "Bid Sent"
+    o4.probability = 60
     o4.bid_date = today + timedelta(days=45)
     o4.lv_value = Decimal("650000.00")
     o4.hdd_value = Decimal("85000.00")

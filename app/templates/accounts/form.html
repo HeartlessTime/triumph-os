@@ -42,7 +42,7 @@
                             
                             <div class="col-12">
                                 <label for="website" class="form-label">Website</label>
-                                <input type="url" class="form-control" id="website" name="website" value="{{ account.website if account else '' }}" placeholder="https://example.com">
+                                <input type="url" class="form-control" id="website" name="website" value="{{ display_website if display_website else (account.website if account else '') }}" placeholder="https://example.com">
                             </div>
                             
                             <div class="col-12">

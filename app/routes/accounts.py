@@ -1,3 +1,5 @@
+from typing import Optional
+
 from fastapi import APIRouter, Request, Depends, Form, HTTPException
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
@@ -11,7 +13,7 @@ router = APIRouter(prefix="/accounts", tags=["accounts"])
 templates = Jinja2Templates(directory="app/templates")
 
 
-def normalize_url(url: str | None) -> str | None:
+def normalize_url(url: Optional[str]) -> Optional[str]:
     """Prepend https:// if URL doesn't start with http:// or https://."""
     if not url:
         return None
@@ -128,9 +130,13 @@ async def edit_account_form(
     if not account:
         raise HTTPException(status_code=404, detail="Account not found")
 
+    # Normalize website URL for display (ensure https:// prefix)
+    display_website = normalize_url(account.website) if account.website else None
+
     return templates.TemplateResponse("accounts/form.html", {
         "request": request,
         "account": account,
+        "display_website": display_website,
         "industries": Account.INDUSTRIES,
         "is_new": False,
     })

@@ -80,11 +80,9 @@ class Opportunity(Base):
 
     STAGES = [
         ('Prospecting', 10),
-        ('Qualification', 20),
-        ('Needs Analysis', 40),
-        ('Proposal', 60),
-        ('Bid Sent', 75),
-        ('Negotiation', 90),
+        ('Proposal', 40),
+        ('Bid Sent', 60),
+        ('Negotiation', 80),
         ('Won', 100),
         ('Lost', 0),
     ]

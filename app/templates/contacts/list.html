@@ -53,7 +53,7 @@
                     </thead>
                     <tbody>
                         {% for contact in contacts %}
-                        <tr>
+                        <tr data-account_id="{{ contact.account_id }}">
                             <td>
                                 <a href="/contacts/{{ contact.id }}" class="text-decoration-none fw-medium">
                                     {{ contact.full_name }}

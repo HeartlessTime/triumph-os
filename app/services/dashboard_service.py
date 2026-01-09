@@ -7,7 +7,7 @@ from app.services.followup import get_followup_status
 
 
 def get_dashboard_data(db: Session, today: date) -> dict:
-    open_stages = ['Prospecting', 'Qualification', 'Needs Analysis', 'Proposal', 'Bid Sent', 'Negotiation']
+    open_stages = ['Prospecting', 'Proposal', 'Bid Sent', 'Negotiation']
 
     pipeline_value = db.query(
         func.sum(func.coalesce(Opportunity.lv_value, 0) + func.coalesce(Opportunity.hdd_value, 0))

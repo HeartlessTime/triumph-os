@@ -3,8 +3,6 @@ Follow-up Engine Service
 
 Rules for OPPORTUNITIES:
 - Prospecting => last_contacted + 14 days
-- Qualification => last_contacted + 7 days
-- Needs Analysis => last_contacted + 7 days
 - Proposal => last_contacted + 14 days
 - Bid Sent => last_contacted + 14 days
 - Negotiation => last_contacted + 7 days
@@ -22,8 +20,6 @@ from typing import Optional
 # Stage to follow-up days mapping
 STAGE_FOLLOWUP_DAYS = {
     'Prospecting': 14,
-    'Qualification': 7,
-    'Needs Analysis': 7,
     'Proposal': 14,
     'Bid Sent': 14,
     'Negotiation': 7,
@@ -65,7 +61,7 @@ def calculate_next_followup(
     Rules (in priority order):
     1. If Won/Lost => None (no follow-up)
     2. If bid date has passed => today + 2 business days (urgent)
-    3. Stage-based: Prospecting/Proposal/Bid Sent = 14 days, others = 7 days
+    3. Stage-based: Prospecting/Proposal/Bid Sent = 14 days, Negotiation = 7 days
 
     Args:
         stage: The opportunity stage

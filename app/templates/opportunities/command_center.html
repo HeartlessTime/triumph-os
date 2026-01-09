@@ -89,7 +89,7 @@
                         <label class="text-muted small d-block">Stage</label>
                         <form method="post" action="/opportunities/{{ opportunity.id }}/update-stage" class="d-inline">
                             <select name="stage" class="form-select form-select-sm d-inline-block w-auto" onchange="this.form.submit()">
-                                {% for stg_name, prob in [('Prospecting', 10), ('Qualification', 20), ('Needs Analysis', 40), ('Proposal', 60), ('Bid Sent', 75), ('Negotiation', 90), ('Won', 100), ('Lost', 0)] %}
+                                {% for stg_name, prob in [('Prospecting', 10), ('Proposal', 40), ('Bid Sent', 60), ('Negotiation', 80), ('Won', 100), ('Lost', 0)] %}
                                 <option value="{{ stg_name }}" {% if opportunity.stage == stg_name %}selected{% endif %}>{{ stg_name }}</option>
                                 {% endfor %}
                             </select>

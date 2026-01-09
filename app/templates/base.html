@@ -206,8 +206,6 @@
         }
 
         .badge-prospecting { background: #dbeafe; color: #1e40af; }
-        .badge-qualification { background: #fef3c7; color: #92400e; }
-        .badge-needs-analysis { background: #fce7f3; color: #9d174d; }
         .badge-proposal { background: #e0e7ff; color: #3730a3; }
         .badge-bid-sent { background: #ccfbf1; color: #065f46; }
         .badge-negotiation { background: #fef9c3; color: #854d0e; }
@@ -520,56 +518,68 @@
     })();
     </script>
 
-    <!-- Live search with debounce -->
+    <!-- Client-side table filtering (no page reload) -->
     <script>
     (function() {
-        let debounceTimer;
-
-        function debounce(func, delay) {
-            return function(...args) {
-                clearTimeout(debounceTimer);
-                debounceTimer = setTimeout(() => func.apply(this, args), delay);
-            };
-        }
-
-        function updateUrlAndReload() {
-            const form = document.querySelector('form.live-search');
-            if (!form) return;
-
-            const formData = new FormData(form);
-            const params = new URLSearchParams();
-
-            for (const [key, value] of formData.entries()) {
-                if (value && value.trim()) {
-                    params.set(key, value.trim());
-                }
-            }
-
-            const newUrl = window.location.pathname + (params.toString() ? '?' + params.toString() : '');
-            window.location.href = newUrl;
-        }
-
         document.addEventListener('DOMContentLoaded', function() {
             const form = document.querySelector('form.live-search');
             if (!form) return;
 
-            // Debounced handler for text inputs
-            const debouncedUpdate = debounce(updateUrlAndReload, 300);
+            const table = document.querySelector('table.table-hover');
+            if (!table) return;
+
+            const tbody = table.querySelector('tbody');
+            if (!tbody) return;
+
+            const rows = Array.from(tbody.querySelectorAll('tr'));
+
+            function filterRows() {
+                const searchInput = form.querySelector('input[type="text"]');
+                const searchTerm = searchInput ? searchInput.value.toLowerCase().trim() : '';
+
+                // Get all select filters
+                const selects = form.querySelectorAll('select');
+                const selectFilters = {};
+                selects.forEach(function(sel) {
+                    selectFilters[sel.name] = sel.value;
+                });
+
+                rows.forEach(function(row) {
+                    const rowText = row.textContent.toLowerCase();
+                    let visible = true;
+
+                    // Text search filter
+                    if (searchTerm && !rowText.includes(searchTerm)) {
+                        visible = false;
+                    }
+
+                    // Select filters - check data attributes on the row
+                    for (const [filterName, filterValue] of Object.entries(selectFilters)) {
+                        if (filterValue) {
+                            const rowAttr = row.getAttribute('data-' + filterName);
+                            if (rowAttr && rowAttr !== filterValue) {
+                                visible = false;
+                            }
+                        }
+                    }
+
+                    row.style.display = visible ? '' : 'none';
+                });
+            }
 
             // Apply to search text inputs
             form.querySelectorAll('input[type="text"]').forEach(function(el) {
-                el.addEventListener('input', debouncedUpdate);
+                el.addEventListener('input', filterRows);
             });
 
-            // Apply immediately to select dropdowns
+            // Apply to select dropdowns
             form.querySelectorAll('select').forEach(function(el) {
-                el.addEventListener('change', updateUrlAndReload);
+                el.addEventListener('change', filterRows);
             });
 
             // Prevent default form submission
             form.addEventListener('submit', function(e) {
                 e.preventDefault();
-                updateUrlAndReload();
             });
         });
     })();

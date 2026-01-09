@@ -55,7 +55,7 @@
                     </thead>
                     <tbody>
                         {% for account in accounts %}
-                        <tr>
+                        <tr data-industry="{{ account.industry or '' }}">
                             <td>
                                 <a href="/accounts/{{ account.id }}" class="text-decoration-none fw-medium">
                                     {{ account.name }}

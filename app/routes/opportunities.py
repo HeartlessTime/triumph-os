@@ -40,11 +40,11 @@ def update_opportunity_followup(opportunity: Opportunity, today: Union[date, Non
 @router.get("", response_class=HTMLResponse)
 async def list_opportunities(
     request: Request,
-    search: str | None = None,
-    stage: str | None = None,
-    estimator_id: str | None = None,
-    gc_id: str | None = None,
-    end_user_account_id: str | None = None,
+    search: Optional[str] = None,
+    stage: Optional[str] = None,
+    estimator_id: Optional[str] = None,
+    gc_id: Optional[str] = None,
+    end_user_account_id: Optional[str] = None,
     db: Session = Depends(get_db)
 ):
     estimator_id = int(estimator_id) if estimator_id else None
@@ -123,7 +123,7 @@ async def list_opportunities(
 @router.get("/intake", response_class=HTMLResponse)
 async def intake_form(
     request: Request,
-    account_id: int | None = None,
+    account_id: Optional[int] = None,
     db: Session = Depends(get_db)
 ):
     accounts = db.query(Account).order_by(Account.name).all()
@@ -178,16 +178,16 @@ async def create_opportunity(
     account_id: int = Form(...),
     name: str = Form(...),
     stage: str = Form("Prospecting"),
-    lv_value: str | None = Form(None),
-    hdd_value: str | None = Form(None),
-    bid_date: str | None = Form(None),
-    owner_id: int | None = Form(None),
-    assigned_estimator_id: int | None = Form(None),
+    lv_value: Optional[str] = Form(None),
+    hdd_value: Optional[str] = Form(None),
+    bid_date: Optional[str] = Form(None),
+    owner_id: Optional[int] = Form(None),
+    assigned_estimator_id: Optional[int] = Form(None),
     scope_names: List[str] = Form(default=[]),
-    scope_other_text: str | None = Form(None),
+    scope_other_text: Optional[str] = Form(None),
     db: Session = Depends(get_db)
 ):
-    def clean_num(val: str | None):
+    def clean_num(val: Optional[str]):
         return Decimal(val.replace(",", "")) if val else None
 
     opportunity = Opportunity(
@@ -443,7 +443,7 @@ async def update_opportunity(
     last_contacted: str = Form(None),
     quick_links_text: str = Form(None),
     scope_names: List[str] = Form(default=[]),
-    scope_other_text: str | None = Form(None),
+    scope_other_text: Optional[str] = Form(None),
     db: Session = Depends(get_db)
 ):
     opportunity = db.query(Opportunity).filter(Opportunity.id == opp_id).first()
