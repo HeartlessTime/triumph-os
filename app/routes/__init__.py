@@ -7,7 +7,6 @@ from app.routes.documents import router as documents_router
 from app.routes.activities import router as activities_router
 from app.routes.tasks import router as tasks_router
 from app.routes.guide import router as guide_router
-from app.routes.meeting_prep import router as meeting_prep_router
 from app.routes.email_sync import router as email_sync_router
 from app.routes.estimators import router as estimators_router
 
@@ -21,7 +20,6 @@ __all__ = [
     "activities_router",
     "tasks_router",
     "guide_router",
-    "meeting_prep_router",
     "email_sync_router",
     "estimators_router",
 ]
