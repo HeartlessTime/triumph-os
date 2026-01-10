@@ -1,0 +1,152 @@
+{% extends "base.html" %}
+
+{% block title %}Task: {{ task.title }} - Triumph OS{% endblock %}
+
+{% block content %}
+<div class="content-area">
+    <div class="page-header">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="/opportunities">Opportunities</a></li>
+                {% if task.opportunity %}
+                <li class="breadcrumb-item"><a href="/opportunities/{{ task.opportunity_id }}">{{ task.opportunity.name }}</a></li>
+                {% endif %}
+                <li class="breadcrumb-item active">Task</li>
+            </ol>
+        </nav>
+        <div class="d-flex justify-content-between align-items-center">
+            <h1>{{ task.title }}</h1>
+            <div class="d-flex gap-2">
+                {% if task.status == 'Open' %}
+                <form method="post" action="/tasks/{{ task.id }}/complete" class="d-inline">
+                    <button type="submit" class="btn btn-success">
+                        <i class="bi bi-check-lg me-1"></i> Complete
+                    </button>
+                </form>
+                {% else %}
+                <form method="post" action="/tasks/{{ task.id }}/reopen" class="d-inline">
+                    <button type="submit" class="btn btn-outline-secondary">
+                        <i class="bi bi-arrow-counterclockwise me-1"></i> Reopen
+                    </button>
+                </form>
+                {% endif %}
+                <a href="/tasks/{{ task.id }}/edit" class="btn btn-outline-primary">
+                    <i class="bi bi-pencil me-1"></i> Edit
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Task Details -->
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="bi bi-list-task me-2"></i>Task Details
+                </div>
+                <div class="card-body">
+                    <dl class="row mb-0">
+                        <dt class="col-sm-4">Status</dt>
+                        <dd class="col-sm-8">
+                            {% if task.status == 'Completed' %}
+                            <span class="badge bg-success">Completed</span>
+                            {% else %}
+                            <span class="badge bg-primary">Open</span>
+                            {% endif %}
+                        </dd>
+
+                        <dt class="col-sm-4">Priority</dt>
+                        <dd class="col-sm-8">
+                            <span class="badge" style="background-color: {{ task.priority_color }}20; color: {{ task.priority_color }}">
+                                {{ task.priority }}
+                            </span>
+                        </dd>
+
+                        <dt class="col-sm-4">Due Date</dt>
+                        <dd class="col-sm-8">
+                            {% if task.due_date %}
+                            <span class="{% if task.is_overdue %}text-danger{% endif %}">
+                                {{ task.due_date.strftime('%b %d, %Y') }}
+                                {% if task.is_overdue %}(Overdue){% endif %}
+                            </span>
+                            {% else %}
+                            <span class="text-muted">Not set</span>
+                            {% endif %}
+                        </dd>
+
+                        <dt class="col-sm-4">Assigned To</dt>
+                        <dd class="col-sm-8">
+                            {% if task.assigned_to %}
+                            {{ task.assigned_to.full_name }}
+                            {% else %}
+                            <span class="text-muted">Unassigned</span>
+                            {% endif %}
+                        </dd>
+
+                        <dt class="col-sm-4">Created</dt>
+                        <dd class="col-sm-8">{{ task.created_at.strftime('%b %d, %Y %H:%M') }}</dd>
+
+                        {% if task.status == 'Completed' and task.completed_at %}
+                        <dt class="col-sm-4">Completed</dt>
+                        <dd class="col-sm-8">{{ task.completed_at.strftime('%b %d, %Y %H:%M') }}</dd>
+                        {% endif %}
+                    </dl>
+
+                    {% if task.description %}
+                    <hr>
+                    <h6>Description</h6>
+                    <p class="mb-0 text-muted">{{ task.description }}</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Activity History -->
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="bi bi-clock-history me-2"></i>Activity (Opportunity Timeline)
+                </div>
+                <div class="card-body">
+                    {% if activities %}
+                    <div class="activity-timeline">
+                        {% for activity in activities %}
+                        <div class="activity-item mb-3 pb-3 {% if not loop.last %}border-bottom{% endif %}">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <span class="me-1">{{ activity.icon }}</span>
+                                    <strong>{{ activity.subject }}</strong>
+                                    {% if activity.contact %}
+                                    <span class="text-muted small">with {{ activity.contact.full_name }}</span>
+                                    {% endif %}
+                                </div>
+                                <small class="text-muted">{{ activity.activity_date.strftime('%b %d, %H:%M') }}</small>
+                            </div>
+                            {% if activity.description %}
+                            <p class="mb-0 mt-1 text-muted small">{{ activity.description[:150] }}{% if activity.description|length > 150 %}...{% endif %}</p>
+                            {% endif %}
+                            {% if activity.created_by %}
+                            <small class="text-muted">by {{ activity.created_by.full_name }}</small>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% if task.opportunity %}
+                    <div class="text-center mt-3">
+                        <a href="/opportunities/{{ task.opportunity_id }}" class="btn btn-sm btn-outline-secondary">
+                            View Full Timeline
+                        </a>
+                    </div>
+                    {% endif %}
+                    {% else %}
+                    <div class="text-center text-muted py-4">
+                        <i class="bi bi-clock h1"></i>
+                        <p>No activity history</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

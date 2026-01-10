@@ -194,7 +194,7 @@
                                     </button>
                                 </form>
                                 <div>
-                                    <span class="fw-medium">{{ task.title }}</span>
+                                    <a href="/tasks/{{ task.id }}" class="fw-medium text-decoration-none">{{ task.title }}</a>
                                     {% if task.assigned_to %}
                                     <span class="text-muted small ms-2">→ {{ task.assigned_to.full_name }}</span>
                                     {% endif %}
@@ -228,7 +228,7 @@
                                         <i class="bi bi-trash"></i>
                                     </button>
                                 </form>
-                                <span class="ms-1">{{ task.title }}</span>
+                                <a href="/tasks/{{ task.id }}" class="ms-1 text-decoration-none text-muted">{{ task.title }}</a>
                             </div>
                         </div>
                         {% endfor %}

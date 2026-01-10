@@ -5,7 +5,7 @@ from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 
 from app.database import get_db
-from app.models import Opportunity, Task, User
+from app.models import Opportunity, Task, User, Activity
 
 router = APIRouter(prefix="/tasks", tags=["tasks"])
 templates = Jinja2Templates(directory="app/templates")
@@ -82,6 +82,31 @@ async def reopen_task(
     if task.opportunity_id:
         return RedirectResponse(url=f"/opportunities/{task.opportunity_id}", status_code=303)
     return RedirectResponse(url="/", status_code=303)
+
+
+@router.get("/{task_id}", response_class=HTMLResponse)
+async def view_task(
+    request: Request,
+    task_id: int,
+    db: Session = Depends(get_db)
+):
+    """Display task detail page with activity history."""
+    task = db.query(Task).filter(Task.id == task_id).first()
+    if not task:
+        raise HTTPException(status_code=404, detail="Task not found")
+
+    # Get activities from the parent opportunity (newest first)
+    activities = []
+    if task.opportunity_id:
+        activities = db.query(Activity).filter(
+            Activity.opportunity_id == task.opportunity_id
+        ).order_by(Activity.activity_date.desc()).limit(20).all()
+
+    return templates.TemplateResponse("tasks/view.html", {
+        "request": request,
+        "task": task,
+        "activities": activities,
+    })
 
 
 @router.get("/{task_id}/edit", response_class=HTMLResponse)
