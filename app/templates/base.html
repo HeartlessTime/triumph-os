@@ -363,6 +363,10 @@
                 <i class="bi bi-speedometer2"></i>
                 Dashboard
             </a>
+            <a href="/summary/weekly" class="nav-link {% if '/summary' in request.url.path %}active{% endif %}">
+                <i class="bi bi-clipboard-data"></i>
+                Weekly Summary
+            </a>
 
             <div class="nav-section mt-3">Sales</div>
             <a href="/accounts" class="nav-link {% if '/accounts' in request.url.path %}active{% endif %}">
