@@ -6,26 +6,42 @@ Designed for boss-friendly reporting without authentication changes.
 """
 
 from datetime import date, datetime, timedelta
-from typing import Optional
+from typing import Optional, Dict
 
-from fastapi import APIRouter, Request, Depends
-from fastapi.responses import HTMLResponse
+from fastapi import APIRouter, Request, Depends, Form
+from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 
 from app.database import get_db
-from app.models import Account, Contact, Opportunity, Activity, Task
+from app.models import Account, Contact, Opportunity, Activity, Task, WeeklySummaryNote
 
 router = APIRouter(prefix="/summary", tags=["summary"])
 templates = Jinja2Templates(directory="app/templates")
 
 
-def get_week_boundaries(days_back: int = 7) -> tuple[date, date]:
+def get_week_boundaries(days_back: int = 7):
     """Get start and end dates for the summary period."""
     end_date = date.today()
     start_date = end_date - timedelta(days=days_back)
     return start_date, end_date
+
+
+def get_week_start_monday():
+    """Get the Monday of the current week for note storage."""
+    today = date.today()
+    # weekday() returns 0 for Monday, 6 for Sunday
+    days_since_monday = today.weekday()
+    return today - timedelta(days=days_since_monday)
+
+
+def load_notes_for_week(db: Session, week_start: date) -> Dict[str, str]:
+    """Load all notes for a given week, keyed by section."""
+    notes = db.query(WeeklySummaryNote).filter(
+        WeeklySummaryNote.week_start == week_start
+    ).all()
+    return {note.section: note.notes or "" for note in notes}
 
 
 @router.get("/weekly", response_class=HTMLResponse)
@@ -150,6 +166,12 @@ async def weekly_summary(
     else:
         summary_sentence = "No activity recorded in the last {} days.".format(days)
 
+    # ----------------------------
+    # LOAD NOTES FOR THIS WEEK
+    # ----------------------------
+    week_start = get_week_start_monday()
+    section_notes = load_notes_for_week(db, week_start)
+
     return templates.TemplateResponse("summary/weekly.html", {
         "request": request,
         "start_date": start_date,
@@ -172,4 +194,51 @@ async def weekly_summary(
         "new_contacts": new_contacts,
         "new_opportunities": new_opportunities,
         "activities_logged": activities_logged,
+        # Notes
+        "week_start": week_start,
+        "section_notes": section_notes,
     })
+
+
+@router.post("/weekly/notes")
+async def save_weekly_note(
+    request: Request,
+    week_start: date = Form(...),
+    section: str = Form(...),
+    notes: str = Form(""),
+    db: Session = Depends(get_db)
+):
+    """
+    Save or update a note for a specific section and week.
+
+    Form fields:
+        week_start: The Monday of the week (YYYY-MM-DD)
+        section: One of 'outreach', 'pipeline', 'tasks', 'new_records', 'other'
+        notes: The note content (can be empty)
+    """
+    # Validate section
+    if section not in WeeklySummaryNote.SECTIONS:
+        return RedirectResponse(url="/summary/weekly", status_code=303)
+
+    # Find existing note or create new one
+    existing = db.query(WeeklySummaryNote).filter(
+        WeeklySummaryNote.week_start == week_start,
+        WeeklySummaryNote.section == section
+    ).first()
+
+    if existing:
+        existing.notes = notes
+        existing.updated_at = datetime.utcnow()
+    else:
+        new_note = WeeklySummaryNote(
+            week_start=week_start,
+            section=section,
+            notes=notes,
+            created_at=datetime.utcnow(),
+            updated_at=datetime.utcnow()
+        )
+        db.add(new_note)
+
+    db.commit()
+
+    return RedirectResponse(url="/summary/weekly", status_code=303)

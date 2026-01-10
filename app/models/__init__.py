@@ -8,6 +8,7 @@ from app.models.activity import Activity
 from app.models.task import Task
 from app.models.document import Document
 from app.models.vendor import Vendor, VendorQuoteRequest
+from app.models.weekly_summary_note import WeeklySummaryNote
 
 __all__ = [
     'User',
@@ -23,4 +24,5 @@ __all__ = [
     'Document',
     'Vendor',
     'VendorQuoteRequest',
+    'WeeklySummaryNote',
 ]

@@ -112,6 +112,17 @@
                     </div>
                     {% endif %}
                 </div>
+                <div class="card-footer bg-light">
+                    <form action="/summary/weekly/notes" method="post" class="note-form">
+                        <input type="hidden" name="week_start" value="{{ week_start }}">
+                        <input type="hidden" name="section" value="outreach">
+                        <div class="mb-2">
+                            <label class="form-label small text-muted mb-1"><i class="bi bi-pencil me-1"></i>Notes</label>
+                            <textarea name="notes" class="form-control form-control-sm" rows="2" placeholder="Add notes about outreach...">{{ section_notes.get('outreach', '') }}</textarea>
+                        </div>
+                        <button type="submit" class="btn btn-sm btn-outline-success">Save Notes</button>
+                    </form>
+                </div>
             </div>
         </div>
 
@@ -158,6 +169,17 @@
                         <p class="mb-0">No pipeline changes this period</p>
                     </div>
                     {% endif %}
+                </div>
+                <div class="card-footer bg-light">
+                    <form action="/summary/weekly/notes" method="post" class="note-form">
+                        <input type="hidden" name="week_start" value="{{ week_start }}">
+                        <input type="hidden" name="section" value="pipeline">
+                        <div class="mb-2">
+                            <label class="form-label small text-muted mb-1"><i class="bi bi-pencil me-1"></i>Notes</label>
+                            <textarea name="notes" class="form-control form-control-sm" rows="2" placeholder="Add notes about pipeline...">{{ section_notes.get('pipeline', '') }}</textarea>
+                        </div>
+                        <button type="submit" class="btn btn-sm btn-outline-warning">Save Notes</button>
+                    </form>
                 </div>
             </div>
         </div>
@@ -209,6 +231,17 @@
                         <p class="mb-0">No tasks completed this period</p>
                     </div>
                     {% endif %}
+                </div>
+                <div class="card-footer bg-light">
+                    <form action="/summary/weekly/notes" method="post" class="note-form">
+                        <input type="hidden" name="week_start" value="{{ week_start }}">
+                        <input type="hidden" name="section" value="tasks">
+                        <div class="mb-2">
+                            <label class="form-label small text-muted mb-1"><i class="bi bi-pencil me-1"></i>Notes</label>
+                            <textarea name="notes" class="form-control form-control-sm" rows="2" placeholder="Add notes about tasks...">{{ section_notes.get('tasks', '') }}</textarea>
+                        </div>
+                        <button type="submit" class="btn btn-sm btn-outline-danger">Save Notes</button>
+                    </form>
                 </div>
             </div>
         </div>
@@ -274,6 +307,17 @@
                     <p class="text-muted small mb-0">None</p>
                     {% endif %}
                 </div>
+                <div class="card-footer bg-light">
+                    <form action="/summary/weekly/notes" method="post" class="note-form">
+                        <input type="hidden" name="week_start" value="{{ week_start }}">
+                        <input type="hidden" name="section" value="new_records">
+                        <div class="mb-2">
+                            <label class="form-label small text-muted mb-1"><i class="bi bi-pencil me-1"></i>Notes</label>
+                            <textarea name="notes" class="form-control form-control-sm" rows="2" placeholder="Add notes about new records...">{{ section_notes.get('new_records', '') }}</textarea>
+                        </div>
+                        <button type="submit" class="btn btn-sm btn-outline-info">Save Notes</button>
+                    </form>
+                </div>
             </div>
         </div>
 
@@ -319,6 +363,25 @@
                         <p class="mb-0">No activities logged this period</p>
                     </div>
                     {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Other Notes -->
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-dark text-white">
+                    <h5 class="mb-0"><i class="bi bi-journal-text me-2"></i>Other Notes</h5>
+                </div>
+                <div class="card-body">
+                    <form action="/summary/weekly/notes" method="post" class="note-form">
+                        <input type="hidden" name="week_start" value="{{ week_start }}">
+                        <input type="hidden" name="section" value="other">
+                        <div class="mb-3">
+                            <textarea name="notes" class="form-control" rows="4" placeholder="Add any other notes, observations, or highlights for this week...">{{ section_notes.get('other', '') }}</textarea>
+                        </div>
+                        <button type="submit" class="btn btn-outline-dark">Save Notes</button>
+                    </form>
                 </div>
             </div>
         </div>
