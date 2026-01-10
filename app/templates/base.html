@@ -106,6 +106,59 @@
             width: 1.5rem;
         }
 
+        /* Sidebar User Section */
+        .sidebar-user {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 1rem 1.5rem;
+            border-top: 1px solid rgba(255,255,255,0.1);
+            background: rgba(0,0,0,0.2);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .sidebar-user .user-info {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            color: rgba(255,255,255,0.9);
+        }
+
+        .sidebar-user .user-info > i {
+            font-size: 1.75rem;
+            opacity: 0.8;
+        }
+
+        .sidebar-user .user-details {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sidebar-user .user-name {
+            font-weight: 500;
+            font-size: 0.9rem;
+            line-height: 1.2;
+        }
+
+        .sidebar-user .user-role {
+            font-size: 0.7rem;
+            color: rgba(255,255,255,0.5);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .sidebar-user .logout-form button {
+            opacity: 0.7;
+            transition: opacity 0.2s;
+        }
+
+        .sidebar-user .logout-form button:hover {
+            opacity: 1;
+        }
+
         /* Main Content */
         .main-content {
             margin-left: var(--sidebar-width);
@@ -402,6 +455,24 @@
                 How to Use
             </a>
         </div>
+
+        <!-- User section at bottom of sidebar -->
+        {% if request.state.current_user %}
+        <div class="sidebar-user">
+            <div class="user-info">
+                <i class="bi bi-person-circle"></i>
+                <div class="user-details">
+                    <span class="user-name">{{ request.state.current_user.full_name }}</span>
+                    <span class="user-role">{{ request.state.current_user.role }}</span>
+                </div>
+            </div>
+            <form method="post" action="/logout" class="logout-form">
+                <button type="submit" class="btn btn-sm btn-outline-light" title="Sign out">
+                    <i class="bi bi-box-arrow-right"></i>
+                </button>
+            </form>
+        </div>
+        {% endif %}
     </nav>
 
     <!-- Mobile sidebar toggle + overlay -->
