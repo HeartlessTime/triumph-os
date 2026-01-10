@@ -149,6 +149,15 @@
                                     {% endfor %}
                                 </select>
                             </div>
+                            <div class="col-md-6">
+                                <label for="stalled_reason" class="form-label">Stalled Reason</label>
+                                <select class="form-select" id="stalled_reason" name="stalled_reason">
+                                    <option value="">Not Stalled</option>
+                                    {% for reason in stalled_reasons %}
+                                    <option value="{{ reason }}" {% if opportunity.stalled_reason == reason %}selected{% endif %}>{{ reason }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
                             <!-- Probability removed from UI -->
                             <div class="col-12">
                                 <label for="notes" class="form-label">Internal Notes</label>

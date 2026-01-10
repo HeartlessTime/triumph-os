@@ -75,9 +75,15 @@ class Account(Base):
     @property
     def open_opportunities_count(self):
         return len([
-            opp for opp in self.opportunities 
+            opp for opp in self.opportunities
             if opp.stage not in ['Won', 'Lost']
         ])
+
+    @property
+    def last_contacted(self):
+        """Get the most recent last_contacted date from all contacts."""
+        dates = [c.last_contacted for c in self.contacts if c.last_contacted]
+        return max(dates) if dates else None
 
     def __repr__(self):
         return f"<Account {self.name}>"

@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 from datetime import datetime, date, timedelta
 
 from app.database import get_db
-from app.models import Contact, Account
+from app.models import Contact, Account, Opportunity, Activity
 
 
 def update_contact_followup(contact: Contact):
@@ -232,13 +232,37 @@ async def log_contact(
     contact_id: int,
     db: Session = Depends(get_db)
 ):
-    """Log contact - updates last_contacted to today and next_followup to 30 days from now."""
+    """Log contact - updates last_contacted to today and next_followup to 30 days from now.
+
+    Also creates Activity entries on all related opportunities.
+    """
     contact = db.query(Contact).filter(Contact.id == contact_id).first()
     if not contact:
         raise HTTPException(status_code=404, detail="Contact not found")
 
     contact.last_contacted = date.today()
     update_contact_followup(contact)
+
+    # Find all opportunities where this contact is the primary contact
+    related_opps = db.query(Opportunity).filter(
+        Opportunity.primary_contact_id == contact_id,
+        Opportunity.stage.notin_(['Won', 'Lost'])
+    ).all()
+
+    # Create Activity entry on each related opportunity
+    for opp in related_opps:
+        activity = Activity(
+            opportunity_id=opp.id,
+            activity_type='call',
+            subject=f"Contacted {contact.full_name}",
+            description=f"Contacted {contact.full_name} regarding {opp.name}",
+            activity_date=datetime.now(),
+            contact_id=contact_id,
+        )
+        db.add(activity)
+        # Also update the opportunity's last_contacted
+        opp.last_contacted = date.today()
+
     db.commit()
 
     # Redirect to 'next' param if provided, otherwise to contact detail

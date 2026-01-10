@@ -409,6 +409,7 @@ async def edit_opportunity_form(
             "estimators": estimators,
             "stages": Opportunity.STAGES,
             "sources": Opportunity.SOURCES,
+            "stalled_reasons": Opportunity.STALLED_REASONS,
             "selected_scope_names": selected_scope_names,
             "selected_scope_other_text": selected_scope_other_text,
         }
@@ -440,6 +441,7 @@ async def update_opportunity(
     project_type: str = Form(None),
     rebid: str = Form(None),
     known_risks: str = Form(None),
+    stalled_reason: str = Form(None),
     last_contacted: str = Form(None),
     quick_links_text: str = Form(None),
     scope_names: List[str] = Form(default=[]),
@@ -477,6 +479,7 @@ async def update_opportunity(
     opportunity.project_type = project_type or None
     opportunity.rebid = rebid == "true" if rebid else False
     opportunity.known_risks = known_risks or None
+    opportunity.stalled_reason = stalled_reason or None
 
     if last_contacted:
         opportunity.last_contacted = datetime.strptime(last_contacted, "%Y-%m-%d").date()

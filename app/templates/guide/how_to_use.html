@@ -30,6 +30,32 @@
         </div>
 
         <div class="card shadow-sm mb-4">
+            <div class="card-header" style="background-color: #6f42c1; color: white;">
+                <h5 class="mb-0"><i class="bi bi-calendar-check me-2"></i>Today Page</h5>
+            </div>
+            <div class="card-body">
+                <p><strong>What it shows:</strong> Your actionable items for today and the upcoming week in one focused view.</p>
+
+                <h6 class="mt-3">Three Key Sections:</h6>
+                <ul>
+                    <li><strong>Follow-ups Due:</strong> Opportunities with follow-ups due today or overdue. These need immediate attention!</li>
+                    <li><strong>Tasks Due (7 days):</strong> All open tasks due within the next week, sorted by due date and priority.</li>
+                    <li><strong>Upcoming Bids (7 days):</strong> Opportunities with bid dates in the next 7 days.</li>
+                </ul>
+
+                <h6 class="mt-3">Quick Actions:</h6>
+                <p>Each item includes quick action buttons:</p>
+                <ul>
+                    <li><strong>View:</strong> Jump directly to the opportunity or task detail page</li>
+                    <li><strong>Log Contact:</strong> Record a contact interaction without leaving the Today page</li>
+                    <li><strong>Complete:</strong> Mark a task as done (for tasks only)</li>
+                </ul>
+
+                <p class="mb-0"><strong>Best Practice:</strong> Start each day on the Today page to prioritize your immediate action items.</p>
+            </div>
+        </div>
+
+        <div class="card shadow-sm mb-4">
             <div class="card-header bg-success text-white">
                 <h5 class="mb-0"><i class="bi bi-building me-2"></i>Managing Accounts</h5>
             </div>
@@ -97,6 +123,15 @@
                     <li><strong>Manual Edit:</strong> You can manually set the "Last Contacted" date when editing a contact</li>
                 </ul>
 
+                <h6 class="mt-3">Contact to Opportunity Activity Sync:</h6>
+                <p>When you log contact with someone, the system automatically:</p>
+                <ul>
+                    <li>Updates the contact's last_contacted date</li>
+                    <li>Creates an Activity entry on all open opportunities where this contact is the primary contact</li>
+                    <li>Updates the last_contacted date on those opportunities</li>
+                </ul>
+                <p>This means you only need to log the interaction once - it automatically syncs to all related opportunities!</p>
+
                 <p class="mb-0"><strong>Best Practice:</strong> Always update contact info after phone calls if details change. Use the Log Contact button to keep follow-up dates accurate.</p>
             </div>
         </div>
@@ -152,6 +187,33 @@
 
                 <h6 class="mt-3">Quick Stage Changes:</h6>
                 <p>On the opportunity detail page, you can quickly change the stage using the dropdown selector without opening the full edit form. The stage updates immediately when you select a new value.</p>
+
+                <h6 class="mt-3">Opportunity Health Score:</h6>
+                <p>Each opportunity displays a Health Score (0-10) as a colored badge in the header:</p>
+                <ul>
+                    <li><strong>Green (8-10):</strong> Healthy - good engagement and complete information</li>
+                    <li><strong>Yellow (5-7):</strong> Needs attention - some gaps in engagement or data</li>
+                    <li><strong>Red (0-4):</strong> At risk - missing critical information or stale contact</li>
+                </ul>
+                <p>Scoring criteria (+2 points each):</p>
+                <ul>
+                    <li>Last contacted within 7 days</li>
+                    <li>Next follow-up date is set</li>
+                    <li>Bid date is set</li>
+                    <li>Primary contact is assigned</li>
+                    <li>Notes are present</li>
+                </ul>
+
+                <h6 class="mt-3">Stalled Reason:</h6>
+                <p>When an opportunity isn't progressing, you can set a Stalled Reason to track why:</p>
+                <ul>
+                    <li><strong>Waiting on GC:</strong> Waiting for general contractor response or decision</li>
+                    <li><strong>Waiting on bid results:</strong> Bid submitted, awaiting outcome</li>
+                    <li><strong>Waiting on drawings:</strong> Need updated drawings or specifications</li>
+                    <li><strong>Budget unclear:</strong> Customer budget not confirmed</li>
+                    <li><strong>Internal delay:</strong> Internal resource or timing issue</li>
+                </ul>
+                <p>Set the stalled reason in the Edit Opportunity form. It displays on both the opportunity detail page and the opportunities list.</p>
 
                 <h6 class="mt-3">Input Helpers:</h6>
                 <ul>
@@ -239,6 +301,44 @@
                 </ul>
 
                 <p class="mb-0"><strong>Best Practice:</strong> Mark tasks complete immediately when done. Review task list daily.</p>
+            </div>
+        </div>
+
+        <div class="card shadow-sm mb-4">
+            <div class="card-header" style="background-color: #20c997; color: white;">
+                <h5 class="mb-0"><i class="bi bi-clipboard-data me-2"></i>Weekly Summary</h5>
+            </div>
+            <div class="card-body">
+                <p><strong>What it shows:</strong> A summary of all sales activity for a given week, perfect for reporting.</p>
+
+                <h6 class="mt-3">Summary Sections:</h6>
+                <ul>
+                    <li><strong>Executive Summary:</strong> Quick counts of contacts logged, new records, tasks completed, and activities</li>
+                    <li><strong>Outreach & Follow-ups:</strong> Contacts you reached out to during the week</li>
+                    <li><strong>Pipeline Movement:</strong> Opportunities that were updated (stage changes, etc.)</li>
+                    <li><strong>Tasks Completed:</strong> Tasks marked as done during the week</li>
+                    <li><strong>New Records Created:</strong> New accounts, contacts, and opportunities added</li>
+                    <li><strong>Activity Timeline:</strong> All logged activities chronologically</li>
+                </ul>
+
+                <h6 class="mt-3">Week Navigation:</h6>
+                <p>Use the Previous Week / Next Week buttons to browse historical summaries. Each week has its own saved notes.</p>
+
+                <h6 class="mt-3">Section Notes:</h6>
+                <p>Each section (except Executive Summary) has a notes field where you can add context or highlights. Notes are saved per-week, so you can document what happened in each period.</p>
+
+                <h6 class="mt-3">Copy Summary to Clipboard:</h6>
+                <p>Click the green "Copy Summary to Clipboard" button to generate a text version of the summary including:</p>
+                <ul>
+                    <li>Outreach list with contacts and dates</li>
+                    <li>Pipeline changes with current stages</li>
+                    <li>Completed tasks</li>
+                    <li>New records created</li>
+                    <li>All your section notes</li>
+                </ul>
+                <p>Paste directly into emails or reports for easy sharing with your team or boss.</p>
+
+                <p class="mb-0"><strong>Best Practice:</strong> Review the Weekly Summary every Friday before leaving. Add notes about key wins and challenges.</p>
             </div>
         </div>
 

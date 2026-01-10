@@ -19,6 +19,7 @@ from app.routes import (
     email_sync_router,
     estimators_router,
     summary_router,
+    today_router,
 )
 
 
@@ -44,6 +45,7 @@ def create_app() -> FastAPI:
     app.include_router(email_sync_router)
     app.include_router(estimators_router)
     app.include_router(summary_router)
+    app.include_router(today_router)
 
     return app
 

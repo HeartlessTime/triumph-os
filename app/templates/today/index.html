@@ -1,0 +1,185 @@
+{% extends "base.html" %}
+
+{% block title %}Today - Triumph OS{% endblock %}
+
+{% block content %}
+<div class="content-area">
+    <div class="page-header">
+        <h1><i class="bi bi-calendar-check me-2"></i>Today</h1>
+        <p class="text-muted mb-0">{{ today.strftime('%A, %B %d, %Y') }}</p>
+    </div>
+
+    <div class="row g-4">
+        <!-- Follow-ups Due -->
+        <div class="col-lg-4">
+            <div class="card h-100">
+                <div class="card-header bg-warning text-dark d-flex justify-content-between align-items-center">
+                    <span><i class="bi bi-telephone-forward me-2"></i>Follow-ups Due</span>
+                    <span class="badge bg-dark">{{ followup_opps|length }}</span>
+                </div>
+                <div class="card-body p-0">
+                    {% if followup_opps %}
+                    <div class="list-group list-group-flush">
+                        {% for opp in followup_opps %}
+                        <div class="list-group-item">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <div>
+                                    <a href="/opportunities/{{ opp.id }}" class="text-decoration-none fw-medium">
+                                        {{ opp.name }}
+                                    </a>
+                                    <div class="text-muted small">{{ opp.account.name }}</div>
+                                </div>
+                                <span class="badge {% if opp.next_followup < today %}bg-danger{% else %}bg-warning text-dark{% endif %}">
+                                    {% if opp.next_followup < today %}
+                                    {{ (today - opp.next_followup).days }}d overdue
+                                    {% else %}
+                                    Today
+                                    {% endif %}
+                                </span>
+                            </div>
+                            <div class="d-flex gap-1">
+                                <a href="/opportunities/{{ opp.id }}" class="btn btn-sm btn-outline-primary">
+                                    <i class="bi bi-eye"></i> View
+                                </a>
+                                <form method="post" action="/opportunities/{{ opp.id }}/log-contact" class="d-inline">
+                                    <input type="hidden" name="next" value="/today">
+                                    <button type="submit" class="btn btn-sm btn-outline-success">
+                                        <i class="bi bi-telephone"></i> Log Contact
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="text-center text-muted py-4">
+                        <i class="bi bi-check-circle h1 text-success"></i>
+                        <p class="mb-0">No follow-ups due</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Tasks Due -->
+        <div class="col-lg-4">
+            <div class="card h-100">
+                <div class="card-header bg-danger text-white d-flex justify-content-between align-items-center">
+                    <span><i class="bi bi-check2-square me-2"></i>Tasks Due (7 days)</span>
+                    <span class="badge bg-light text-dark">{{ upcoming_tasks|length }}</span>
+                </div>
+                <div class="card-body p-0">
+                    {% if upcoming_tasks %}
+                    <div class="list-group list-group-flush">
+                        {% for task in upcoming_tasks %}
+                        <div class="list-group-item">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <div>
+                                    <span class="fw-medium">{{ task.title }}</span>
+                                    {% if task.opportunity %}
+                                    <div class="text-muted small">
+                                        <a href="/opportunities/{{ task.opportunity.id }}" class="text-decoration-none text-muted">
+                                            {{ task.opportunity.name }}
+                                        </a>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                                <div class="text-end">
+                                    <span class="badge" style="background-color: {{ task.priority_color }}20; color: {{ task.priority_color }}">
+                                        {{ task.priority }}
+                                    </span>
+                                    {% if task.due_date %}
+                                    <div class="small {% if task.is_overdue %}text-danger{% elif task.due_date == today %}text-warning{% endif %}">
+                                        {% if task.due_date < today %}
+                                        {{ (today - task.due_date).days }}d overdue
+                                        {% elif task.due_date == today %}
+                                        Today
+                                        {% else %}
+                                        {{ task.due_date.strftime('%b %d') }}
+                                        {% endif %}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="d-flex gap-1">
+                                {% if task.opportunity %}
+                                <a href="/opportunities/{{ task.opportunity.id }}" class="btn btn-sm btn-outline-primary">
+                                    <i class="bi bi-eye"></i> View
+                                </a>
+                                {% endif %}
+                                <form method="post" action="/tasks/{{ task.id }}/complete" class="d-inline">
+                                    <input type="hidden" name="next" value="/today">
+                                    <button type="submit" class="btn btn-sm btn-outline-success">
+                                        <i class="bi bi-check"></i> Complete
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="text-center text-muted py-4">
+                        <i class="bi bi-check-circle h1 text-success"></i>
+                        <p class="mb-0">No tasks due this week</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Upcoming Bids -->
+        <div class="col-lg-4">
+            <div class="card h-100">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                    <span><i class="bi bi-calendar-event me-2"></i>Upcoming Bids (7 days)</span>
+                    <span class="badge bg-light text-dark">{{ upcoming_bids|length }}</span>
+                </div>
+                <div class="card-body p-0">
+                    {% if upcoming_bids %}
+                    <div class="list-group list-group-flush">
+                        {% for opp in upcoming_bids %}
+                        <div class="list-group-item">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <div>
+                                    <a href="/opportunities/{{ opp.id }}" class="text-decoration-none fw-medium">
+                                        {{ opp.name }}
+                                    </a>
+                                    <div class="text-muted small">{{ opp.account.name }}</div>
+                                </div>
+                                <div class="text-end">
+                                    <span class="badge {% if opp.bid_date == today %}bg-danger{% elif opp.days_until_bid <= 3 %}bg-warning text-dark{% else %}bg-info{% endif %}">
+                                        {% if opp.bid_date == today %}
+                                        TODAY
+                                        {% else %}
+                                        {{ opp.days_until_bid }}d
+                                        {% endif %}
+                                    </span>
+                                    <div class="small text-muted">{{ opp.bid_date.strftime('%b %d') }}</div>
+                                </div>
+                            </div>
+                            <div class="d-flex gap-1">
+                                <a href="/opportunities/{{ opp.id }}" class="btn btn-sm btn-outline-primary">
+                                    <i class="bi bi-eye"></i> View
+                                </a>
+                                <form method="post" action="/opportunities/{{ opp.id }}/log-contact" class="d-inline">
+                                    <input type="hidden" name="next" value="/today">
+                                    <button type="submit" class="btn btn-sm btn-outline-success">
+                                        <i class="bi bi-telephone"></i> Log Contact
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="text-center text-muted py-4">
+                        <i class="bi bi-calendar-x h1"></i>
+                        <p class="mb-0">No bids in the next 7 days</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

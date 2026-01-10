@@ -48,6 +48,7 @@
                             <th>Industry</th>
                             <th>Location</th>
                             <th>Contacts</th>
+                            <th>Last Contacted</th>
                             <th>Open Opps</th>
                             <th>Pipeline</th>
                             <th></th>
@@ -76,6 +77,7 @@
                                 {% endif %}
                             </td>
                             <td>{{ account.contacts|length }}</td>
+                            <td>{{ account.last_contacted.strftime('%b %d') if account.last_contacted else '—' }}</td>
                             <td>
                                 {% if account.open_opportunities_count > 0 %}
                                 <span class="badge bg-primary">{{ account.open_opportunities_count }}</span>

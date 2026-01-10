@@ -72,7 +72,7 @@
                             <th>Stage</th>
                             <th>Value</th>
                             <th>Bid Date</th>
-                            <th>Owner</th>
+                            <th>Last Contacted</th>
                             <th>Next Follow-up</th>
                             <th></th>
                         </tr>
@@ -90,6 +90,9 @@
                                 <span class="badge badge-stage badge-{{ opp.stage|lower|replace(' ', '-') }}">
                                     {{ opp.stage }}
                                 </span>
+                                {% if opp.stalled_reason %}
+                                <div class="text-muted small"><i class="bi bi-pause-circle me-1"></i>{{ opp.stalled_reason }}</div>
+                                {% endif %}
                             </td>
                             <td class="currency">{{ opp.value or 0 }}</td>
                             <td>
@@ -99,7 +102,7 @@
                                 </span>
                                 {% else %}—{% endif %}
                             </td>
-                            <td>{{ opp.owner.full_name if opp.owner else '—' }}</td>
+                            <td>{{ opp.last_contacted.strftime('%b %d') if opp.last_contacted else '—' }}</td>
                             <td>
                                 {% if opp.next_followup %}
                                 <span class="{{ opp.followup_status.css_class }}">

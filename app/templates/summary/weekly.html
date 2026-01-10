@@ -13,6 +13,9 @@
             </p>
         </div>
         <div class="d-flex gap-2 align-items-center">
+            <button type="button" class="btn btn-success" id="copyToClipboard">
+                <i class="bi bi-clipboard me-1"></i> Copy Summary to Clipboard
+            </button>
             <a href="/summary/weekly?week_start={{ prev_week }}" class="btn btn-outline-secondary">
                 <i class="bi bi-chevron-left"></i> Previous Week
             </a>
@@ -398,4 +401,106 @@
         </div>
     </div>
 </div>
+
+<!-- Hidden summary data for clipboard -->
+<div id="summaryData" style="display: none;">
+    <div id="weekRange">{{ start_date.strftime('%B %d') }} – {{ end_date.strftime('%B %d, %Y') }}</div>
+
+    <div id="outreachData">{% for contact in outreach_contacts %}
+- {{ contact.full_name }} ({{ contact.account.name }}) - {{ contact.last_contacted.strftime('%b %d') }}{% endfor %}</div>
+
+    <div id="pipelineData">{% for opp in pipeline_changes %}
+- {{ opp.name }} ({{ opp.account.name }}) - {{ opp.stage }}{% endfor %}</div>
+
+    <div id="tasksData">{% for task in tasks_completed %}
+- {{ task.title }}{% if task.opportunity %} ({{ task.opportunity.name }}){% endif %}{% endfor %}</div>
+
+    <div id="newRecordsData">
+Accounts: {% for acc in new_accounts %}{{ acc.name }}{% if not loop.last %}, {% endif %}{% else %}None{% endfor %}
+Contacts: {% for contact in new_contacts %}{{ contact.full_name }}{% if not loop.last %}, {% endif %}{% else %}None{% endfor %}
+Opportunities: {% for opp in new_opportunities %}{{ opp.name }}{% if not loop.last %}, {% endif %}{% else %}None{% endfor %}</div>
+
+    <div id="outreachNotes">{{ section_notes.get('outreach', '') }}</div>
+    <div id="pipelineNotes">{{ section_notes.get('pipeline', '') }}</div>
+    <div id="tasksNotes">{{ section_notes.get('tasks', '') }}</div>
+    <div id="newRecordsNotes">{{ section_notes.get('new_records', '') }}</div>
+    <div id="otherNotes">{{ section_notes.get('other', '') }}</div>
+</div>
+
+<script>
+document.getElementById('copyToClipboard').addEventListener('click', function() {
+    const weekRange = document.getElementById('weekRange').textContent.trim();
+    const outreach = document.getElementById('outreachData').textContent.trim();
+    const pipeline = document.getElementById('pipelineData').textContent.trim();
+    const tasks = document.getElementById('tasksData').textContent.trim();
+    const newRecords = document.getElementById('newRecordsData').textContent.trim();
+
+    const outreachNotes = document.getElementById('outreachNotes').textContent.trim();
+    const pipelineNotes = document.getElementById('pipelineNotes').textContent.trim();
+    const tasksNotes = document.getElementById('tasksNotes').textContent.trim();
+    const newRecordsNotes = document.getElementById('newRecordsNotes').textContent.trim();
+    const otherNotes = document.getElementById('otherNotes').textContent.trim();
+
+    let summary = `WEEKLY SUMMARY: ${weekRange}\n`;
+    summary += '='.repeat(50) + '\n\n';
+
+    summary += `OUTREACH & FOLLOW-UPS\n`;
+    summary += '-'.repeat(30) + '\n';
+    summary += outreach || 'No outreach logged this period';
+    summary += '\n';
+    if (outreachNotes) {
+        summary += `\nNotes: ${outreachNotes}\n`;
+    }
+    summary += '\n';
+
+    summary += `PIPELINE MOVEMENT\n`;
+    summary += '-'.repeat(30) + '\n';
+    summary += pipeline || 'No pipeline changes this period';
+    summary += '\n';
+    if (pipelineNotes) {
+        summary += `\nNotes: ${pipelineNotes}\n`;
+    }
+    summary += '\n';
+
+    summary += `TASKS COMPLETED\n`;
+    summary += '-'.repeat(30) + '\n';
+    summary += tasks || 'No tasks completed this period';
+    summary += '\n';
+    if (tasksNotes) {
+        summary += `\nNotes: ${tasksNotes}\n`;
+    }
+    summary += '\n';
+
+    summary += `NEW RECORDS CREATED\n`;
+    summary += '-'.repeat(30) + '\n';
+    summary += newRecords;
+    summary += '\n';
+    if (newRecordsNotes) {
+        summary += `\nNotes: ${newRecordsNotes}\n`;
+    }
+    summary += '\n';
+
+    if (otherNotes) {
+        summary += `OTHER NOTES\n`;
+        summary += '-'.repeat(30) + '\n';
+        summary += otherNotes + '\n';
+    }
+
+    navigator.clipboard.writeText(summary).then(function() {
+        const btn = document.getElementById('copyToClipboard');
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '<i class="bi bi-check me-1"></i> Copied!';
+        btn.classList.remove('btn-success');
+        btn.classList.add('btn-outline-success');
+        setTimeout(function() {
+            btn.innerHTML = originalText;
+            btn.classList.remove('btn-outline-success');
+            btn.classList.add('btn-success');
+        }, 2000);
+    }).catch(function(err) {
+        console.error('Failed to copy: ', err);
+        alert('Failed to copy to clipboard');
+    });
+});
+</script>
 {% endblock %}

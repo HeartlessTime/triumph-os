@@ -1,4 +1,4 @@
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
 from decimal import Decimal
 from sqlalchemy import Column, Integer, String, Text, DateTime, Date, Numeric, ForeignKey, JSON
 from sqlalchemy import Boolean, Time
@@ -62,6 +62,8 @@ class Opportunity(Base):
     quick_links = Column(JSON, nullable=True)
     # End-user / owner account (e.g., Austin ISD)
     end_user_account_id = Column(Integer, ForeignKey('accounts.id'), nullable=True)
+    # Stalled reason for tracking why opportunity is not progressing
+    stalled_reason = Column(String(100), nullable=True)
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
     updated_at = Column(DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
 
@@ -106,6 +108,14 @@ class Opportunity(Base):
         'Repeat Customer',
         'Advertisement',
         'Other'
+    ]
+
+    STALLED_REASONS = [
+        'Waiting on GC',
+        'Waiting on bid results',
+        'Waiting on drawings',
+        'Budget unclear',
+        'Internal delay',
     ]
 
     DEFAULT_CHECKLIST = [
@@ -183,6 +193,53 @@ class Opportunity(Base):
         total = len(self.estimating_checklist)
         done = sum(1 for item in self.estimating_checklist if item.get('done', False))
         return (done, total)
+
+    @property
+    def health_score(self):
+        """Calculate opportunity health score (0-10).
+
+        Scoring:
+        +2 last_contacted within 7 days
+        +2 next_followup set
+        +2 bid_date set
+        +2 primary_contact set
+        +2 notes present
+        """
+        score = 0
+        today = date.today()
+
+        # +2 if last_contacted within 7 days
+        if self.last_contacted and (today - self.last_contacted).days <= 7:
+            score += 2
+
+        # +2 if next_followup is set
+        if self.next_followup:
+            score += 2
+
+        # +2 if bid_date is set
+        if self.bid_date:
+            score += 2
+
+        # +2 if primary_contact is set
+        if self.primary_contact_id:
+            score += 2
+
+        # +2 if notes are present
+        if self.notes and self.notes.strip():
+            score += 2
+
+        return score
+
+    @property
+    def health_score_color(self):
+        """Return CSS color class for health score badge."""
+        score = self.health_score
+        if score >= 8:
+            return 'success'  # Green
+        elif score >= 5:
+            return 'warning'  # Yellow
+        else:
+            return 'danger'   # Red
 
     def get_default_probability(self):
         """Get default probability for current stage."""
