@@ -4,7 +4,7 @@ from fastapi import APIRouter, Request, Depends, Form, HTTPException, File, Uplo
 from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
-from sqlalchemy import or_
+from sqlalchemy import or_, func, case
 from typing import List, Optional, Union
 import os
 
@@ -47,6 +47,7 @@ async def list_opportunities(
     sort: Optional[str] = None,
     db: Session = Depends(get_db)
 ):
+    print("SORT PARAM:", sort)  # DEBUG
     estimator_id = int(estimator_id) if estimator_id else None
 
     today = date.today()
@@ -79,20 +80,26 @@ async def list_opportunities(
             Opportunity.stalled_reason != ''
         )
 
-    opportunities = query.order_by(
-        Opportunity.bid_date.nullslast(),
-        Opportunity.name
-    ).all()
-
     # Apply sorting
-    if sort == 'value':
-        opportunities.sort(key=lambda o: (o.value or 0), reverse=True)
-    elif sort == 'bid_date':
-        opportunities.sort(key=lambda o: (o.bid_date or date.max))
-    elif sort == 'last_contacted':
-        opportunities.sort(key=lambda o: (o.last_contacted or date.min))
-    elif sort == 'next_followup':
-        opportunities.sort(key=lambda o: (o.next_followup or date.max))
+    if sort == "value":
+        query = query.order_by(
+            (Opportunity.lv_value + Opportunity.hdd_value).desc().nullslast()
+        )
+    elif sort == "bid_date":
+        query = query.order_by(Opportunity.bid_date.asc().nullslast())
+    elif sort == "last_contacted":
+        # "Oldest" = ASC, NULLs first (never contacted = oldest)
+        query = query.order_by(Opportunity.last_contacted.asc().nullsfirst())
+    elif sort == "next_followup":
+        query = query.order_by(Opportunity.next_followup.asc().nullslast())
+    else:
+        # Default sort
+        query = query.order_by(
+            Opportunity.bid_date.asc().nullslast(),
+            Opportunity.name
+        )
+
+    opportunities = query.all()
 
     for opp in opportunities:
         opp.followup_status = get_followup_status(opp.next_followup, today)
@@ -188,6 +195,7 @@ async def create_opportunity(
     assigned_estimator_id: Optional[int] = Form(None),
     scope_names: List[str] = Form(default=[]),
     scope_other_text: Optional[str] = Form(None),
+    gc_ids: List[str] = Form(default=[]),
     db: Session = Depends(get_db)
 ):
     def clean_num(val: Optional[str]):
@@ -204,6 +212,7 @@ async def create_opportunity(
         owner_id=owner_id,
         assigned_estimator_id=assigned_estimator_id,
         last_contacted=date.today(),
+        gcs=[int(gc_id) for gc_id in gc_ids if gc_id] if gc_ids else None,
     )
 
     update_opportunity_followup(opportunity)
@@ -312,6 +321,12 @@ async def delete_opportunity(
     if not opportunity:
         raise HTTPException(status_code=404, detail="Opportunity not found")
 
+    # Explicitly delete children first (don't rely on cascade)
+    db.query(Activity).filter(Activity.opportunity_id == opp_id).delete()
+    db.query(Task).filter(Task.opportunity_id == opp_id).delete()
+    db.query(OpportunityScope).filter(OpportunityScope.opportunity_id == opp_id).delete()
+    db.query(Document).filter(Document.opportunity_id == opp_id).delete()
+
     db.delete(opportunity)
     db.commit()
 
@@ -334,6 +349,7 @@ async def update_stage(
 
     opportunity.stage = stage
     opportunity.probability = Opportunity.STAGE_PROBABILITIES.get(stage, 0)
+    opportunity.last_contacted = date.today()
     update_opportunity_followup(opportunity)
     db.commit()
 

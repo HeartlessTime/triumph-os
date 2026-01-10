@@ -39,14 +39,17 @@
                                     {% endfor %}
                                 </select>
                             </div>
-                            <div class="col-md-6">
-                                <label for="gc_ids" class="form-label">General Contractors (GCs)</label>
-                                <select class="form-select" id="gc_ids" name="gc_ids" multiple>
+                            <div class="col-12">
+                                <label class="form-label">General Contractors (GCs)</label>
+                                <div class="border rounded p-2" style="max-height: 200px; overflow-y: auto;">
                                     {% for acc in accounts %}
-                                    <option value="{{ acc.id }}">{{ acc.name }}</option>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" name="gc_ids" value="{{ acc.id }}" id="gc_{{ acc.id }}">
+                                        <label class="form-check-label" for="gc_{{ acc.id }}">{{ acc.name }}</label>
+                                    </div>
                                     {% endfor %}
-                                </select>
-                                <div class="form-text">Select GC accounts bidding on this project (optional).</div>
+                                </div>
+                                <div class="form-text">Select one or more GCs bidding on this project.</div>
                             </div>
                             <div class="col-12">
                                 <label for="name" class="form-label">Opportunity Name <span class="text-danger">*</span></label>

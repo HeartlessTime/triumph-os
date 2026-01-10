@@ -215,12 +215,31 @@ async def delete_contact(
     contact_id: int,
     db: Session = Depends(get_db)
 ):
-    """Delete a contact."""
+    """Delete a contact with proper cleanup."""
     contact = db.query(Contact).filter(Contact.id == contact_id).first()
     if not contact:
         raise HTTPException(status_code=404, detail="Contact not found")
 
     account_id = contact.account_id
+
+    # Remove this contact from opportunities (primary_contact_id)
+    db.query(Opportunity).filter(
+        Opportunity.primary_contact_id == contact_id
+    ).update({"primary_contact_id": None})
+
+    # Remove from related_contact_ids (JSON array) in opportunities
+    opps_with_related = db.query(Opportunity).filter(
+        Opportunity.related_contact_ids.isnot(None)
+    ).all()
+    for opp in opps_with_related:
+        if opp.related_contact_ids and contact_id in opp.related_contact_ids:
+            opp.related_contact_ids = [cid for cid in opp.related_contact_ids if cid != contact_id]
+            if not opp.related_contact_ids:
+                opp.related_contact_ids = None
+
+    # Delete activities linked to this contact
+    db.query(Activity).filter(Activity.contact_id == contact_id).delete()
+
     db.delete(contact)
     db.commit()
 

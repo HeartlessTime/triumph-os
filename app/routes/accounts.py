@@ -4,10 +4,11 @@ from fastapi import APIRouter, Request, Depends, Form, HTTPException
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
-from sqlalchemy import or_
+from sqlalchemy import or_, func
+from datetime import date
 
 from app.database import get_db
-from app.models import Account
+from app.models import Account, Opportunity, Contact
 
 router = APIRouter(prefix="/accounts", tags=["accounts"])
 templates = Jinja2Templates(directory="app/templates")
@@ -45,16 +46,37 @@ async def list_accounts(
     if industry:
         query = query.filter(Account.industry == industry)
 
-    accounts = query.order_by(Account.name).all()
+    # SQL-safe sorting (only real DB columns)
+    if sort == "name":
+        query = query.order_by(Account.name.asc())
+    elif sort == "value":
+        # Subquery needed because total_pipeline_value is a Python property
+        pipeline_subq = (
+            db.query(
+                Opportunity.account_id,
+                func.sum(Opportunity.lv_value + Opportunity.hdd_value).label('total_value')
+            )
+            .filter(Opportunity.stage.notin_(['Won', 'Lost']))
+            .group_by(Opportunity.account_id)
+            .subquery()
+        )
+        query = (
+            query
+            .outerjoin(pipeline_subq, Account.id == pipeline_subq.c.account_id)
+            .order_by(pipeline_subq.c.total_value.desc().nullslast())
+        )
+    elif sort != "last_contacted":
+        # Default sort (skip if last_contacted - handled in Python below)
+        query = query.order_by(Account.name.asc())
 
-    # Apply sorting
-    if sort == 'name':
-        accounts.sort(key=lambda a: (a.name or '').lower())
-    elif sort == 'last_contacted':
-        from datetime import date
-        accounts.sort(key=lambda a: (a.last_contacted or date.min))
-    elif sort == 'value':
-        accounts.sort(key=lambda a: (a.total_pipeline_value or 0), reverse=True)
+    accounts = query.all()
+
+    # Python-side sort for last_contacted (it's a @property, not a DB column)
+    if sort == "last_contacted":
+        accounts.sort(
+            key=lambda a: a.last_contacted or date.min,
+            reverse=False  # Oldest first (those not contacted recently at top)
+        )
 
     return templates.TemplateResponse("accounts/list.html", {
         "request": request,
@@ -194,10 +216,21 @@ async def delete_account(
     account_id: int,
     db: Session = Depends(get_db)
 ):
-    """Delete an account."""
+    """Delete an account with safety checks."""
     account = db.query(Account).filter(Account.id == account_id).first()
     if not account:
         raise HTTPException(status_code=404, detail="Account not found")
+
+    # Block deletion if account has any opportunities
+    opp_count = db.query(Opportunity).filter(Opportunity.account_id == account_id).count()
+    if opp_count > 0:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Cannot delete account with {opp_count} opportunity(ies). Delete opportunities first."
+        )
+
+    # Delete all contacts under this account
+    db.query(Contact).filter(Contact.account_id == account_id).delete()
 
     db.delete(account)
     db.commit()

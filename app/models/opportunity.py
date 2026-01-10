@@ -205,6 +205,9 @@ class Opportunity(Base):
         +2 primary_contact set
         +2 notes present
         """
+        if self.stage in ('Won', 'Lost'):
+            return None
+
         score = 0
         today = date.today()
 
@@ -234,6 +237,8 @@ class Opportunity(Base):
     def health_score_color(self):
         """Return CSS color class for health score badge."""
         score = self.health_score
+        if score is None:
+            return None
         if score >= 8:
             return 'success'  # Green
         elif score >= 5:

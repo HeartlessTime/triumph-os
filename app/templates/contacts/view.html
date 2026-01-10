@@ -27,6 +27,11 @@
                         <i class="bi bi-telephone me-1"></i> Log Contact
                     </button>
                 </form>
+                <form method="post" action="/contacts/{{ contact.id }}/delete" class="d-inline" onsubmit="return confirm('Delete this contact? This cannot be undone.');">
+                    <button type="submit" class="btn btn-outline-danger">
+                        <i class="bi bi-trash me-1"></i> Delete
+                    </button>
+                </form>
             </div>
         </div>
     </div>

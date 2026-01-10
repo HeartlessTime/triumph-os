@@ -41,7 +41,7 @@
                     </select>
                 </div>
                 <div class="col-md-2">
-                    <select class="form-select" name="sort">
+                    <select class="form-select" name="sort" onchange="this.form.submit()">
                         <option value="">Sort by...</option>
                         <option value="value" {% if sort == 'value' %}selected{% endif %}>Value (High to Low)</option>
                         <option value="bid_date" {% if sort == 'bid_date' %}selected{% endif %}>Bid Date (Earliest)</option>

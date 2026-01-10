@@ -33,7 +33,7 @@
                     </select>
                 </div>
                 <div class="col-md-3">
-                    <select class="form-select" name="sort">
+                    <select class="form-select" name="sort" onchange="this.form.submit()">
                         <option value="">Sort by...</option>
                         <option value="name" {% if sort == 'name' %}selected{% endif %}>Name (A–Z)</option>
                         <option value="last_contacted" {% if sort == 'last_contacted' %}selected{% endif %}>Last Contacted (Oldest)</option>
