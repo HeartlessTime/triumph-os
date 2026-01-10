@@ -21,19 +21,17 @@ router = APIRouter(prefix="/summary", tags=["summary"])
 templates = Jinja2Templates(directory="app/templates")
 
 
-def get_week_boundaries(days_back: int = 7):
-    """Get start and end dates for the summary period."""
-    end_date = date.today()
-    start_date = end_date - timedelta(days=days_back)
-    return start_date, end_date
-
-
-def get_week_start_monday():
-    """Get the Monday of the current week for note storage."""
-    today = date.today()
+def get_week_start_monday(for_date: Optional[date] = None) -> date:
+    """Get the Monday of the week for a given date (or current week if None)."""
+    target = for_date or date.today()
     # weekday() returns 0 for Monday, 6 for Sunday
-    days_since_monday = today.weekday()
-    return today - timedelta(days=days_since_monday)
+    days_since_monday = target.weekday()
+    return target - timedelta(days=days_since_monday)
+
+
+def get_week_boundaries_for_week(week_start: date):
+    """Get start (Monday) and end (Sunday) dates for a given week."""
+    return week_start, week_start + timedelta(days=6)
 
 
 def load_notes_for_week(db: Session, week_start: date) -> Dict[str, str]:
@@ -47,18 +45,31 @@ def load_notes_for_week(db: Session, week_start: date) -> Dict[str, str]:
 @router.get("/weekly", response_class=HTMLResponse)
 async def weekly_summary(
     request: Request,
-    days: Optional[int] = 7,
+    week_start: Optional[date] = None,
     db: Session = Depends(get_db)
 ):
     """
-    Weekly summary page showing work completed in the last N days.
+    Weekly summary page showing work completed in a specific week.
 
     Query params:
-        days: Number of days to look back (default 7)
+        week_start: Monday of the week to display (YYYY-MM-DD). Defaults to current week.
     """
-    start_date, end_date = get_week_boundaries(days)
+    # Determine the week to display
+    if week_start:
+        # Normalize to Monday of that week
+        week_start = get_week_start_monday(week_start)
+    else:
+        week_start = get_week_start_monday()
+
+    start_date, end_date = get_week_boundaries_for_week(week_start)
     start_datetime = datetime.combine(start_date, datetime.min.time())
     end_datetime = datetime.combine(end_date, datetime.max.time())
+
+    # Calculate previous and next week
+    prev_week = week_start - timedelta(days=7)
+    next_week = week_start + timedelta(days=7)
+    current_week = get_week_start_monday()
+    is_current_week = (week_start == current_week)
 
     # ----------------------------
     # 1) EXECUTIVE SUMMARY COUNTS
@@ -161,22 +172,25 @@ async def weekly_summary(
     if new_opportunities_count > 0:
         summary_parts.append(f"{new_opportunities_count} new opportunit{'ies' if new_opportunities_count != 1 else 'y'}")
 
+    week_label = "This week" if is_current_week else f"Week of {start_date.strftime('%b %d')}"
     if summary_parts:
-        summary_sentence = "This week: " + ", ".join(summary_parts) + "."
+        summary_sentence = f"{week_label}: " + ", ".join(summary_parts) + "."
     else:
-        summary_sentence = "No activity recorded in the last {} days.".format(days)
+        summary_sentence = f"No activity recorded for {week_label.lower()}."
 
     # ----------------------------
     # LOAD NOTES FOR THIS WEEK
     # ----------------------------
-    week_start = get_week_start_monday()
     section_notes = load_notes_for_week(db, week_start)
 
     return templates.TemplateResponse("summary/weekly.html", {
         "request": request,
         "start_date": start_date,
         "end_date": end_date,
-        "days": days,
+        "week_start": week_start,
+        "prev_week": prev_week,
+        "next_week": next_week,
+        "is_current_week": is_current_week,
         "summary_sentence": summary_sentence,
         # Counts
         "contacts_logged_count": contacts_logged_count,
@@ -195,7 +209,6 @@ async def weekly_summary(
         "new_opportunities": new_opportunities,
         "activities_logged": activities_logged,
         # Notes
-        "week_start": week_start,
         "section_notes": section_notes,
     })
 
@@ -216,9 +229,11 @@ async def save_weekly_note(
         section: One of 'outreach', 'pipeline', 'tasks', 'new_records', 'other'
         notes: The note content (can be empty)
     """
+    redirect_url = f"/summary/weekly?week_start={week_start}"
+
     # Validate section
     if section not in WeeklySummaryNote.SECTIONS:
-        return RedirectResponse(url="/summary/weekly", status_code=303)
+        return RedirectResponse(url=redirect_url, status_code=303)
 
     # Find existing note or create new one
     existing = db.query(WeeklySummaryNote).filter(
@@ -241,4 +256,4 @@ async def save_weekly_note(
 
     db.commit()
 
-    return RedirectResponse(url="/summary/weekly", status_code=303)
+    return RedirectResponse(url=redirect_url, status_code=303)
