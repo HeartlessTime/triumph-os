@@ -6,6 +6,7 @@ from datetime import datetime, date, timedelta
 
 from app.database import get_db
 from app.models import Contact, Account, Opportunity, Activity
+from app.services.followup import calculate_next_followup
 
 
 def update_contact_followup(contact: Contact):
@@ -260,8 +261,13 @@ async def log_contact(
             contact_id=contact_id,
         )
         db.add(activity)
-        # Also update the opportunity's last_contacted
+        # Update the opportunity's last_contacted and recalculate next_followup
         opp.last_contacted = date.today()
+        opp.next_followup = calculate_next_followup(
+            stage=opp.stage,
+            last_contacted=opp.last_contacted,
+            bid_date=opp.bid_date
+        )
 
     db.commit()
 
