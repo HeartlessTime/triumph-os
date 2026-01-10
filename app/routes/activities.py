@@ -11,6 +11,9 @@ from app.services.followup import calculate_next_followup
 router = APIRouter(prefix="/activities", tags=["activities"])
 templates = Jinja2Templates(directory="app/templates")
 
+# TODO: Replace with actual authentication when implemented
+CURRENT_USER_ID = 1
+
 
 @router.post("/opportunity/{opp_id}/add")
 async def add_activity(
@@ -42,6 +45,7 @@ async def add_activity(
         description=description or None,
         activity_date=activity_dt,
         contact_id=contact_id if contact_id else None,
+        created_by_id=CURRENT_USER_ID,
     )
 
     db.add(activity)

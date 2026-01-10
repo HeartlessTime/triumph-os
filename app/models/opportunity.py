@@ -154,7 +154,7 @@ class Opportunity(Base):
 
     @property
     def completed_tasks(self):
-        return [t for t in self.tasks if t.status == 'Complete']
+        return [t for t in self.tasks if t.status == 'Completed']
 
     @property
     def value(self):

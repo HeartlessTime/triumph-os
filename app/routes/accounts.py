@@ -13,6 +13,9 @@ from app.models import Account, Opportunity, Contact
 router = APIRouter(prefix="/accounts", tags=["accounts"])
 templates = Jinja2Templates(directory="app/templates")
 
+# TODO: Replace with actual authentication when implemented
+CURRENT_USER_ID = 1
+
 
 def normalize_url(url: Optional[str]) -> Optional[str]:
     """Prepend https:// if URL doesn't start with http:// or https://."""
@@ -127,6 +130,7 @@ async def create_account(
         state=state or None,
         zip_code=zip_code or None,
         notes=notes or None,
+        created_by_id=CURRENT_USER_ID,
     )
 
     db.add(account)

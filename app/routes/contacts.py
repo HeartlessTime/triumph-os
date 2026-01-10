@@ -16,6 +16,9 @@ def update_contact_followup(contact: Contact):
 router = APIRouter(prefix="/contacts", tags=["contacts"])
 templates = Jinja2Templates(directory="app/templates")
 
+# TODO: Replace with actual authentication when implemented
+CURRENT_USER_ID = 1
+
 
 @router.get("", response_class=HTMLResponse)
 async def list_contacts(
@@ -278,6 +281,7 @@ async def log_contact(
             description=f"Contacted {contact.full_name} regarding {opp.name}",
             activity_date=datetime.now(),
             contact_id=contact_id,
+            created_by_id=CURRENT_USER_ID,
         )
         db.add(activity)
         # Update the opportunity's last_contacted and recalculate next_followup

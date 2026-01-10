@@ -14,9 +14,9 @@ class Task(Base):
     due_date = Column(Date, nullable=True, index=True)
     priority = Column(String(20), nullable=False, default='Medium')
     status = Column(String(20), nullable=False, default='Open', index=True)
+    completed_at = Column(DateTime, nullable=True)
     assigned_to_id = Column(Integer, ForeignKey('users.id'), nullable=True)
     created_by_id = Column(Integer, ForeignKey('users.id'), nullable=True)
-    completed_at = Column(DateTime, nullable=True)
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
     updated_at = Column(DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
 
@@ -26,7 +26,7 @@ class Task(Base):
     created_by = relationship("User", back_populates="created_tasks", foreign_keys=[created_by_id])
 
     PRIORITIES = ['Low', 'Medium', 'High', 'Urgent']
-    STATUSES = ['Open', 'Complete']
+    STATUSES = ['Open', 'Completed']
 
     PRIORITY_COLORS = {
         'Low': '#6c757d',
@@ -38,7 +38,7 @@ class Task(Base):
     @property
     def is_overdue(self):
         """Check if task is overdue."""
-        if self.status == 'Complete':
+        if self.status == 'Completed':
             return False
         if self.due_date:
             return self.due_date < date.today()
@@ -58,14 +58,13 @@ class Task(Base):
 
     def complete(self):
         """Mark task as complete."""
-        self.status = 'Complete'
-        self.completed_at = datetime.utcnow()
+        self.status = 'Completed'
+        self.updated_at = datetime.utcnow()
         return self
 
     def reopen(self):
         """Reopen a completed task."""
         self.status = 'Open'
-        self.completed_at = None
         return self
 
     def __repr__(self):

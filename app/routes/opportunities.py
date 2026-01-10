@@ -18,6 +18,9 @@ from app.services.followup import calculate_next_followup, get_followup_status
 router = APIRouter(prefix="/opportunities", tags=["opportunities"])
 templates = Jinja2Templates(directory="app/templates")
 
+# TODO: Replace with actual authentication when implemented
+CURRENT_USER_ID = 1
+
 
 # -----------------------------
 # Helpers
@@ -209,7 +212,7 @@ async def create_opportunity(
         lv_value=clean_num(lv_value),
         hdd_value=clean_num(hdd_value),
         bid_date=datetime.strptime(bid_date, "%Y-%m-%d").date() if bid_date else None,
-        owner_id=owner_id,
+        owner_id=owner_id if owner_id else CURRENT_USER_ID,
         assigned_estimator_id=assigned_estimator_id,
         last_contacted=date.today(),
         gcs=[int(gc_id) for gc_id in gc_ids if gc_id] if gc_ids else None,
@@ -347,10 +350,25 @@ async def update_stage(
     if not opportunity:
         raise HTTPException(status_code=404, detail="Opportunity not found")
 
+    old_stage = opportunity.stage
+
     opportunity.stage = stage
     opportunity.probability = Opportunity.STAGE_PROBABILITIES.get(stage, 0)
     opportunity.last_contacted = date.today()
     update_opportunity_followup(opportunity)
+
+    # Log stage change as activity for pipeline tracking
+    if old_stage != stage:
+        activity = Activity(
+            opportunity_id=opp_id,
+            activity_type='note',
+            subject=f"Stage changed: {old_stage} → {stage}",
+            description=f"Pipeline stage updated from {old_stage} to {stage}",
+            activity_date=datetime.now(),
+            created_by_id=CURRENT_USER_ID,
+        )
+        db.add(activity)
+
     db.commit()
 
     return RedirectResponse(url=f"/opportunities/{opp_id}", status_code=303)
@@ -478,6 +496,9 @@ async def update_opportunity(
             return None
         return Decimal(str(val).replace(",", ""))
 
+    # Capture old stage for activity logging
+    old_stage = opportunity.stage
+
     opportunity.account_id = account_id
     opportunity.name = name
     opportunity.stage = stage
@@ -537,6 +558,19 @@ async def update_opportunity(
             db.add(OpportunityScope(opportunity_id=opp_id, scope_package_id=scope_pkg.id))
 
     update_opportunity_followup(opportunity)
+
+    # Log stage change as activity for pipeline tracking
+    if old_stage != stage:
+        activity = Activity(
+            opportunity_id=opp_id,
+            activity_type='note',
+            subject=f"Stage changed: {old_stage} → {stage}",
+            description=f"Pipeline stage updated from {old_stage} to {stage}",
+            activity_date=datetime.now(),
+            created_by_id=CURRENT_USER_ID,
+        )
+        db.add(activity)
+
     db.commit()
 
     return RedirectResponse(url=f"/opportunities/{opp_id}", status_code=303)

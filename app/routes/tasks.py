@@ -10,6 +10,9 @@ from app.models import Opportunity, Task, User
 router = APIRouter(prefix="/tasks", tags=["tasks"])
 templates = Jinja2Templates(directory="app/templates")
 
+# TODO: Replace with actual authentication when implemented
+CURRENT_USER_ID = 1
+
 
 @router.post("/opportunity/{opp_id}/add")
 async def add_task(
@@ -33,7 +36,8 @@ async def add_task(
         description=description or None,
         due_date=datetime.strptime(due_date, "%Y-%m-%d").date() if due_date else None,
         priority=priority,
-        assigned_to_id=assigned_to_id if assigned_to_id else None,
+        assigned_to_id=assigned_to_id if assigned_to_id else CURRENT_USER_ID,
+        created_by_id=CURRENT_USER_ID,
     )
 
     db.add(task)
