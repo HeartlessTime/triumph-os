@@ -1,0 +1,327 @@
+{% extends "base.html" %}
+
+{% block title %}Weekly Summary - Triumph OS{% endblock %}
+
+{% block content %}
+<div class="content-area">
+    <div class="page-header d-flex justify-content-between align-items-center">
+        <div>
+            <h1><i class="bi bi-clipboard-data me-2"></i>Weekly Summary</h1>
+            <p class="text-muted mb-0">{{ start_date.strftime('%B %d') }} - {{ end_date.strftime('%B %d, %Y') }}</p>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="/summary/weekly?days=7" class="btn {% if days == 7 %}btn-primary{% else %}btn-outline-primary{% endif %}">7 Days</a>
+            <a href="/summary/weekly?days=14" class="btn {% if days == 14 %}btn-primary{% else %}btn-outline-primary{% endif %}">14 Days</a>
+            <a href="/summary/weekly?days=30" class="btn {% if days == 30 %}btn-primary{% else %}btn-outline-primary{% endif %}">30 Days</a>
+        </div>
+    </div>
+
+    <!-- Executive Summary -->
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0"><i class="bi bi-bar-chart-line me-2"></i>Executive Summary</h5>
+        </div>
+        <div class="card-body">
+            <p class="lead mb-4">{{ summary_sentence }}</p>
+
+            <div class="row g-3">
+                <div class="col-md-4 col-lg-2">
+                    <div class="text-center p-3 border rounded">
+                        <div class="h2 mb-0 text-primary">{{ contacts_logged_count }}</div>
+                        <div class="text-muted small">Contacts Logged</div>
+                    </div>
+                </div>
+                <div class="col-md-4 col-lg-2">
+                    <div class="text-center p-3 border rounded">
+                        <div class="h2 mb-0 text-success">{{ new_contacts_count }}</div>
+                        <div class="text-muted small">New Contacts</div>
+                    </div>
+                </div>
+                <div class="col-md-4 col-lg-2">
+                    <div class="text-center p-3 border rounded">
+                        <div class="h2 mb-0 text-info">{{ new_accounts_count }}</div>
+                        <div class="text-muted small">New Accounts</div>
+                    </div>
+                </div>
+                <div class="col-md-4 col-lg-2">
+                    <div class="text-center p-3 border rounded">
+                        <div class="h2 mb-0 text-warning">{{ opportunities_touched_count }}</div>
+                        <div class="text-muted small">Opps Touched</div>
+                    </div>
+                </div>
+                <div class="col-md-4 col-lg-2">
+                    <div class="text-center p-3 border rounded">
+                        <div class="h2 mb-0 text-danger">{{ tasks_completed_count }}</div>
+                        <div class="text-muted small">Tasks Done</div>
+                    </div>
+                </div>
+                <div class="col-md-4 col-lg-2">
+                    <div class="text-center p-3 border rounded">
+                        <div class="h2 mb-0 text-secondary">{{ activities_logged_count }}</div>
+                        <div class="text-muted small">Activities</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <!-- Outreach & Follow-ups -->
+        <div class="col-lg-6">
+            <div class="card h-100">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0"><i class="bi bi-telephone me-2"></i>Outreach & Follow-ups</h5>
+                </div>
+                <div class="card-body p-0">
+                    {% if outreach_contacts %}
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Contact</th>
+                                    <th>Account</th>
+                                    <th>Date</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for contact in outreach_contacts %}
+                                <tr>
+                                    <td>
+                                        <a href="/contacts/{{ contact.id }}" class="text-decoration-none">
+                                            {{ contact.full_name }}
+                                        </a>
+                                        {% if contact.title %}
+                                        <div class="text-muted small">{{ contact.title }}</div>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <a href="/accounts/{{ contact.account_id }}" class="text-decoration-none text-muted">
+                                            {{ contact.account.name }}
+                                        </a>
+                                    </td>
+                                    <td class="text-muted small">{{ contact.last_contacted.strftime('%b %d') }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center text-muted py-4">
+                        <i class="bi bi-telephone-x h1"></i>
+                        <p class="mb-0">No outreach logged this period</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Pipeline Movement -->
+        <div class="col-lg-6">
+            <div class="card h-100">
+                <div class="card-header bg-warning text-dark">
+                    <h5 class="mb-0"><i class="bi bi-arrow-left-right me-2"></i>Pipeline Movement</h5>
+                </div>
+                <div class="card-body p-0">
+                    {% if pipeline_changes %}
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Opportunity</th>
+                                    <th>Stage</th>
+                                    <th>Updated</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for opp in pipeline_changes %}
+                                <tr>
+                                    <td>
+                                        <a href="/opportunities/{{ opp.id }}" class="text-decoration-none">
+                                            {{ opp.name }}
+                                        </a>
+                                        <div class="text-muted small">{{ opp.account.name }}</div>
+                                    </td>
+                                    <td>
+                                        <span class="badge badge-stage badge-{{ opp.stage|lower|replace(' ', '-') }}">
+                                            {{ opp.stage }}
+                                        </span>
+                                    </td>
+                                    <td class="text-muted small">{{ opp.updated_at.strftime('%b %d') }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center text-muted py-4">
+                        <i class="bi bi-inbox h1"></i>
+                        <p class="mb-0">No pipeline changes this period</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Tasks Completed -->
+        <div class="col-lg-6">
+            <div class="card h-100">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="mb-0"><i class="bi bi-check2-square me-2"></i>Tasks Completed</h5>
+                </div>
+                <div class="card-body p-0">
+                    {% if tasks_completed %}
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Task</th>
+                                    <th>Opportunity</th>
+                                    <th>Completed</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for task in tasks_completed %}
+                                <tr>
+                                    <td>
+                                        {{ task.title }}
+                                        {% if task.description %}
+                                        <div class="text-muted small text-truncate" style="max-width: 200px;">{{ task.description }}</div>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if task.opportunity %}
+                                        <a href="/opportunities/{{ task.opportunity.id }}" class="text-decoration-none text-muted">
+                                            {{ task.opportunity.name }}
+                                        </a>
+                                        {% else %}
+                                        <span class="text-muted">-</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-muted small">{{ task.completed_at.strftime('%b %d') }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center text-muted py-4">
+                        <i class="bi bi-list-task h1"></i>
+                        <p class="mb-0">No tasks completed this period</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- New Records Created -->
+        <div class="col-lg-6">
+            <div class="card h-100">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0"><i class="bi bi-plus-circle me-2"></i>New Records Created</h5>
+                </div>
+                <div class="card-body">
+                    <!-- New Accounts -->
+                    <h6 class="text-muted mb-2">
+                        <i class="bi bi-building me-1"></i> Accounts ({{ new_accounts|length }})
+                    </h6>
+                    {% if new_accounts %}
+                    <ul class="list-unstyled mb-3">
+                        {% for acc in new_accounts %}
+                        <li class="mb-1">
+                            <a href="/accounts/{{ acc.id }}" class="text-decoration-none">{{ acc.name }}</a>
+                            <span class="text-muted small">- {{ acc.created_at.strftime('%b %d') }}</span>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    {% else %}
+                    <p class="text-muted small mb-3">None</p>
+                    {% endif %}
+
+                    <!-- New Contacts -->
+                    <h6 class="text-muted mb-2">
+                        <i class="bi bi-person me-1"></i> Contacts ({{ new_contacts|length }})
+                    </h6>
+                    {% if new_contacts %}
+                    <ul class="list-unstyled mb-3">
+                        {% for contact in new_contacts %}
+                        <li class="mb-1">
+                            <a href="/contacts/{{ contact.id }}" class="text-decoration-none">{{ contact.full_name }}</a>
+                            <span class="text-muted small">@ {{ contact.account.name }} - {{ contact.created_at.strftime('%b %d') }}</span>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    {% else %}
+                    <p class="text-muted small mb-3">None</p>
+                    {% endif %}
+
+                    <!-- New Opportunities -->
+                    <h6 class="text-muted mb-2">
+                        <i class="bi bi-bullseye me-1"></i> Opportunities ({{ new_opportunities|length }})
+                    </h6>
+                    {% if new_opportunities %}
+                    <ul class="list-unstyled mb-0">
+                        {% for opp in new_opportunities %}
+                        <li class="mb-1">
+                            <a href="/opportunities/{{ opp.id }}" class="text-decoration-none">{{ opp.name }}</a>
+                            <span class="text-muted small">- {{ opp.created_at.strftime('%b %d') }}</span>
+                            {% if opp.value %}
+                            <span class="badge bg-success bg-opacity-10 text-success ms-1 currency">{{ opp.value }}</span>
+                            {% endif %}
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    {% else %}
+                    <p class="text-muted small mb-0">None</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Activity Timeline -->
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-secondary text-white">
+                    <h5 class="mb-0"><i class="bi bi-clock-history me-2"></i>Recent Activity Timeline</h5>
+                </div>
+                <div class="card-body">
+                    {% if activities_logged %}
+                    <div class="activity-timeline">
+                        {% for activity in activities_logged %}
+                        <div class="activity-item">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <span class="me-2">{{ activity.icon }}</span>
+                                    <strong>{{ activity.subject }}</strong>
+                                    {% if activity.contact %}
+                                    <span class="text-muted">with
+                                        <a href="/contacts/{{ activity.contact.id }}" class="text-decoration-none">{{ activity.contact.full_name }}</a>
+                                    </span>
+                                    {% endif %}
+                                </div>
+                                <div class="text-end">
+                                    <small class="text-muted">{{ activity.activity_date.strftime('%b %d, %I:%M %p') }}</small>
+                                </div>
+                            </div>
+                            <div class="mt-1">
+                                <a href="/opportunities/{{ activity.opportunity_id }}" class="text-muted small text-decoration-none">
+                                    <i class="bi bi-bullseye me-1"></i>{{ activity.opportunity.name }}
+                                </a>
+                            </div>
+                            {% if activity.description %}
+                            <p class="text-muted small mb-0 mt-1" style="max-width: 600px;">{{ activity.description[:150] }}{% if activity.description|length > 150 %}...{% endif %}</p>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="text-center text-muted py-4">
+                        <i class="bi bi-journal-x h1"></i>
+                        <p class="mb-0">No activities logged this period</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

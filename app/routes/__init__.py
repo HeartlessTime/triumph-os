@@ -9,6 +9,7 @@ from app.routes.tasks import router as tasks_router
 from app.routes.guide import router as guide_router
 from app.routes.email_sync import router as email_sync_router
 from app.routes.estimators import router as estimators_router
+from app.routes.summary import router as summary_router
 
 __all__ = [
     "dashboard_router",
@@ -22,4 +23,5 @@ __all__ = [
     "guide_router",
     "email_sync_router",
     "estimators_router",
+    "summary_router",
 ]

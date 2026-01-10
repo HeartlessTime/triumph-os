@@ -18,6 +18,7 @@ from app.routes import (
     guide_router,
     email_sync_router,
     estimators_router,
+    summary_router,
 )
 
 
@@ -42,6 +43,7 @@ def create_app() -> FastAPI:
     app.include_router(guide_router)
     app.include_router(email_sync_router)
     app.include_router(estimators_router)
+    app.include_router(summary_router)
 
     return app
 
