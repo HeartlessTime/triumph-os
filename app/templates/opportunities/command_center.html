@@ -116,6 +116,10 @@
                             {{ opportunity.owner.full_name if opportunity.owner else '—' }}
                         </div>
                         <div class="col-6">
+                            <label class="text-muted small d-block">Estimator</label>
+                            {{ opportunity.assigned_estimator.full_name if opportunity.assigned_estimator else '—' }}
+                        </div>
+                        <div class="col-6">
                             <label class="text-muted small d-block">Source</label>
                             {{ opportunity.source or '—' }}
                         </div>
@@ -288,13 +292,18 @@
         
         <!-- Right Column - Details -->
         <div class="col-lg-8">
-            <!-- Documents Section -->
+            <!-- Quick Links Section -->
             {% if quick_links %}
             <div class="card mb-4">
-                <div class="card-header">Quick Links</div>
+                <div class="card-header"><i class="bi bi-link-45deg me-2"></i>Quick Links</div>
                 <div class="card-body">
                     {% for link in quick_links %}
-                    <div class="mb-2"><a href="{{ link }}" target="_blank">{{ link }}</a></div>
+                    {% set url = link if link.startswith('http://') or link.startswith('https://') else 'https://' + link %}
+                    <div class="mb-2">
+                        <a href="{{ url }}" target="_blank" rel="noopener noreferrer">
+                            <i class="bi bi-box-arrow-up-right me-1"></i>{{ link }}
+                        </a>
+                    </div>
                     {% endfor %}
                 </div>
             </div>

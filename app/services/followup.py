@@ -172,13 +172,13 @@ def get_followup_status(next_followup: Optional[date], today: Optional[date] = N
         }
     elif days_until <= 3:
         return {
-            'status': 'upcoming',
+            'status': 'due_soon',
             'days_until': days_until,
-            'css_class': 'text-info'
+            'css_class': 'text-warning'
         }
     else:
         return {
-            'status': 'upcoming',
+            'status': 'safe',
             'days_until': days_until,
-            'css_class': ''
+            'css_class': 'text-success'
         }

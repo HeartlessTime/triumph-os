@@ -35,18 +35,20 @@
             </a>
         </div>
         <div class="col-md-6 col-xl-3">
-            <div class="stat-card">
-                <div class="d-flex justify-content-between align-items-start">
-                    <div>
-                        <div class="stat-value currency">{{ weighted_pipeline }}</div>
-                        <div class="stat-label">Weighted Pipeline</div>
-                        <div class="text-muted small mt-1">Probability-adjusted value</div>
-                    </div>
-                    <div class="stat-icon bg-success bg-opacity-10 text-success">
-                        <i class="bi bi-graph-up"></i>
+            <a href="/opportunities?stalled=1" class="text-decoration-none">
+                <div class="stat-card {% if stalled_count > 0 %}border-warning{% endif %}">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <div class="stat-value">{{ stalled_count }}</div>
+                            <div class="stat-label">Stalled Opportunities</div>
+                            <div class="text-muted small mt-1">Deals needing attention</div>
+                        </div>
+                        <div class="stat-icon bg-warning bg-opacity-10 text-warning">
+                            <i class="bi bi-pause-circle"></i>
+                        </div>
                     </div>
                 </div>
-            </div>
+            </a>
         </div>
         <div class="col-md-6 col-xl-3">
             <a href="/opportunities" class="text-decoration-none">

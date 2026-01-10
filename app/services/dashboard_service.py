@@ -13,7 +13,13 @@ def get_dashboard_data(db: Session, today: date) -> dict:
         func.sum(func.coalesce(Opportunity.lv_value, 0) + func.coalesce(Opportunity.hdd_value, 0))
     ).filter(Opportunity.stage.in_(open_stages)).scalar() or 0
 
-    weighted_pipeline = 0
+    stalled_count = db.query(func.count(Opportunity.id))\
+        .filter(
+            Opportunity.stage.in_(open_stages),
+            Opportunity.stalled_reason.isnot(None),
+            Opportunity.stalled_reason != ''
+        )\
+        .scalar() or 0
 
     open_opportunities = db.query(func.count(Opportunity.id))\
         .filter(Opportunity.stage.in_(open_stages))\
@@ -88,7 +94,7 @@ def get_dashboard_data(db: Session, today: date) -> dict:
 
     return {
         "pipeline_value": pipeline_value,
-        "weighted_pipeline": weighted_pipeline,
+        "stalled_count": stalled_count,
         "open_opportunities": open_opportunities,
         "won_this_month": won_this_month,
         "followup_opps": followup_opps,

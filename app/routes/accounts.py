@@ -28,6 +28,7 @@ async def list_accounts(
     request: Request,
     search: str = None,
     industry: str = None,
+    sort: str = None,
     db: Session = Depends(get_db)
 ):
     """List all accounts with optional filtering."""
@@ -46,12 +47,22 @@ async def list_accounts(
 
     accounts = query.order_by(Account.name).all()
 
+    # Apply sorting
+    if sort == 'name':
+        accounts.sort(key=lambda a: (a.name or '').lower())
+    elif sort == 'last_contacted':
+        from datetime import date
+        accounts.sort(key=lambda a: (a.last_contacted or date.min))
+    elif sort == 'value':
+        accounts.sort(key=lambda a: (a.total_pipeline_value or 0), reverse=True)
+
     return templates.TemplateResponse("accounts/list.html", {
         "request": request,
         "accounts": accounts,
         "search": search,
         "industry": industry,
         "industries": Account.INDUSTRIES,
+        "sort": sort,
     })
 
 

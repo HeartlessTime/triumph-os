@@ -1,401 +1,244 @@
 {% extends "base.html" %}
 
-{% block title %}How to Use - Triumph OS{% endblock %}
+{% block title %}Reference Guide - Triumph OS{% endblock %}
 
 {% block content %}
 <div class="page-header">
-    <h1><i class="bi bi-book me-2"></i>How to Use Triumph OS</h1>
-    <p class="text-muted">Complete guide to using the Sales platform</p>
+    <h1><i class="bi bi-book me-2"></i>Triumph OS Reference Guide</h1>
+    <p class="text-muted">Quick reference for internal team</p>
+</div>
+
+<!-- Quick Navigation -->
+<div class="card shadow-sm mb-4">
+    <div class="card-body py-2">
+        <div class="d-flex flex-wrap gap-2">
+            <span class="text-muted small align-self-center me-2">Jump to:</span>
+            <a href="#dashboard" class="btn btn-outline-secondary btn-sm">Dashboard</a>
+            <a href="#today" class="btn btn-outline-secondary btn-sm">Today</a>
+            <a href="#accounts" class="btn btn-outline-secondary btn-sm">Accounts</a>
+            <a href="#contacts" class="btn btn-outline-secondary btn-sm">Contacts</a>
+            <a href="#opportunities" class="btn btn-outline-secondary btn-sm">Opportunities</a>
+            <a href="#activities" class="btn btn-outline-secondary btn-sm">Activities</a>
+            <a href="#tasks" class="btn btn-outline-secondary btn-sm">Tasks</a>
+            <a href="#weekly-summary" class="btn btn-outline-secondary btn-sm">Weekly Summary</a>
+        </div>
+    </div>
 </div>
 
 <div class="row">
     <div class="col-12">
-        <div class="card shadow-sm mb-4">
+
+        <!-- SECTION: Daily Use -->
+        <h4 class="text-muted mb-3 mt-2"><i class="bi bi-calendar-day me-2"></i>Daily Use</h4>
+
+        <!-- Dashboard -->
+        <div id="dashboard" class="card shadow-sm mb-4">
             <div class="card-header bg-primary text-white">
-                <h5 class="mb-0"><i class="bi bi-speedometer2 me-2"></i>Dashboard Overview</h5>
+                <h5 class="mb-0"><i class="bi bi-speedometer2 me-2"></i>Dashboard</h5>
             </div>
             <div class="card-body">
-                <p><strong>What it shows:</strong> Your main hub for tracking sales pipeline, upcoming bids, and tasks.</p>
-                <ul>
-                    <li><strong>Pipeline Value:</strong> Total estimated value of all open opportunities (LV + HDD)</li>
-                    <li><strong>Open Opportunities:</strong> Count of active bids in progress</li>
-                    <li><strong>Won This Month:</strong> Total value of projects won in current month</li>
-                    <li><strong>Opportunities Needing Follow-up:</strong> Bids past their next follow-up date</li>
-                    <li><strong>Upcoming Bids:</strong> Projects with bid dates in next 14 days</li>
-                    <li><strong>My Tasks:</strong> Your open action items sorted by priority and due date</li>
-                    <li><strong>Recent Activities:</strong> Latest customer interactions and notes</li>
+                <p class="mb-3">Your daily starting point. Shows pipeline health and items needing attention.</p>
+                <ul class="mb-0">
+                    <li><strong>Pipeline Value</strong> — Total value of open opportunities</li>
+                    <li><strong>Stalled Opportunities</strong> — Deals marked with a stalled reason</li>
+                    <li><strong>Follow-ups Needed</strong> — Opportunities past their follow-up date</li>
+                    <li><strong>Upcoming Bids</strong> — Bids due in next 14 days</li>
+                    <li><strong>My Tasks</strong> — Your open tasks by priority</li>
                 </ul>
-                <p class="mb-0"><strong>Best Practice:</strong> Check dashboard first thing each morning to stay on top of deadlines.</p>
             </div>
         </div>
 
-        <div class="card shadow-sm mb-4">
+        <!-- Today Page -->
+        <div id="today" class="card shadow-sm mb-4">
             <div class="card-header" style="background-color: #6f42c1; color: white;">
                 <h5 class="mb-0"><i class="bi bi-calendar-check me-2"></i>Today Page</h5>
             </div>
             <div class="card-body">
-                <p><strong>What it shows:</strong> Your actionable items for today and the upcoming week in one focused view.</p>
-
-                <h6 class="mt-3">Three Key Sections:</h6>
-                <ul>
-                    <li><strong>Follow-ups Due:</strong> Opportunities with follow-ups due today or overdue. These need immediate attention!</li>
-                    <li><strong>Tasks Due (7 days):</strong> All open tasks due within the next week, sorted by due date and priority.</li>
-                    <li><strong>Upcoming Bids (7 days):</strong> Opportunities with bid dates in the next 7 days.</li>
+                <p class="mb-3">Focused view of what needs action today and this week.</p>
+                <ul class="mb-0">
+                    <li><strong>Follow-ups Due</strong> — Overdue or due today</li>
+                    <li><strong>Tasks Due</strong> — Due within 7 days</li>
+                    <li><strong>Upcoming Bids</strong> — Bids due within 7 days</li>
                 </ul>
-
-                <h6 class="mt-3">Quick Actions:</h6>
-                <p>Each item includes quick action buttons:</p>
-                <ul>
-                    <li><strong>View:</strong> Jump directly to the opportunity or task detail page</li>
-                    <li><strong>Log Contact:</strong> Record a contact interaction without leaving the Today page</li>
-                    <li><strong>Complete:</strong> Mark a task as done (for tasks only)</li>
-                </ul>
-
-                <p class="mb-0"><strong>Best Practice:</strong> Start each day on the Today page to prioritize your immediate action items.</p>
+                <p class="mt-3 mb-0 small text-muted">Quick actions: View, Log Contact, Complete Task</p>
             </div>
         </div>
 
-        <div class="card shadow-sm mb-4">
+        <!-- SECTION: Core Records -->
+        <h4 class="text-muted mb-3 mt-4"><i class="bi bi-database me-2"></i>Core Records</h4>
+
+        <!-- Accounts -->
+        <div id="accounts" class="card shadow-sm mb-4">
             <div class="card-header bg-success text-white">
-                <h5 class="mb-0"><i class="bi bi-building me-2"></i>Managing Accounts</h5>
+                <h5 class="mb-0"><i class="bi bi-building me-2"></i>Accounts</h5>
             </div>
             <div class="card-body">
-                <p><strong>What they are:</strong> Customer companies (General Contractors, Developers, etc.)</p>
-
-                <h6 class="mt-3">Creating an Account:</h6>
-                <ol>
-                    <li>Click "Accounts" in left sidebar</li>
-                    <li>Click "+ New Account" button</li>
-                    <li>Fill in company details (name, industry, contact info, address)</li>
-                    <li>Add notes about the company (bidding preferences, payment history, etc.)</li>
-                    <li>Click "Save"</li>
-                </ol>
-
-                <h6 class="mt-3">Account Details Include:</h6>
-                <ul>
-                    <li><strong>Industry:</strong> Construction, Real Estate, Healthcare, Education, etc.</li>
-                    <li><strong>Contacts:</strong> People you work with at the company</li>
-                    <li><strong>Opportunities:</strong> All bids/projects for this account</li>
-                    <li><strong>Activity History:</strong> All calls, emails, meetings logged</li>
+                <p class="mb-3">Customer companies (GCs, developers, owners).</p>
+                <h6>What to do</h6>
+                <ul class="mb-0">
+                    <li>Create one account per company</li>
+                    <li>Add contacts and opportunities under the account</li>
+                    <li>Use consistent naming (avoid abbreviations)</li>
                 </ul>
-
-                <h6 class="mt-3">Input Helpers:</h6>
-                <ul>
-                    <li><strong>Website URLs:</strong> If you enter a website without http:// or https://, the system automatically adds https:// for you</li>
-                    <li><strong>Phone Numbers:</strong> As you type, phone numbers are automatically formatted as XXX-XXX-XXXX</li>
-                </ul>
-
-                <p class="mb-0"><strong>Tip:</strong> Use consistent naming (e.g., "ABC Construction" not "ABC Const" or "ABC").</p>
             </div>
         </div>
 
-        <div class="card shadow-sm mb-4">
+        <!-- Contacts -->
+        <div id="contacts" class="card shadow-sm mb-4">
             <div class="card-header bg-info text-white">
-                <h5 class="mb-0"><i class="bi bi-people me-2"></i>Managing Contacts</h5>
+                <h5 class="mb-0"><i class="bi bi-people me-2"></i>Contacts</h5>
             </div>
             <div class="card-body">
-                <p><strong>What they are:</strong> Individual people at customer companies</p>
-
-                <h6 class="mt-3">Adding a Contact:</h6>
-                <ol>
-                    <li>Go to an Account detail page</li>
-                    <li>Click "+ Add Contact" in Contacts section</li>
-                    <li>Enter name, title, email, phone numbers</li>
-                    <li>Mark as "Primary Contact" if main decision maker</li>
-                    <li>Add notes (communication preferences, role in bid process)</li>
-                    <li>Click "Save"</li>
-                </ol>
-
-                <h6 class="mt-3">Contact Information:</h6>
-                <ul>
-                    <li><strong>Primary Contact:</strong> Main decision maker (only one per account)</li>
-                    <li><strong>Title:</strong> Project Manager, Estimator, VP Operations, etc.</li>
-                    <li><strong>Mobile vs. Office Phone:</strong> Both tracked for easier reach</li>
+                <p class="mb-3">People at customer companies.</p>
+                <h6>What to do</h6>
+                <ul class="mb-3">
+                    <li>Mark one contact as <strong>Primary Contact</strong> per account</li>
+                    <li>Use <strong>Log Contact</strong> after each interaction — this updates follow-up dates</li>
                 </ul>
-
-                <h6 class="mt-3">Contact Follow-ups:</h6>
-                <p>Contacts have their own follow-up tracking separate from opportunities:</p>
-                <ul>
-                    <li><strong>30-Day Cycle:</strong> When you log contact with someone, the next follow-up is automatically set to 30 days from that date</li>
-                    <li><strong>Log Contact Button:</strong> Click "Log Contact" on a contact's page or directly from the contacts list to record an interaction and update the follow-up date</li>
-                    <li><strong>Last Contacted:</strong> Shows when you last interacted with this person (visible in contacts list and detail page)</li>
-                    <li><strong>Next Follow-up:</strong> Shows when you should reach out again (turns red if overdue)</li>
-                    <li><strong>Manual Edit:</strong> You can manually set the "Last Contacted" date when editing a contact</li>
+                <h6>What to watch for</h6>
+                <ul class="mb-0">
+                    <li>Contacts turn red when overdue for follow-up (30-day cycle)</li>
                 </ul>
-
-                <h6 class="mt-3">Contact to Opportunity Activity Sync:</h6>
-                <p>When you log contact with someone, the system automatically:</p>
-                <ul>
-                    <li>Updates the contact's last_contacted date</li>
-                    <li>Creates an Activity entry on all open opportunities where this contact is the primary contact</li>
-                    <li>Updates the last_contacted date on those opportunities</li>
-                </ul>
-                <p>This means you only need to log the interaction once - it automatically syncs to all related opportunities!</p>
-
-                <p class="mb-0"><strong>Best Practice:</strong> Always update contact info after phone calls if details change. Use the Log Contact button to keep follow-up dates accurate.</p>
             </div>
         </div>
 
-        <div class="card shadow-sm mb-4">
+        <!-- Opportunities -->
+        <div id="opportunities" class="card shadow-sm mb-4">
             <div class="card-header bg-warning text-white">
-                <h5 class="mb-0"><i class="bi bi-trophy me-2"></i>Managing Opportunities (Bids)</h5>
+                <h5 class="mb-0"><i class="bi bi-trophy me-2"></i>Opportunities</h5>
             </div>
             <div class="card-body">
-                <p><strong>What they are:</strong> Individual bid opportunities or projects</p>
+                <p class="mb-3">Bids and projects you're pursuing.</p>
 
-                <h6 class="mt-3">Creating an Opportunity:</h6>
-                <ol>
-                    <li>Click "Opportunities" in sidebar or "+ New Opportunity" from account page</li>
-                    <li>Select the customer account</li>
-                    <li>Enter project name (e.g., "Downtown Office Tower - LV Package")</li>
-                    <li>Set Stage (Prospecting, Proposal, Bid Sent, Negotiation, Won/Lost)</li>
-                    <li>Enter bid date, project type, and submission details</li>
-                    <li>Fill in estimated values:
-                        <ul>
-                            <li><strong>LV Value:</strong> Low-voltage systems estimate</li>
-                            <li><strong>HDD Value:</strong> Horizontal directional drilling / underground estimate</li>
-                        </ul>
-                    </li>
-                    <li>Assign owner</li>
-                    <li>Set next follow-up date to stay on top of communication</li>
-                </ol>
-
-                <h6 class="mt-3">Sales Stages Explained:</h6>
-                <ul>
-                    <li><strong>Prospecting (10%):</strong> Initial contact, gathering basic info</li>
-                    <li><strong>Proposal (40%):</strong> Actively preparing bid</li>
-                    <li><strong>Bid Sent (60%):</strong> Bid submitted, awaiting decision</li>
-                    <li><strong>Negotiation (80%):</strong> In final negotiations</li>
-                    <li><strong>Won (100%):</strong> Project awarded to us</li>
-                    <li><strong>Lost (0%):</strong> Lost to competitor or project cancelled</li>
+                <h6>Key fields to fill in</h6>
+                <ul class="mb-3">
+                    <li><strong>LV Value / HDD Value</strong> — Estimated dollar amounts</li>
+                    <li><strong>Bid Date</strong> — When bid is due</li>
+                    <li><strong>Primary Contact</strong> — Main person for this deal</li>
+                    <li><strong>GCs</strong> — General contractors (select multiple if needed)</li>
+                    <li><strong>Quick Links</strong> — External URLs (bid portals, folders)</li>
                 </ul>
 
-                <h6 class="mt-3">Opportunity Follow-ups:</h6>
-                <p>Opportunity follow-ups are separate from contact follow-ups and are based on the sales stage and bid date:</p>
-                <ul>
-                    <li><strong>Stage-Based Follow-up Rules:</strong>
-                        <ul>
-                            <li>Prospecting, Proposal, Bid Sent → 14 days from last contact</li>
-                            <li>Negotiation → 7 days from last contact</li>
-                            <li>Won, Lost → No automatic follow-up</li>
-                        </ul>
-                    </li>
-                    <li><strong>Past Bid Date:</strong> If a bid date has passed and the opportunity isn't Won/Lost, an urgent 2 business day follow-up is set</li>
-                    <li>Use the "Log Contact" button on an opportunity to update its follow-up schedule</li>
-                    <li>Opportunities needing follow-up appear on the dashboard</li>
+                <h6>Sales Stages</h6>
+                <table class="table table-sm mb-3">
+                    <tbody>
+                        <tr><td>Prospecting</td><td>10%</td></tr>
+                        <tr><td>Proposal</td><td>40%</td></tr>
+                        <tr><td>Bid Sent</td><td>60%</td></tr>
+                        <tr><td>Negotiation</td><td>80%</td></tr>
+                        <tr><td>Won</td><td>100%</td></tr>
+                        <tr><td>Lost</td><td>0%</td></tr>
+                    </tbody>
+                </table>
+
+                <h6>Stalled Reasons</h6>
+                <p class="mb-2">Set when a deal isn't progressing:</p>
+                <ul class="mb-3">
+                    <li>Waiting on GC</li>
+                    <li>Waiting on bid results</li>
+                    <li>Waiting on drawings</li>
+                    <li>Budget unclear</li>
+                    <li>Internal delay</li>
                 </ul>
 
-                <h6 class="mt-3">Quick Stage Changes:</h6>
-                <p>On the opportunity detail page, you can quickly change the stage using the dropdown selector without opening the full edit form. The stage updates immediately when you select a new value.</p>
+                <h6>Follow-up Rules</h6>
+                <table class="table table-sm mb-3">
+                    <tbody>
+                        <tr><td>Prospecting / Proposal / Bid Sent</td><td>14 days from last contact</td></tr>
+                        <tr><td>Negotiation</td><td>7 days from last contact</td></tr>
+                        <tr><td>Past bid date (not closed)</td><td>2 business days</td></tr>
+                        <tr><td>Won / Lost</td><td>No follow-up</td></tr>
+                    </tbody>
+                </table>
 
-                <h6 class="mt-3">Opportunity Health Score:</h6>
-                <p>Each opportunity displays a Health Score (0-10) as a colored badge in the header:</p>
-                <ul>
-                    <li><strong>Green (8-10):</strong> Healthy - good engagement and complete information</li>
-                    <li><strong>Yellow (5-7):</strong> Needs attention - some gaps in engagement or data</li>
-                    <li><strong>Red (0-4):</strong> At risk - missing critical information or stale contact</li>
-                </ul>
-                <p>Scoring criteria (+2 points each):</p>
-                <ul>
-                    <li>Last contacted within 7 days</li>
-                    <li>Next follow-up date is set</li>
-                    <li>Bid date is set</li>
-                    <li>Primary contact is assigned</li>
-                    <li>Notes are present</li>
+                <h6>Follow-up Colors</h6>
+                <ul class="mb-3">
+                    <li><span class="text-danger fw-bold">Red</span> — Overdue</li>
+                    <li><span class="text-warning fw-bold">Yellow</span> — Due within 3 days</li>
+                    <li><span class="text-success fw-bold">Green</span> — Safe (4+ days)</li>
                 </ul>
 
-                <h6 class="mt-3">Stalled Reason:</h6>
-                <p>When an opportunity isn't progressing, you can set a Stalled Reason to track why:</p>
-                <ul>
-                    <li><strong>Waiting on GC:</strong> Waiting for general contractor response or decision</li>
-                    <li><strong>Waiting on bid results:</strong> Bid submitted, awaiting outcome</li>
-                    <li><strong>Waiting on drawings:</strong> Need updated drawings or specifications</li>
-                    <li><strong>Budget unclear:</strong> Customer budget not confirmed</li>
-                    <li><strong>Internal delay:</strong> Internal resource or timing issue</li>
+                <h6>Health Score</h6>
+                <p class="mb-2">Shows deal engagement at a glance. Appears next to opportunity name.</p>
+                <ul class="mb-0">
+                    <li><span class="text-success fw-bold">Green (8–10)</span> — Healthy</li>
+                    <li><span class="text-warning fw-bold">Yellow (5–7)</span> — Needs attention</li>
+                    <li><span class="text-danger fw-bold">Red (0–4)</span> — At risk</li>
                 </ul>
-                <p>Set the stalled reason in the Edit Opportunity form. It displays on both the opportunity detail page and the opportunities list.</p>
-
-                <h6 class="mt-3">Input Helpers:</h6>
-                <ul>
-                    <li><strong>Dollar Values:</strong> As you type dollar amounts (LV Value, HDD Value), commas are automatically inserted for thousands (e.g., 750000 becomes 750,000)</li>
-                </ul>
-
-                <p class="mb-0"><strong>Tip:</strong> Update the stage as the opportunity progresses. Set realistic follow-up dates and stick to them!</p>
             </div>
         </div>
 
-        <div class="card shadow-sm mb-4">
+        <!-- SECTION: Work Tracking -->
+        <h4 class="text-muted mb-3 mt-4"><i class="bi bi-clipboard-check me-2"></i>Work Tracking</h4>
+
+        <!-- Activities -->
+        <div id="activities" class="card shadow-sm mb-4">
             <div class="card-header bg-secondary text-white">
-                <h5 class="mb-0"><i class="bi bi-chat-dots me-2"></i>Logging Activities</h5>
+                <h5 class="mb-0"><i class="bi bi-chat-dots me-2"></i>Activities</h5>
             </div>
             <div class="card-body">
-                <p><strong>What they are:</strong> Record of all customer interactions</p>
-
-                <h6 class="mt-3">Activity Types:</h6>
-                <ul>
-                    <li><strong>Call:</strong> Phone conversations</li>
-                    <li><strong>Email:</strong> Email exchanges</li>
-                    <li><strong>Meeting:</strong> In-person or virtual meetings</li>
-                    <li><strong>Site Visit:</strong> Project site walks</li>
-                    <li><strong>Note:</strong> General notes or updates</li>
+                <p class="mb-3">Log of customer interactions.</p>
+                <h6>Types</h6>
+                <ul class="mb-3">
+                    <li>Call, Email, Meeting, Site Visit, Note</li>
                 </ul>
-
-                <h6 class="mt-3">Logging an Activity:</h6>
-                <ol>
-                    <li>Go to Account, Contact, or Opportunity page</li>
-                    <li>Click "+ Log Activity"</li>
-                    <li>Select activity type</li>
-                    <li>Enter subject/title</li>
-                    <li>Add detailed notes about the conversation</li>
-                    <li>Set date/time and duration</li>
-                    <li>Link to relevant opportunity if applicable</li>
-                    <li>Click "Save"</li>
-                </ol>
-
-                <h6 class="mt-3">What to Include in Notes:</h6>
-                <ul>
-                    <li>Who you spoke with</li>
-                    <li>Topics discussed</li>
-                    <li>Decisions made</li>
-                    <li>Action items for follow-up</li>
-                    <li>Next steps and timelines</li>
-                    <li>Customer concerns or objections</li>
+                <h6>What to do</h6>
+                <ul class="mb-0">
+                    <li>Log activities after each customer interaction</li>
+                    <li>Link to the relevant opportunity when applicable</li>
                 </ul>
-
-                <p class="mb-0"><strong>Why it matters:</strong> Detailed activity logs help your team stay coordinated and provide context for future interactions.</p>
             </div>
         </div>
 
-        <div class="card shadow-sm mb-4">
+        <!-- Tasks -->
+        <div id="tasks" class="card shadow-sm mb-4">
             <div class="card-header bg-dark text-white">
-                <h5 class="mb-0"><i class="bi bi-check-square me-2"></i>Managing Tasks</h5>
+                <h5 class="mb-0"><i class="bi bi-check-square me-2"></i>Tasks</h5>
             </div>
             <div class="card-body">
-                <p><strong>What they are:</strong> Action items and to-dos for opportunities</p>
-
-                <h6 class="mt-3">Creating a Task:</h6>
-                <ol>
-                    <li>Go to Tasks page or Opportunity detail</li>
-                    <li>Click "+ New Task"</li>
-                    <li>Enter task title and description</li>
-                    <li>Set priority (Low, Medium, High)</li>
-                    <li>Set due date</li>
-                    <li>Assign to team member</li>
-                    <li>Link to opportunity if applicable</li>
-                    <li>Click "Save"</li>
-                </ol>
-
-                <h6 class="mt-3">Task Priorities:</h6>
-                <ul>
-                    <li><strong>High:</strong> Urgent - blocks bid submission or has tight deadline</li>
-                    <li><strong>Medium:</strong> Important but not urgent</li>
-                    <li><strong>Low:</strong> Nice to have, no immediate deadline</li>
+                <p class="mb-3">Action items, optionally linked to opportunities.</p>
+                <h6>Priority Levels</h6>
+                <ul class="mb-3">
+                    <li><strong>Urgent</strong> — Do immediately</li>
+                    <li><strong>High</strong> — Important, has deadline</li>
+                    <li><strong>Medium</strong> — Important, flexible timing</li>
+                    <li><strong>Low</strong> — When you have time</li>
                 </ul>
-
-                <h6 class="mt-3">Task Examples:</h6>
-                <ul>
-                    <li>"Request fire alarm quotes from vendors"</li>
-                    <li>"Schedule site visit with GC"</li>
-                    <li>"Follow up with customer on bid questions"</li>
-                    <li>"Review and finalize proposal"</li>
+                <h6>What to watch for</h6>
+                <ul class="mb-0">
+                    <li>Tasks due within 7 days appear on Today page</li>
+                    <li>Completed tasks can be reopened if needed</li>
                 </ul>
-
-                <p class="mb-0"><strong>Best Practice:</strong> Mark tasks complete immediately when done. Review task list daily.</p>
             </div>
         </div>
 
-        <div class="card shadow-sm mb-4">
+        <!-- SECTION: Reporting -->
+        <h4 class="text-muted mb-3 mt-4"><i class="bi bi-bar-chart me-2"></i>Reporting</h4>
+
+        <!-- Weekly Summary -->
+        <div id="weekly-summary" class="card shadow-sm mb-4">
             <div class="card-header" style="background-color: #20c997; color: white;">
                 <h5 class="mb-0"><i class="bi bi-clipboard-data me-2"></i>Weekly Summary</h5>
             </div>
             <div class="card-body">
-                <p><strong>What it shows:</strong> A summary of all sales activity for a given week, perfect for reporting.</p>
-
-                <h6 class="mt-3">Summary Sections:</h6>
-                <ul>
-                    <li><strong>Executive Summary:</strong> Quick counts of contacts logged, new records, tasks completed, and activities</li>
-                    <li><strong>Outreach & Follow-ups:</strong> Contacts you reached out to during the week</li>
-                    <li><strong>Pipeline Movement:</strong> Opportunities that were updated (stage changes, etc.)</li>
-                    <li><strong>Tasks Completed:</strong> Tasks marked as done during the week</li>
-                    <li><strong>New Records Created:</strong> New accounts, contacts, and opportunities added</li>
-                    <li><strong>Activity Timeline:</strong> All logged activities chronologically</li>
-                </ul>
-
-                <h6 class="mt-3">Week Navigation:</h6>
-                <p>Use the Previous Week / Next Week buttons to browse historical summaries. Each week has its own saved notes.</p>
-
-                <h6 class="mt-3">Section Notes:</h6>
-                <p>Each section (except Executive Summary) has a notes field where you can add context or highlights. Notes are saved per-week, so you can document what happened in each period.</p>
-
-                <h6 class="mt-3">Copy Summary to Clipboard:</h6>
-                <p>Click the green "Copy Summary to Clipboard" button to generate a text version of the summary including:</p>
-                <ul>
-                    <li>Outreach list with contacts and dates</li>
-                    <li>Pipeline changes with current stages</li>
-                    <li>Completed tasks</li>
+                <p class="mb-3">Summary of your weekly activity for reporting.</p>
+                <h6>Includes</h6>
+                <ul class="mb-3">
+                    <li>Outreach & follow-ups</li>
+                    <li>Pipeline movement</li>
+                    <li>Tasks completed</li>
                     <li>New records created</li>
-                    <li>All your section notes</li>
+                    <li>Activity timeline</li>
                 </ul>
-                <p>Paste directly into emails or reports for easy sharing with your team or boss.</p>
-
-                <p class="mb-0"><strong>Best Practice:</strong> Review the Weekly Summary every Friday before leaving. Add notes about key wins and challenges.</p>
+                <h6>What to do</h6>
+                <ul class="mb-0">
+                    <li>Add notes to each section (saved per week)</li>
+                    <li>Use <strong>Copy to Clipboard</strong> to export for emails/reports</li>
+                    <li>Use week navigation to review past weeks</li>
+                </ul>
             </div>
         </div>
 
-        <div class="card shadow-sm mb-4">
-            <div class="card-header bg-primary text-white">
-                <h5 class="mb-0"><i class="bi bi-lightbulb me-2"></i>Tips for Success</h5>
-            </div>
-            <div class="card-body">
-                <h6>Live Search:</h6>
-                <p>All list pages (Accounts, Contacts, Opportunities) feature live search that updates automatically as you type:</p>
-                <ul>
-                    <li>Start typing in any search box and results filter instantly</li>
-                    <li>Select dropdown filters and the list updates immediately</li>
-                    <li>No need to click a "Filter" or "Search" button</li>
-                    <li>There's a brief delay (300ms) to avoid unnecessary refreshes while typing</li>
-                </ul>
-
-                <h6 class="mt-3">Daily Workflow:</h6>
-                <ol>
-                    <li>Check Dashboard for overdue follow-ups and upcoming bids</li>
-                    <li>Review and complete high-priority tasks</li>
-                    <li>Log all customer interactions (calls, emails) immediately</li>
-                    <li>Update opportunity stages as they progress</li>
-                    <li>Set next follow-up dates before ending calls</li>
-                </ol>
-
-                <h6 class="mt-3">Data Quality:</h6>
-                <ul>
-                    <li>Use consistent naming conventions</li>
-                    <li>Keep contact information up to date</li>
-                    <li>Add detailed notes - your future self will thank you</li>
-                    <li>Update opportunity values as bids are refined</li>
-                    <li>Move lost opportunities to "Lost" stage (don't delete)</li>
-                </ul>
-
-                <h6 class="mt-3">Team Collaboration:</h6>
-                <ul>
-                    <li>Assign opportunities to correct owners</li>
-                    <li>Use activity logs to communicate with team about customer interactions</li>
-                    <li>Create tasks for team members when action is needed</li>
-                </ul>
-
-                <h6 class="mt-3">Pipeline Management:</h6>
-                <ul>
-                    <li>Set realistic bid dates and follow-up dates</li>
-                    <li>Move opportunities through stages as they progress</li>
-                    <li>Don't let opportunities sit in "Prospecting" too long</li>
-                    <li>Update to "Lost" quickly if project is cancelled</li>
-                    <li>Update to "Won" immediately when awarded (celebrate!)</li>
-                </ul>
-
-                <div class="alert alert-info mt-4">
-                    <i class="bi bi-info-circle me-2"></i>
-                    <strong>Need Help?</strong> Contact your system administrator or team lead with questions about using Triumph OS.
-                </div>
-            </div>
-        </div>
     </div>
 </div>
 {% endblock %}

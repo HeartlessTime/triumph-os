@@ -43,13 +43,11 @@ async def list_opportunities(
     search: Optional[str] = None,
     stage: Optional[str] = None,
     estimator_id: Optional[str] = None,
-    gc_id: Optional[str] = None,
-    end_user_account_id: Optional[str] = None,
+    stalled: Optional[str] = None,
+    sort: Optional[str] = None,
     db: Session = Depends(get_db)
 ):
     estimator_id = int(estimator_id) if estimator_id else None
-    gc_id = int(gc_id) if gc_id else None
-    end_user_account_id = int(end_user_account_id) if end_user_account_id else None
 
     today = date.today()
 
@@ -74,19 +72,27 @@ async def list_opportunities(
     if estimator_id:
         query = query.filter(Opportunity.assigned_estimator_id == estimator_id)
 
+    # Filter stalled opportunities (those with a stalled_reason set)
+    if stalled:
+        query = query.filter(
+            Opportunity.stalled_reason.isnot(None),
+            Opportunity.stalled_reason != ''
+        )
+
     opportunities = query.order_by(
         Opportunity.bid_date.nullslast(),
         Opportunity.name
     ).all()
 
-    # Python-side filters
-    if gc_id:
-        opportunities = [o for o in opportunities if o.gcs and gc_id in o.gcs]
-
-    if end_user_account_id:
-        opportunities = [
-            o for o in opportunities if o.end_user_account_id == end_user_account_id
-        ]
+    # Apply sorting
+    if sort == 'value':
+        opportunities.sort(key=lambda o: (o.value or 0), reverse=True)
+    elif sort == 'bid_date':
+        opportunities.sort(key=lambda o: (o.bid_date or date.max))
+    elif sort == 'last_contacted':
+        opportunities.sort(key=lambda o: (o.last_contacted or date.min))
+    elif sort == 'next_followup':
+        opportunities.sort(key=lambda o: (o.next_followup or date.max))
 
     for opp in opportunities:
         opp.followup_status = get_followup_status(opp.next_followup, today)
@@ -98,21 +104,18 @@ async def list_opportunities(
         .all()
     )
 
-    accounts = db.query(Account).order_by(Account.name).all()
-
     return templates.TemplateResponse(
         "opportunities/list.html",
         {
             "request": request,
             "opportunities": opportunities,
             "users": users,
-            "accounts": accounts,
             "stages": Opportunity.STAGE_NAMES,
             "search": search,
             "stage": stage,
             "estimator_id": estimator_id,
-            "gc_id": gc_id,
-            "end_user_account_id": end_user_account_id,
+            "stalled": stalled,
+            "sort": sort,
         }
     )
 
@@ -444,6 +447,8 @@ async def update_opportunity(
     stalled_reason: str = Form(None),
     last_contacted: str = Form(None),
     quick_links_text: str = Form(None),
+    end_user_account_id: int = Form(None),
+    gc_ids: List[str] = Form(default=[]),
     scope_names: List[str] = Form(default=[]),
     scope_other_text: Optional[str] = Form(None),
     db: Session = Depends(get_db)
@@ -480,6 +485,7 @@ async def update_opportunity(
     opportunity.rebid = rebid == "true" if rebid else False
     opportunity.known_risks = known_risks or None
     opportunity.stalled_reason = stalled_reason or None
+    opportunity.end_user_account_id = end_user_account_id or None
 
     if last_contacted:
         opportunity.last_contacted = datetime.strptime(last_contacted, "%Y-%m-%d").date()
@@ -488,6 +494,12 @@ async def update_opportunity(
         opportunity.quick_links = [link.strip() for link in quick_links_text.strip().split("\n") if link.strip()]
     else:
         opportunity.quick_links = None
+
+    # Update GCs list
+    if gc_ids:
+        opportunity.gcs = [int(gc_id) for gc_id in gc_ids if gc_id]
+    else:
+        opportunity.gcs = None
 
     # Update scope packages - clear existing and re-add
     db.query(OpportunityScope).filter(OpportunityScope.opportunity_id == opp_id).delete()
