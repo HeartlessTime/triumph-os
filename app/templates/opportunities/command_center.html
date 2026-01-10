@@ -37,6 +37,15 @@
         </div>
     </div>
 
+    {% if opportunity.stalled_reason %}
+    <div class="alert alert-warning d-flex align-items-center mb-4" role="alert">
+        <i class="bi bi-pause-circle-fill me-2 fs-5"></i>
+        <div>
+            <strong>Stalled:</strong> {{ opportunity.stalled_reason }}
+        </div>
+    </div>
+    {% endif %}
+
     <!-- Primary Contact Card (Top Section) -->
     <div class="card mb-4">
         <div class="card-header d-flex justify-content-between align-items-center">
