@@ -12,7 +12,7 @@ from app.database import SessionLocal, engine, Base
 from app.models import (
     Account, Contact, ScopePackage,
     Opportunity, OpportunityScope, Estimate, EstimateLineItem,
-    Activity, Task, Document, Vendor
+    Activity, Task, Document, Vendor, User
 )
 from app.services.followup import calculate_next_followup
 from app.services.estimate import recalculate_estimate
@@ -26,6 +26,34 @@ def seed_database():
 
     try:
         print("Seeding database...")
+
+        # Create Users (needed for owner/estimator assignment)
+        print("  Creating users...")
+        users = [
+            User(
+                email="garrett@triumph.com",
+                password_hash="placeholder",
+                full_name="Garrett Garcia",
+                role="Admin",
+                is_active=True,
+            ),
+            User(
+                email="sales@triumph.com",
+                password_hash="placeholder",
+                full_name="Sarah Sales",
+                role="Sales",
+                is_active=True,
+            ),
+            User(
+                email="estimator@triumph.com",
+                password_hash="placeholder",
+                full_name="Eric Estimator",
+                role="Estimator",
+                is_active=True,
+            ),
+        ]
+        db.add_all(users)
+        db.flush()
 
         # Create Low-Voltage Scope Packages (replace generic scopes for LV contractors)
         print("  Creating low-voltage scope packages...")

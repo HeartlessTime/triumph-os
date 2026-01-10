@@ -2,7 +2,9 @@
 Weekly Summary Router
 
 Provides a read-only summary page showing work completed in the last 7 days.
-Designed for boss-friendly reporting without authentication changes.
+Scoped to the current user's data only.
+
+NOTE: Currently uses hardcoded CURRENT_USER_ID until authentication is added.
 """
 
 from datetime import date, datetime, timedelta
@@ -12,13 +14,17 @@ from fastapi import APIRouter, Request, Depends, Form
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
-from sqlalchemy import func
+from sqlalchemy import func, or_
 
 from app.database import get_db
-from app.models import Account, Contact, Opportunity, Activity, Task, WeeklySummaryNote
+from app.models import Account, Contact, Opportunity, Activity, Task, WeeklySummaryNote, User
 
 router = APIRouter(prefix="/summary", tags=["summary"])
 templates = Jinja2Templates(directory="app/templates")
+
+# TODO: Replace with actual authentication when implemented
+# Hardcoded user ID for now - change this to match your user
+CURRENT_USER_ID = 1
 
 
 def get_week_start_monday(for_date: Optional[date] = None) -> date:
@@ -72,56 +78,101 @@ async def weekly_summary(
     is_current_week = (week_start == current_week)
 
     # ----------------------------
+    # USER SCOPING
+    # ----------------------------
+    # All queries below are filtered to show only the current user's data:
+    # - Activities: created_by_id == current user
+    # - Tasks: assigned_to_id == current user
+    # - Opportunities: owner_id OR assigned_estimator_id == current user
+    # - Contacts/Accounts: Only those related to user's opportunities
+    user_id = CURRENT_USER_ID
+
+    # Get IDs of opportunities owned by or assigned to the current user
+    user_opp_ids = [opp.id for opp in db.query(Opportunity.id).filter(
+        or_(
+            Opportunity.owner_id == user_id,
+            Opportunity.assigned_estimator_id == user_id
+        )
+    ).all()]
+
+    # ----------------------------
     # 1) EXECUTIVE SUMMARY COUNTS
     # ----------------------------
 
-    # Contacts where last_contacted was set/updated in the period
-    # (This tracks log-contact actions)
-    contacts_logged = db.query(Contact).filter(
-        Contact.last_contacted >= start_date,
-        Contact.last_contacted <= end_date
-    ).all()
+    # Contacts logged - only those tied to user's opportunities
+    # We filter contacts by account_id matching any of the user's opportunity accounts
+    user_account_ids = [opp.account_id for opp in db.query(Opportunity.account_id).filter(
+        or_(
+            Opportunity.owner_id == user_id,
+            Opportunity.assigned_estimator_id == user_id
+        )
+    ).distinct().all()]
+
+    # If user has no opportunities, contacts will be empty
+    if user_account_ids:
+        contacts_logged = db.query(Contact).filter(
+            Contact.last_contacted >= start_date,
+            Contact.last_contacted <= end_date,
+            Contact.account_id.in_(user_account_ids)
+        ).all()
+    else:
+        contacts_logged = []
     contacts_logged_count = len(contacts_logged)
 
-    # New contacts created
-    new_contacts = db.query(Contact).filter(
-        Contact.created_at >= start_datetime,
-        Contact.created_at <= end_datetime
-    ).order_by(Contact.created_at.desc()).all()
+    # New contacts created - only for user's accounts
+    if user_account_ids:
+        new_contacts = db.query(Contact).filter(
+            Contact.created_at >= start_datetime,
+            Contact.created_at <= end_datetime,
+            Contact.account_id.in_(user_account_ids)
+        ).order_by(Contact.created_at.desc()).all()
+    else:
+        new_contacts = []
     new_contacts_count = len(new_contacts)
 
-    # New accounts created
+    # New accounts created by user
     new_accounts = db.query(Account).filter(
         Account.created_at >= start_datetime,
-        Account.created_at <= end_datetime
+        Account.created_at <= end_datetime,
+        Account.created_by_id == user_id
     ).order_by(Account.created_at.desc()).all()
     new_accounts_count = len(new_accounts)
 
-    # Opportunities touched (any update in the period)
+    # Opportunities touched - only user's opportunities
     opportunities_touched = db.query(Opportunity).filter(
         Opportunity.updated_at >= start_datetime,
-        Opportunity.updated_at <= end_datetime
+        Opportunity.updated_at <= end_datetime,
+        or_(
+            Opportunity.owner_id == user_id,
+            Opportunity.assigned_estimator_id == user_id
+        )
     ).order_by(Opportunity.updated_at.desc()).all()
     opportunities_touched_count = len(opportunities_touched)
 
-    # New opportunities created
+    # New opportunities created - only user's opportunities
     new_opportunities = db.query(Opportunity).filter(
         Opportunity.created_at >= start_datetime,
-        Opportunity.created_at <= end_datetime
+        Opportunity.created_at <= end_datetime,
+        or_(
+            Opportunity.owner_id == user_id,
+            Opportunity.assigned_estimator_id == user_id
+        )
     ).order_by(Opportunity.created_at.desc()).all()
     new_opportunities_count = len(new_opportunities)
 
-    # Tasks completed
+    # Tasks completed - only tasks assigned to current user
     tasks_completed = db.query(Task).filter(
         Task.completed_at >= start_datetime,
-        Task.completed_at <= end_datetime
+        Task.completed_at <= end_datetime,
+        Task.assigned_to_id == user_id
     ).order_by(Task.completed_at.desc()).all()
     tasks_completed_count = len(tasks_completed)
 
-    # Activities logged
+    # Activities logged - only activities created by current user
     activities_logged = db.query(Activity).filter(
         Activity.activity_date >= start_datetime,
-        Activity.activity_date <= end_datetime
+        Activity.activity_date <= end_datetime,
+        Activity.created_by_id == user_id
     ).order_by(Activity.activity_date.desc()).all()
     activities_logged_count = len(activities_logged)
 
@@ -129,19 +180,28 @@ async def weekly_summary(
     # 2) OUTREACH & FOLLOW-UPS
     # ----------------------------
     # Contacts where log-contact was used (last_contacted updated)
-    outreach_contacts = db.query(Contact).filter(
-        Contact.last_contacted >= start_date,
-        Contact.last_contacted <= end_date
-    ).order_by(Contact.last_contacted.desc()).all()
+    # Scoped to contacts from user's accounts
+    if user_account_ids:
+        outreach_contacts = db.query(Contact).filter(
+            Contact.last_contacted >= start_date,
+            Contact.last_contacted <= end_date,
+            Contact.account_id.in_(user_account_ids)
+        ).order_by(Contact.last_contacted.desc()).all()
+    else:
+        outreach_contacts = []
 
     # ----------------------------
     # 3) PIPELINE MOVEMENT
     # ----------------------------
     # Opportunities updated in the period (proxy for stage changes)
-    # Since we don't have an audit log, show recently updated opportunities
+    # Scoped to user's opportunities only
     pipeline_changes = db.query(Opportunity).filter(
         Opportunity.updated_at >= start_datetime,
-        Opportunity.updated_at <= end_datetime
+        Opportunity.updated_at <= end_datetime,
+        or_(
+            Opportunity.owner_id == user_id,
+            Opportunity.assigned_estimator_id == user_id
+        )
     ).order_by(Opportunity.updated_at.desc()).all()
 
     # ----------------------------
