@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Request, Depends, Form, HTTPException
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 from datetime import datetime, date, timedelta
 
 from app.database import get_db
@@ -16,8 +16,6 @@ def update_contact_followup(contact: Contact):
 router = APIRouter(prefix="/contacts", tags=["contacts"])
 templates = Jinja2Templates(directory="app/templates")
 
-# TODO: Replace with actual authentication when implemented
-CURRENT_USER_ID = 1
 
 
 @router.get("", response_class=HTMLResponse)
@@ -31,7 +29,10 @@ async def list_contacts(
     # Safely convert account_id (treat "" as None)
     account_id_int = int(account_id) if account_id else None
 
-    query = db.query(Contact).join(Account)
+    # Eager load account to avoid N+1 when template accesses contact.account.name
+    query = db.query(Contact).options(
+        selectinload(Contact.account)
+    ).join(Account)
 
     if search:
         search_term = f"%{search}%"
@@ -273,6 +274,7 @@ async def log_contact(
     ).all()
 
     # Create Activity entry on each related opportunity
+    current_user = request.state.current_user
     for opp in related_opps:
         activity = Activity(
             opportunity_id=opp.id,
@@ -281,7 +283,7 @@ async def log_contact(
             description=f"Contacted {contact.full_name} regarding {opp.name}",
             activity_date=datetime.now(),
             contact_id=contact_id,
-            created_by_id=CURRENT_USER_ID,
+            created_by_id=current_user.id,
         )
         db.add(activity)
         # Update the opportunity's last_contacted and recalculate next_followup

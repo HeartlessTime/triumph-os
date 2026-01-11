@@ -11,7 +11,7 @@ from datetime import date, timedelta
 from fastapi import APIRouter, Request, Depends
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 from sqlalchemy import or_
 
 from app.database import get_db
@@ -31,19 +31,28 @@ async def today_page(
     week_from_now = today + timedelta(days=7)
 
     # Opportunities with follow-ups due today or overdue (only open opportunities)
-    followup_opps = db.query(Opportunity).filter(
+    # Eager load account for template rendering (opp.account.name)
+    followup_opps = db.query(Opportunity).options(
+        selectinload(Opportunity.account)
+    ).filter(
         Opportunity.next_followup <= today,
         Opportunity.stage.notin_(['Won', 'Lost'])
     ).order_by(Opportunity.next_followup).all()
 
     # Tasks due today or within next 7 days (only open tasks)
-    upcoming_tasks = db.query(Task).filter(
+    # Eager load opportunity for template rendering (task.opportunity.name)
+    upcoming_tasks = db.query(Task).options(
+        selectinload(Task.opportunity)
+    ).filter(
         Task.due_date <= week_from_now,
         Task.status == 'Open'
     ).order_by(Task.due_date, Task.priority.desc()).all()
 
     # Opportunities with bid dates in next 7 days (only open opportunities)
-    upcoming_bids = db.query(Opportunity).filter(
+    # Eager load account for template rendering (opp.account.name)
+    upcoming_bids = db.query(Opportunity).options(
+        selectinload(Opportunity.account)
+    ).filter(
         Opportunity.bid_date >= today,
         Opportunity.bid_date <= week_from_now,
         Opportunity.stage.notin_(['Won', 'Lost'])

@@ -1,5 +1,5 @@
 from datetime import date, timedelta
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 from sqlalchemy import func
 
 from app.models import Opportunity, Task, Activity, User
@@ -33,7 +33,9 @@ def get_dashboard_data(db: Session, today: date) -> dict:
         Opportunity.close_date >= first_of_month
     ).scalar() or 0
 
+    # Eager load account for template rendering (opp.account.name)
     followup_opps = db.query(Opportunity)\
+        .options(selectinload(Opportunity.account))\
         .filter(
             Opportunity.stage.in_(open_stages),
             Opportunity.next_followup.isnot(None),
@@ -46,7 +48,9 @@ def get_dashboard_data(db: Session, today: date) -> dict:
     for opp in followup_opps:
         opp.followup_status = get_followup_status(opp.next_followup, today)
 
+    # Eager load account for template rendering (opp.account.name)
     upcoming_bids = db.query(Opportunity)\
+        .options(selectinload(Opportunity.account))\
         .filter(
             Opportunity.stage.in_(open_stages),
             Opportunity.bid_date.isnot(None),
@@ -57,13 +61,17 @@ def get_dashboard_data(db: Session, today: date) -> dict:
         .limit(10)\
         .all()
 
+    # Eager load opportunity for template rendering (task.opportunity.name)
     my_tasks = db.query(Task)\
+        .options(selectinload(Task.opportunity))\
         .filter(Task.status == 'Open')\
         .order_by(Task.due_date.nullslast(), Task.priority.desc())\
         .limit(10)\
         .all()
 
+    # Eager load opportunity for template rendering (activity.opportunity.name)
     recent_activities = db.query(Activity)\
+        .options(selectinload(Activity.opportunity))\
         .order_by(Activity.activity_date.desc())\
         .limit(10)\
         .all()

@@ -1,12 +1,12 @@
 {% extends "base.html" %}
 
-{% block title %}Weekly Summary - Triumph OS{% endblock %}
+{% block title %}My Weekly Summary - Triumph OS{% endblock %}
 
 {% block content %}
 <div class="content-area">
     <div class="page-header d-flex justify-content-between align-items-center">
         <div>
-            <h1><i class="bi bi-clipboard-data me-2"></i>Weekly Summary</h1>
+            <h1><i class="bi bi-person-check me-2"></i>My Weekly Summary</h1>
             <p class="text-muted mb-0">
                 Week of {{ start_date.strftime('%B %d') }} – {{ end_date.strftime('%B %d, %Y') }}
                 {% if is_current_week %}<span class="badge bg-primary ms-2">Current Week</span>{% endif %}
@@ -16,15 +16,18 @@
             <button type="button" class="btn btn-success" id="copyToClipboard">
                 <i class="bi bi-clipboard me-1"></i> Copy Summary to Clipboard
             </button>
-            <a href="/summary/weekly?week_start={{ prev_week }}" class="btn btn-outline-secondary">
+            <a href="/summary/weekly?week_start={{ week_start }}" class="btn btn-outline-secondary">
+                <i class="bi bi-people me-1"></i> Team Summary
+            </a>
+            <a href="/summary/my-weekly?week_start={{ prev_week }}" class="btn btn-outline-secondary">
                 <i class="bi bi-chevron-left"></i> Previous Week
             </a>
             {% if not is_current_week %}
-            <a href="/summary/weekly" class="btn btn-outline-primary">
+            <a href="/summary/my-weekly" class="btn btn-outline-primary">
                 <i class="bi bi-calendar-check"></i> Today
             </a>
             {% endif %}
-            <a href="/summary/weekly?week_start={{ next_week }}" class="btn btn-outline-secondary">
+            <a href="/summary/my-weekly?week_start={{ next_week }}" class="btn btn-outline-secondary">
                 Next Week <i class="bi bi-chevron-right"></i>
             </a>
         </div>
@@ -113,7 +116,7 @@
                                             {{ contact.account.name }}
                                         </a>
                                     </td>
-                                    <td class="text-muted small">{{ contact.last_contacted.strftime('%b %d') if contact.last_contacted else '—' }}</td>
+                                    <td class="text-muted small">{{ contact.last_contacted.strftime('%b %d') if contact.last_contacted else '-' }}</td>
                                 </tr>
                                 {% endfor %}
                             </tbody>
@@ -130,7 +133,7 @@
                     <form action="/summary/weekly/notes" method="post" class="note-form">
                         <input type="hidden" name="week_start" value="{{ week_start }}">
                         <input type="hidden" name="section" value="outreach">
-                        <input type="hidden" name="note_type" value="team">
+                        <input type="hidden" name="note_type" value="personal">
                         <div class="mb-2">
                             <label class="form-label small text-muted mb-1"><i class="bi bi-pencil me-1"></i>Notes</label>
                             <textarea name="notes" class="form-control form-control-sm" rows="2" placeholder="Add notes about outreach...">{{ section_notes.get('outreach', '') }}</textarea>
@@ -189,7 +192,7 @@
                     <form action="/summary/weekly/notes" method="post" class="note-form">
                         <input type="hidden" name="week_start" value="{{ week_start }}">
                         <input type="hidden" name="section" value="pipeline">
-                        <input type="hidden" name="note_type" value="team">
+                        <input type="hidden" name="note_type" value="personal">
                         <div class="mb-2">
                             <label class="form-label small text-muted mb-1"><i class="bi bi-pencil me-1"></i>Notes</label>
                             <textarea name="notes" class="form-control form-control-sm" rows="2" placeholder="Add notes about pipeline...">{{ section_notes.get('pipeline', '') }}</textarea>
@@ -252,7 +255,7 @@
                     <form action="/summary/weekly/notes" method="post" class="note-form">
                         <input type="hidden" name="week_start" value="{{ week_start }}">
                         <input type="hidden" name="section" value="tasks">
-                        <input type="hidden" name="note_type" value="team">
+                        <input type="hidden" name="note_type" value="personal">
                         <div class="mb-2">
                             <label class="form-label small text-muted mb-1"><i class="bi bi-pencil me-1"></i>Notes</label>
                             <textarea name="notes" class="form-control form-control-sm" rows="2" placeholder="Add notes about tasks...">{{ section_notes.get('tasks', '') }}</textarea>
@@ -328,7 +331,7 @@
                     <form action="/summary/weekly/notes" method="post" class="note-form">
                         <input type="hidden" name="week_start" value="{{ week_start }}">
                         <input type="hidden" name="section" value="new_records">
-                        <input type="hidden" name="note_type" value="team">
+                        <input type="hidden" name="note_type" value="personal">
                         <div class="mb-2">
                             <label class="form-label small text-muted mb-1"><i class="bi bi-pencil me-1"></i>Notes</label>
                             <textarea name="notes" class="form-control form-control-sm" rows="2" placeholder="Add notes about new records...">{{ section_notes.get('new_records', '') }}</textarea>
@@ -395,7 +398,7 @@
                     <form action="/summary/weekly/notes" method="post" class="note-form">
                         <input type="hidden" name="week_start" value="{{ week_start }}">
                         <input type="hidden" name="section" value="other">
-                        <input type="hidden" name="note_type" value="team">
+                        <input type="hidden" name="note_type" value="personal">
                         <div class="mb-3">
                             <textarea name="notes" class="form-control" rows="4" placeholder="Add any other notes, observations, or highlights for this week...">{{ section_notes.get('other', '') }}</textarea>
                         </div>
@@ -433,7 +436,7 @@ Opportunities: {% for opp in new_opportunities %}{{ opp.name }}{% if not loop.la
 </div>
 
 <script>
-document.getElementById('copyToClipboard').addEventListener('click', function() {
+document.getElementById('copyToClipboard')?.addEventListener('click', function() {
     const weekRange = document.getElementById('weekRange').textContent.trim();
     const outreach = document.getElementById('outreachData').textContent.trim();
     const pipeline = document.getElementById('pipelineData').textContent.trim();
@@ -446,7 +449,7 @@ document.getElementById('copyToClipboard').addEventListener('click', function() 
     const newRecordsNotes = document.getElementById('newRecordsNotes').textContent.trim();
     const otherNotes = document.getElementById('otherNotes').textContent.trim();
 
-    let summary = `WEEKLY SUMMARY: ${weekRange}\n`;
+    let summary = `MY WEEKLY SUMMARY: ${weekRange}\n`;
     summary += '='.repeat(50) + '\n\n';
 
     summary += `OUTREACH & FOLLOW-UPS\n`;

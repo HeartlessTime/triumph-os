@@ -420,9 +420,13 @@
                 <i class="bi bi-calendar-check"></i>
                 Today
             </a>
-            <a href="/summary/weekly" class="nav-link {% if '/summary' in request.url.path %}active{% endif %}">
+            <a href="/summary/weekly" class="nav-link {% if request.url.path == '/summary/weekly' %}active{% endif %}">
                 <i class="bi bi-clipboard-data"></i>
                 Weekly Summary
+            </a>
+            <a href="/summary/my-weekly" class="nav-link {% if request.url.path == '/summary/my-weekly' %}active{% endif %}">
+                <i class="bi bi-person-check"></i>
+                My Summary
             </a>
 
             <div class="nav-section mt-3">Sales</div>

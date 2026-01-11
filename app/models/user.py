@@ -24,6 +24,7 @@ class User(Base):
     created_activities = relationship("Activity", back_populates="created_by")
     assigned_tasks = relationship("Task", back_populates="assigned_to", foreign_keys="Task.assigned_to_id")
     created_tasks = relationship("Task", back_populates="created_by", foreign_keys="Task.created_by_id")
+    completed_tasks = relationship("Task", back_populates="completed_by", foreign_keys="Task.completed_by_id")
     uploaded_documents = relationship("Document", back_populates="uploaded_by")
 
     ROLES = ['Admin', 'Sales', 'Estimator']

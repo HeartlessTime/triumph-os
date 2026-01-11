@@ -3,7 +3,7 @@ from decimal import Decimal
 from fastapi import APIRouter, Request, Depends, Form, HTTPException, File, UploadFile
 from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 from sqlalchemy import or_, func, case
 from typing import List, Optional, Union
 import os
@@ -18,8 +18,6 @@ from app.services.followup import calculate_next_followup, get_followup_status
 router = APIRouter(prefix="/opportunities", tags=["opportunities"])
 templates = Jinja2Templates(directory="app/templates")
 
-# TODO: Replace with actual authentication when implemented
-CURRENT_USER_ID = 1
 
 
 # -----------------------------
@@ -56,9 +54,11 @@ async def list_opportunities(
     today = date.today()
 
     # EXPLICIT JOIN (fixes ambiguous FK error)
+    # Eager load account to avoid N+1 when template accesses opp.account.name
     query = (
         db.query(Opportunity)
         .join(Account, Opportunity.account_id == Account.id)
+        .options(selectinload(Opportunity.account))
     )
 
     if search:
@@ -204,6 +204,7 @@ async def create_opportunity(
     def clean_num(val: Optional[str]):
         return Decimal(val.replace(",", "")) if val else None
 
+    current_user = request.state.current_user
     opportunity = Opportunity(
         account_id=account_id,
         name=name,
@@ -212,7 +213,7 @@ async def create_opportunity(
         lv_value=clean_num(lv_value),
         hdd_value=clean_num(hdd_value),
         bid_date=datetime.strptime(bid_date, "%Y-%m-%d").date() if bid_date else None,
-        owner_id=owner_id if owner_id else CURRENT_USER_ID,
+        owner_id=owner_id if owner_id else current_user.id,
         assigned_estimator_id=assigned_estimator_id,
         last_contacted=date.today(),
         gcs=[int(gc_id) for gc_id in gc_ids if gc_id] if gc_ids else None,
@@ -260,7 +261,23 @@ async def opportunity_detail(
 ):
     today = date.today()
 
-    opportunity = db.query(Opportunity).filter(Opportunity.id == opp_id).first()
+    # Eager load all relationships accessed in command_center.html template:
+    # - account (name, id)
+    # - primary_contact (full_name, title, email, phone)
+    # - tasks (list) with task.assigned_to
+    # - activities (list) with activity.contact
+    # - owner (full_name)
+    # - assigned_estimator (full_name)
+    # - scopes via scope_links
+    opportunity = db.query(Opportunity).options(
+        selectinload(Opportunity.account),
+        selectinload(Opportunity.primary_contact),
+        selectinload(Opportunity.tasks).selectinload(Task.assigned_to),
+        selectinload(Opportunity.activities).selectinload(Activity.contact),
+        selectinload(Opportunity.owner),
+        selectinload(Opportunity.assigned_estimator),
+        selectinload(Opportunity.scope_links).selectinload(OpportunityScope.scope_package)
+    ).filter(Opportunity.id == opp_id).first()
     if not opportunity:
         raise HTTPException(status_code=404, detail="Opportunity not found")
 
@@ -341,6 +358,7 @@ async def delete_opportunity(
 # -----------------------------
 @router.post("/{opp_id}/update-stage")
 async def update_stage(
+    request: Request,
     opp_id: int,
     stage: str = Form(...),
     db: Session = Depends(get_db)
@@ -358,6 +376,7 @@ async def update_stage(
     update_opportunity_followup(opportunity)
 
     # Log stage change as activity for pipeline tracking
+    current_user = request.state.current_user
     if old_stage != stage:
         activity = Activity(
             opportunity_id=opp_id,
@@ -365,7 +384,7 @@ async def update_stage(
             subject=f"Stage changed: {old_stage} → {stage}",
             description=f"Pipeline stage updated from {old_stage} to {stage}",
             activity_date=datetime.now(),
-            created_by_id=CURRENT_USER_ID,
+            created_by_id=current_user.id,
         )
         db.add(activity)
 
@@ -560,6 +579,7 @@ async def update_opportunity(
     update_opportunity_followup(opportunity)
 
     # Log stage change as activity for pipeline tracking
+    current_user = request.state.current_user
     if old_stage != stage:
         activity = Activity(
             opportunity_id=opp_id,
@@ -567,7 +587,7 @@ async def update_opportunity(
             subject=f"Stage changed: {old_stage} → {stage}",
             description=f"Pipeline stage updated from {old_stage} to {stage}",
             activity_date=datetime.now(),
-            created_by_id=CURRENT_USER_ID,
+            created_by_id=current_user.id,
         )
         db.add(activity)
 

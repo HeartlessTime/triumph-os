@@ -3,7 +3,7 @@ from typing import Optional
 from fastapi import APIRouter, Request, Depends, Form, HTTPException
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 from sqlalchemy import or_, func
 from datetime import date
 
@@ -12,10 +12,6 @@ from app.models import Account, Opportunity, Contact
 
 router = APIRouter(prefix="/accounts", tags=["accounts"])
 templates = Jinja2Templates(directory="app/templates")
-
-# TODO: Replace with actual authentication when implemented
-CURRENT_USER_ID = 1
-
 
 def normalize_url(url: Optional[str]) -> Optional[str]:
     """Prepend https:// if URL doesn't start with http:// or https://."""
@@ -36,7 +32,15 @@ async def list_accounts(
     db: Session = Depends(get_db)
 ):
     """List all accounts with optional filtering."""
-    query = db.query(Account)
+    # Eager load contacts and opportunities to avoid N+1 for:
+    # - account.contacts (for length count in template)
+    # - account.last_contacted property (iterates contacts)
+    # - account.open_opportunities_count property (iterates opportunities)
+    # - account.total_pipeline_value property (iterates opportunities)
+    query = db.query(Account).options(
+        selectinload(Account.contacts),
+        selectinload(Account.opportunities)
+    )
 
     if search:
         query = query.filter(
@@ -120,6 +124,7 @@ async def create_account(
     db: Session = Depends(get_db)
 ):
     """Create a new account."""
+    current_user = request.state.current_user
     account = Account(
         name=name,
         industry=industry or None,
@@ -130,7 +135,7 @@ async def create_account(
         state=state or None,
         zip_code=zip_code or None,
         notes=notes or None,
-        created_by_id=CURRENT_USER_ID,
+        created_by_id=current_user.id,
     )
 
     db.add(account)
@@ -146,7 +151,12 @@ async def view_account(
     db: Session = Depends(get_db)
 ):
     """View account details."""
-    account = db.query(Account).filter(Account.id == account_id).first()
+    # Eager load contacts and opportunities to avoid N+1 in template
+    # Template accesses account.contacts (list) and account.opportunities (list)
+    account = db.query(Account).options(
+        selectinload(Account.contacts),
+        selectinload(Account.opportunities)
+    ).filter(Account.id == account_id).first()
     if not account:
         raise HTTPException(status_code=404, detail="Account not found")
 

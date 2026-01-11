@@ -10,8 +10,6 @@ from app.models import Opportunity, Task, User, Activity
 router = APIRouter(prefix="/tasks", tags=["tasks"])
 templates = Jinja2Templates(directory="app/templates")
 
-# TODO: Replace with actual authentication when implemented
-CURRENT_USER_ID = 1
 
 
 @router.post("/opportunity/{opp_id}/add")
@@ -30,14 +28,15 @@ async def add_task(
     if not opportunity:
         raise HTTPException(status_code=404, detail="Opportunity not found")
 
+    current_user = request.state.current_user
     task = Task(
         opportunity_id=opp_id,
         title=title,
         description=description or None,
         due_date=datetime.strptime(due_date, "%Y-%m-%d").date() if due_date else None,
         priority=priority,
-        assigned_to_id=assigned_to_id if assigned_to_id else CURRENT_USER_ID,
-        created_by_id=CURRENT_USER_ID,
+        assigned_to_id=assigned_to_id if assigned_to_id else current_user.id,
+        created_by_id=current_user.id,
     )
 
     db.add(task)
@@ -57,7 +56,8 @@ async def complete_task(
     if not task:
         raise HTTPException(status_code=404, detail="Task not found")
 
-    task.complete()
+    current_user = request.state.current_user
+    task.complete(completed_by_user_id=current_user.id)
     db.commit()
 
     if task.opportunity_id:
