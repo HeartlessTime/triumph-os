@@ -14,26 +14,31 @@ from app.models import User
 # Password hashing context using bcrypt
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
+# bcrypt has a 72-byte limit on passwords
+BCRYPT_MAX_BYTES = 72
 
-def _truncate_password(password: str) -> str:
+
+def _safe_password(password: str) -> bytes:
     """
-    bcrypt has a hard 72-byte input limit.
-    We must truncate consistently for BOTH hashing and verification.
+    Encode password and truncate to bcrypt's 72-byte limit if needed.
+    This ensures compatibility across different bcrypt library versions.
     """
-    return password.encode("utf-8")[:72].decode("utf-8", errors="ignore")
+    password_bytes = password.encode("utf-8")
+    return password_bytes[:BCRYPT_MAX_BYTES]
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     """Verify a password against its hash."""
-    return pwd_context.verify(
-        _truncate_password(plain_password),
-        hashed_password,
-    )
+    try:
+        return pwd_context.verify(_safe_password(plain_password), hashed_password)
+    except Exception:
+        # Handle malformed hashes or other bcrypt errors gracefully
+        return False
 
 
 def get_password_hash(password: str) -> str:
     """Hash a password for storing."""
-    return pwd_context.hash(_truncate_password(password))
+    return pwd_context.hash(_safe_password(password))
 
 
 def get_current_user_optional(

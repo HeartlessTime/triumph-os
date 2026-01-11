@@ -258,6 +258,7 @@ async def log_contact(
 ):
     """Log contact - updates last_contacted to today and next_followup to 30 days from now.
 
+    Creates a follow-up Activity for the contact (appears in summaries/audit log).
     Also creates Activity entries on all related opportunities.
     """
     contact = db.query(Contact).filter(Contact.id == contact_id).first()
@@ -267,14 +268,28 @@ async def log_contact(
     contact.last_contacted = date.today()
     update_contact_followup(contact)
 
+    current_user = request.state.current_user
+
+    # Always create a contact-level follow-up Activity (no opportunity required)
+    # This ensures the follow-up appears in weekly summaries and audit log
+    followup_activity = Activity(
+        opportunity_id=None,
+        activity_type='call',
+        subject=f"Follow-up with {contact.full_name}",
+        description=f"Logged contact with {contact.full_name} at {contact.account.name}",
+        activity_date=datetime.now(),
+        contact_id=contact_id,
+        created_by_id=current_user.id,
+    )
+    db.add(followup_activity)
+
     # Find all opportunities where this contact is the primary contact
     related_opps = db.query(Opportunity).filter(
         Opportunity.primary_contact_id == contact_id,
         Opportunity.stage.notin_(['Won', 'Lost'])
     ).all()
 
-    # Create Activity entry on each related opportunity
-    current_user = request.state.current_user
+    # Create additional Activity entries on each related opportunity
     for opp in related_opps:
         activity = Activity(
             opportunity_id=opp.id,

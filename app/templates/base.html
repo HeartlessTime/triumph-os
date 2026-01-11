@@ -453,6 +453,12 @@
                 New Account
             </a>
 
+            <div class="nav-section mt-3">Admin</div>
+            <a href="/audit-log" class="nav-link {% if '/audit-log' in request.url.path %}active{% endif %}">
+                <i class="bi bi-journal-text"></i>
+                Activity Audit Log
+            </a>
+
             <div class="nav-section mt-3">Help</div>
             <a href="/how-to-use" class="nav-link {% if '/how-to-use' in request.url.path %}active{% endif %}">
                 <i class="bi bi-book"></i>

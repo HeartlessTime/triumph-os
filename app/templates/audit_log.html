@@ -1,0 +1,168 @@
+{% extends "base.html" %}
+
+{% block title %}Activity Audit Log - Triumph OS{% endblock %}
+
+{% block content %}
+<div class="content-area">
+    <div class="page-header d-flex justify-content-between align-items-center">
+        <div>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="/">Dashboard</a></li>
+                    <li class="breadcrumb-item active">Audit Log</li>
+                </ol>
+            </nav>
+            <h1><i class="bi bi-journal-text me-2"></i>Activity Audit Log</h1>
+            <p class="text-muted mb-0">Read-only view of all system activities</p>
+        </div>
+        <div class="text-muted">
+            <span class="badge bg-secondary">{{ total_count }} total activities</span>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-body p-0">
+            {% if activities %}
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead>
+                        <tr>
+                            <th style="width: 160px;">Timestamp</th>
+                            <th style="width: 140px;">User</th>
+                            <th style="width: 100px;">Action</th>
+                            <th>Subject / Description</th>
+                            <th style="width: 200px;">Related Records</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for activity in activities %}
+                        <tr>
+                            <td>
+                                <div class="small">
+                                    <div class="fw-medium">{{ activity.created_at.strftime('%b %d, %Y') }}</div>
+                                    <div class="text-muted">{{ activity.created_at.strftime('%I:%M %p') }}</div>
+                                </div>
+                            </td>
+                            <td>
+                                {% if activity.created_by %}
+                                <span class="d-flex align-items-center gap-2">
+                                    <i class="bi bi-person-circle text-muted"></i>
+                                    {{ activity.created_by.full_name }}
+                                </span>
+                                {% else %}
+                                <span class="text-muted">—</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span class="badge
+                                    {% if activity.activity_type == 'call' %}bg-success
+                                    {% elif activity.activity_type == 'meeting' %}bg-primary
+                                    {% elif activity.activity_type == 'email' %}bg-info
+                                    {% elif activity.activity_type == 'site_visit' %}bg-warning text-dark
+                                    {% elif activity.activity_type == 'task_completed' %}bg-success
+                                    {% else %}bg-secondary{% endif %}">
+                                    {{ activity.icon }} {{ activity.type_display }}
+                                </span>
+                            </td>
+                            <td>
+                                <div class="fw-medium">{{ activity.subject }}</div>
+                                {% if activity.description %}
+                                <div class="text-muted small text-truncate" style="max-width: 400px;">
+                                    {{ activity.description }}
+                                </div>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="small">
+                                    {% if activity.opportunity %}
+                                    <div class="mb-1">
+                                        <i class="bi bi-bullseye text-primary me-1"></i>
+                                        <a href="/opportunities/{{ activity.opportunity.id }}" class="text-decoration-none">
+                                            {{ activity.opportunity.name }}
+                                        </a>
+                                        {% if activity.opportunity.account %}
+                                        <span class="text-muted">@ {{ activity.opportunity.account.name }}</span>
+                                        {% endif %}
+                                    </div>
+                                    {% endif %}
+                                    {% if activity.contact %}
+                                    <div>
+                                        <i class="bi bi-person text-success me-1"></i>
+                                        <a href="/contacts/{{ activity.contact.id }}" class="text-decoration-none">
+                                            {{ activity.contact.full_name }}
+                                        </a>
+                                        {% if activity.contact.account %}
+                                        <span class="text-muted">@ {{ activity.contact.account.name }}</span>
+                                        {% endif %}
+                                    </div>
+                                    {% endif %}
+                                    {% if not activity.opportunity and not activity.contact %}
+                                    <span class="text-muted">—</span>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            {% if total_pages > 1 %}
+            <div class="card-footer bg-light d-flex justify-content-between align-items-center">
+                <div class="text-muted small">
+                    Showing {{ (page - 1) * page_size + 1 }} - {{ [page * page_size, total_count] | min }} of {{ total_count }}
+                </div>
+                <nav aria-label="Audit log pagination">
+                    <ul class="pagination pagination-sm mb-0">
+                        {% if page > 1 %}
+                        <li class="page-item">
+                            <a class="page-link" href="/audit-log?page={{ page - 1 }}">&laquo; Previous</a>
+                        </li>
+                        {% else %}
+                        <li class="page-item disabled">
+                            <span class="page-link">&laquo; Previous</span>
+                        </li>
+                        {% endif %}
+
+                        {% for p in range(1, total_pages + 1) %}
+                            {% if p == page %}
+                            <li class="page-item active">
+                                <span class="page-link">{{ p }}</span>
+                            </li>
+                            {% elif p == 1 or p == total_pages or (p >= page - 2 and p <= page + 2) %}
+                            <li class="page-item">
+                                <a class="page-link" href="/audit-log?page={{ p }}">{{ p }}</a>
+                            </li>
+                            {% elif p == page - 3 or p == page + 3 %}
+                            <li class="page-item disabled">
+                                <span class="page-link">...</span>
+                            </li>
+                            {% endif %}
+                        {% endfor %}
+
+                        {% if page < total_pages %}
+                        <li class="page-item">
+                            <a class="page-link" href="/audit-log?page={{ page + 1 }}">Next &raquo;</a>
+                        </li>
+                        {% else %}
+                        <li class="page-item disabled">
+                            <span class="page-link">Next &raquo;</span>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+            </div>
+            {% endif %}
+
+            {% else %}
+            <div class="empty-state">
+                <i class="bi bi-journal-x"></i>
+                <h5>No Activities Found</h5>
+                <p class="text-muted">There are no activities recorded in the system yet.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

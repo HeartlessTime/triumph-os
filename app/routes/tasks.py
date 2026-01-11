@@ -51,15 +51,30 @@ async def complete_task(
     task_id: int,
     db: Session = Depends(get_db)
 ):
-    """Mark a task as complete."""
+    """Mark a task as complete and create audit Activity."""
     task = db.query(Task).filter(Task.id == task_id).first()
     if not task:
         raise HTTPException(status_code=404, detail="Task not found")
 
     current_user = request.state.current_user
     task.complete(completed_by_user_id=current_user.id)
+
+    # Create audit Activity for task completion
+    activity = Activity(
+        opportunity_id=task.opportunity_id,  # May be None for standalone tasks
+        activity_type='task_completed',
+        subject=f"Completed task: {task.title}",
+        description=f"Task completed by {current_user.full_name}",
+        activity_date=datetime.utcnow(),
+        created_by_id=current_user.id,
+    )
+    db.add(activity)
     db.commit()
 
+    # Redirect back to referrer or default location
+    referer = request.headers.get("referer")
+    if referer:
+        return RedirectResponse(url=referer, status_code=303)
     if task.opportunity_id:
         return RedirectResponse(url=f"/opportunities/{task.opportunity_id}", status_code=303)
     return RedirectResponse(url="/", status_code=303)

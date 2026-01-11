@@ -8,7 +8,7 @@ class Activity(Base):
     __tablename__ = 'activities'
 
     id = Column(Integer, primary_key=True)
-    opportunity_id = Column(Integer, ForeignKey('opportunities.id', ondelete='CASCADE'), nullable=False, index=True)
+    opportunity_id = Column(Integer, ForeignKey('opportunities.id', ondelete='CASCADE'), nullable=True, index=True)
     activity_type = Column(String(50), nullable=False)  # call, meeting, email, note
     subject = Column(String(255), nullable=False)
     description = Column(Text, nullable=True)
@@ -28,6 +28,7 @@ class Activity(Base):
         ('email', 'Email'),
         ('note', 'Note'),
         ('site_visit', 'Site Visit'),
+        ('task_completed', 'Task Completed'),
     ]
 
     TYPE_ICONS = {
@@ -36,6 +37,7 @@ class Activity(Base):
         'email': '✉️',
         'note': '📝',
         'site_visit': '🏗️',
+        'task_completed': '✅',
     }
 
     @property

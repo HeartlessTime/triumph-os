@@ -221,13 +221,26 @@
                     <div class="list-group list-group-flush">
                         {% for task in my_tasks %}
                         <div class="list-group-item d-flex justify-content-between align-items-center">
-                            <div>
-                                <div class="fw-medium">{{ task.title }}</div>
-                                {% if task.opportunity %}
-                                <a href="/opportunities/{{ task.opportunity.id }}" class="text-muted small text-decoration-none">
-                                    {{ task.opportunity.name }}
-                                </a>
+                            <div class="d-flex align-items-start gap-2">
+                                {% if task.status != 'Completed' %}
+                                <form method="post" action="/tasks/{{ task.id }}/complete" class="d-inline">
+                                    <button type="submit" class="btn btn-sm btn-outline-success p-1" title="Complete Task" style="line-height: 1;">
+                                        <i class="bi bi-check-lg"></i>
+                                    </button>
+                                </form>
+                                {% else %}
+                                <span class="badge bg-success-subtle text-success" title="Completed by {{ task.completed_by.full_name if task.completed_by else 'Unknown' }}">
+                                    <i class="bi bi-check-circle-fill"></i>
+                                </span>
                                 {% endif %}
+                                <div>
+                                    <div class="fw-medium">{{ task.title }}</div>
+                                    {% if task.opportunity %}
+                                    <a href="/opportunities/{{ task.opportunity.id }}" class="text-muted small text-decoration-none">
+                                        {{ task.opportunity.name }}
+                                    </a>
+                                    {% endif %}
+                                </div>
                             </div>
                             <div class="text-end">
                                 <span class="badge" style="background-color: {{ task.priority_color }}20; color: {{ task.priority_color }}">
