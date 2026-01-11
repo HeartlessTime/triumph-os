@@ -19,7 +19,7 @@ from app.routes import (
     activities_router,
     tasks_router,
     guide_router,
-    email_sync_router,
+    # email_sync_router,  # EMAIL SYNC REMOVED - Feature disabled for MVP
     estimators_router,
     summary_router,
     today_router,
@@ -112,7 +112,7 @@ def create_app() -> FastAPI:
     app.include_router(activities_router)
     app.include_router(tasks_router)
     app.include_router(guide_router)
-    app.include_router(email_sync_router)
+    # app.include_router(email_sync_router)  # EMAIL SYNC REMOVED - Feature disabled for MVP
     app.include_router(estimators_router)
     app.include_router(summary_router)
     app.include_router(today_router)
@@ -128,5 +128,12 @@ if __name__ == "__main__":
     import uvicorn
 
     port = int(os.getenv("PORT", "8000"))
-    # nosec B104 - Intentional dev binding; controlled by HOST env var
-    uvicorn.run("app.main:app", host="0.0.0.0", port=port, reload=True)
+    host = os.getenv("HOST", "127.0.0.1")
+
+    uvicorn.run(
+        "app.main:app",
+        host=host,  # nosec B104
+        port=port,
+        reload=True,
+    )
+  
