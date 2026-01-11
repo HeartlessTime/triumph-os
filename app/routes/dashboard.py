@@ -12,17 +12,10 @@ templates = Jinja2Templates(directory="app/templates")
 
 
 @router.get("/", response_class=HTMLResponse)
-async def dashboard(
-    request: Request,
-    db: Session = Depends(get_db)
-):
+async def dashboard(request: Request, db: Session = Depends(get_db)):
     today = date.today()
     data = get_dashboard_data(db, today)
 
     return templates.TemplateResponse(
-        "dashboard/index.html",
-        {
-            "request": request,
-            **data
-        }
+        "dashboard/index.html", {"request": request, **data}
     )

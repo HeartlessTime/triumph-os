@@ -2,10 +2,11 @@
 Email integration module for auto-logging activities from Gmail and Outlook.
 Syncs emails with contacts and creates activity records automatically.
 """
+
 import os
 import re
 from datetime import datetime, timedelta
-from typing import List, Dict, Optional, Tuple
+from typing import Dict, Optional
 from email.utils import parsedate_to_datetime
 import imaplib
 import email
@@ -45,20 +46,22 @@ class EmailIntegration:
             return None
 
         # Extract email from "Name <email@domain.com>" format
-        email_match = re.search(r'[\w\.-]+@[\w\.-]+\.\w+', email_address)
+        email_match = re.search(r"[\w\.-]+@[\w\.-]+\.\w+", email_address)
         if email_match:
             clean_email = email_match.group(0).lower()
         else:
             clean_email = email_address.lower()
 
         # Search for contact by email
-        contact = self.db.query(Contact).filter(
-            Contact.email.ilike(clean_email)
-        ).first()
+        contact = (
+            self.db.query(Contact).filter(Contact.email.ilike(clean_email)).first()
+        )
 
         return contact
 
-    def find_related_opportunity(self, contact: Contact, subject: str, body: str) -> Optional[Opportunity]:
+    def find_related_opportunity(
+        self, contact: Contact, subject: str, body: str
+    ) -> Optional[Opportunity]:
         """
         Find the most relevant opportunity to attach this email to.
 
@@ -71,12 +74,17 @@ class EmailIntegration:
             return None
 
         # Get opportunities for contact's account
-        opportunities = self.db.query(Opportunity).filter(
-            and_(
-                Opportunity.account_id == contact.account_id,
-                Opportunity.stage.notin_(['Won', 'Lost'])  # Only open opps
+        opportunities = (
+            self.db.query(Opportunity)
+            .filter(
+                and_(
+                    Opportunity.account_id == contact.account_id,
+                    Opportunity.stage.notin_(["Won", "Lost"]),  # Only open opps
+                )
             )
-        ).order_by(Opportunity.updated_at.desc()).all()
+            .order_by(Opportunity.updated_at.desc())
+            .all()
+        )
 
         if not opportunities:
             return None
@@ -97,7 +105,7 @@ class EmailIntegration:
         subject: str,
         body: str,
         sent_date: datetime,
-        created_by_id: int
+        created_by_id: int,
     ) -> Optional[Activity]:
         """
         Create an activity record from an email.
@@ -121,14 +129,18 @@ class EmailIntegration:
         description = body[:500] + "..." if len(body) > 500 else body
 
         # Check if this activity already exists (avoid duplicates)
-        existing = self.db.query(Activity).filter(
-            and_(
-                Activity.opportunity_id == opportunity.id,
-                Activity.subject == subject,
-                Activity.activity_date == sent_date,
-                Activity.activity_type == 'email'
+        existing = (
+            self.db.query(Activity)
+            .filter(
+                and_(
+                    Activity.opportunity_id == opportunity.id,
+                    Activity.subject == subject,
+                    Activity.activity_date == sent_date,
+                    Activity.activity_type == "email",
+                )
             )
-        ).first()
+            .first()
+        )
 
         if existing:
             return existing  # Already logged
@@ -136,19 +148,22 @@ class EmailIntegration:
         # Create new activity
         activity = Activity(
             opportunity_id=opportunity.id,
-            activity_type='email',
+            activity_type="email",
             subject=subject,
             description=description,
             activity_date=sent_date,
             contact_id=contact.id if contact else None,
-            created_by_id=created_by_id
+            created_by_id=created_by_id,
         )
 
         self.db.add(activity)
         self.db.commit()
 
         # Update last_contacted on opportunity
-        if not opportunity.last_contacted or sent_date.date() > opportunity.last_contacted:
+        if (
+            not opportunity.last_contacted
+            or sent_date.date() > opportunity.last_contacted
+        ):
             opportunity.last_contacted = sent_date.date()
             self.db.commit()
 
@@ -162,19 +177,21 @@ class GmailIntegration(EmailIntegration):
         super().__init__(db)
         self.email_address = email_address
         self.app_password = app_password
-        self.imap_server = 'imap.gmail.com'
+        self.imap_server = "imap.gmail.com"
 
-    def sync_emails(self, since_date: Optional[datetime] = None, user_id: int = None) -> Dict:
+    def sync_emails(
+        self, since_date: Optional[datetime] = None, user_id: int = None
+    ) -> Dict:
         """Sync Gmail emails via IMAP."""
         if since_date is None:
             since_date = datetime.utcnow() - timedelta(days=7)
 
         stats = {
-            'total_emails': 0,
-            'activities_created': 0,
-            'contacts_matched': 0,
-            'opportunities_matched': 0,
-            'errors': []
+            "total_emails": 0,
+            "activities_created": 0,
+            "contacts_matched": 0,
+            "opportunities_matched": 0,
+            "errors": [],
         }
 
         try:
@@ -183,35 +200,35 @@ class GmailIntegration(EmailIntegration):
             mail.login(self.email_address, self.app_password)
 
             # Search both sent and inbox
-            for folder in ['INBOX', '[Gmail]/Sent Mail']:
+            for folder in ["INBOX", "[Gmail]/Sent Mail"]:
                 try:
                     mail.select(folder)
 
                     # Search for emails since date
                     date_str = since_date.strftime("%d-%b-%Y")
-                    result, data = mail.search(None, f'(SINCE {date_str})')
+                    result, data = mail.search(None, f"(SINCE {date_str})")
 
-                    if result != 'OK':
+                    if result != "OK":
                         continue
 
                     email_ids = data[0].split()
-                    stats['total_emails'] += len(email_ids)
+                    stats["total_emails"] += len(email_ids)
 
                     # Process each email
                     for email_id in email_ids[-50:]:  # Limit to 50 most recent
                         try:
-                            result, msg_data = mail.fetch(email_id, '(RFC822)')
-                            if result != 'OK':
+                            result, msg_data = mail.fetch(email_id, "(RFC822)")
+                            if result != "OK":
                                 continue
 
                             raw_email = msg_data[0][1]
                             msg = email.message_from_bytes(raw_email)
 
                             # Extract email data
-                            subject = self._decode_header(msg['Subject'])
-                            from_addr = msg['From']
-                            to_addr = msg['To']
-                            date_str = msg['Date']
+                            subject = self._decode_header(msg["Subject"])
+                            from_addr = msg["From"]
+                            to_addr = msg["To"]
+                            date_str = msg["Date"]
 
                             # Parse date
                             try:
@@ -223,7 +240,7 @@ class GmailIntegration(EmailIntegration):
                             body = self._get_email_body(msg)
 
                             # Determine contact (sent vs received)
-                            if folder == '[Gmail]/Sent Mail':
+                            if folder == "[Gmail]/Sent Mail":
                                 contact_email = to_addr
                             else:
                                 contact_email = from_addr
@@ -231,12 +248,14 @@ class GmailIntegration(EmailIntegration):
                             # Match contact
                             contact = self.match_contact_from_email(contact_email)
                             if contact:
-                                stats['contacts_matched'] += 1
+                                stats["contacts_matched"] += 1
 
                                 # Find related opportunity
-                                opportunity = self.find_related_opportunity(contact, subject, body)
+                                opportunity = self.find_related_opportunity(
+                                    contact, subject, body
+                                )
                                 if opportunity:
-                                    stats['opportunities_matched'] += 1
+                                    stats["opportunities_matched"] += 1
 
                                     # Create activity
                                     activity = self.create_activity_from_email(
@@ -245,25 +264,27 @@ class GmailIntegration(EmailIntegration):
                                         subject=subject,
                                         body=body,
                                         sent_date=sent_date,
-                                        created_by_id=user_id or 1
+                                        created_by_id=user_id or 1,
                                     )
 
                                     if activity:
-                                        stats['activities_created'] += 1
+                                        stats["activities_created"] += 1
 
                         except Exception as e:
-                            stats['errors'].append(f"Error processing email {email_id}: {str(e)}")
+                            stats["errors"].append(
+                                f"Error processing email {email_id}: {str(e)}"
+                            )
                             continue
 
                 except Exception as e:
-                    stats['errors'].append(f"Error accessing folder {folder}: {str(e)}")
+                    stats["errors"].append(f"Error accessing folder {folder}: {str(e)}")
                     continue
 
             mail.close()
             mail.logout()
 
         except Exception as e:
-            stats['errors'].append(f"IMAP connection error: {str(e)}")
+            stats["errors"].append(f"IMAP connection error: {str(e)}")
 
         return stats
 
@@ -276,10 +297,10 @@ class GmailIntegration(EmailIntegration):
         parts = []
         for content, charset in decoded:
             if isinstance(content, bytes):
-                parts.append(content.decode(charset or 'utf-8', errors='ignore'))
+                parts.append(content.decode(charset or "utf-8", errors="ignore"))
             else:
                 parts.append(content)
-        return ''.join(parts)
+        return "".join(parts)
 
     def _get_email_body(self, msg):
         """Extract plain text body from email."""
@@ -288,15 +309,17 @@ class GmailIntegration(EmailIntegration):
         if msg.is_multipart():
             for part in msg.walk():
                 content_type = part.get_content_type()
-                if content_type == 'text/plain':
+                if content_type == "text/plain":
                     try:
-                        body = part.get_payload(decode=True).decode('utf-8', errors='ignore')
+                        body = part.get_payload(decode=True).decode(
+                            "utf-8", errors="ignore"
+                        )
                         break
                     except:
                         continue
         else:
             try:
-                body = msg.get_payload(decode=True).decode('utf-8', errors='ignore')
+                body = msg.get_payload(decode=True).decode("utf-8", errors="ignore")
             except:
                 body = ""
 
@@ -312,16 +335,18 @@ class OutlookIntegration(EmailIntegration):
     def __init__(self, db: Session, access_token: str):
         super().__init__(db)
         self.access_token = access_token
-        self.graph_endpoint = 'https://graph.microsoft.com/v1.0'
+        self.graph_endpoint = "https://graph.microsoft.com/v1.0"
 
-    def sync_emails(self, since_date: Optional[datetime] = None, user_id: int = None) -> Dict:
+    def sync_emails(
+        self, since_date: Optional[datetime] = None, user_id: int = None
+    ) -> Dict:
         """Sync Outlook emails via Microsoft Graph API."""
         # Note: Requires additional setup with Microsoft Graph API
         # This is a placeholder implementation
         stats = {
-            'total_emails': 0,
-            'activities_created': 0,
-            'errors': ['Outlook integration requires Microsoft Graph API setup']
+            "total_emails": 0,
+            "activities_created": 0,
+            "errors": ["Outlook integration requires Microsoft Graph API setup"],
         }
 
         # TODO: Implement Graph API email sync
@@ -332,7 +357,9 @@ class OutlookIntegration(EmailIntegration):
         return stats
 
 
-def get_email_integration(db: Session, provider: str = 'gmail') -> Optional[EmailIntegration]:
+def get_email_integration(
+    db: Session, provider: str = "gmail"
+) -> Optional[EmailIntegration]:
     """
     Factory function to get appropriate email integration.
 
@@ -343,15 +370,15 @@ def get_email_integration(db: Session, provider: str = 'gmail') -> Optional[Emai
     Returns:
         EmailIntegration instance or None if not configured
     """
-    if provider == 'gmail':
-        email_addr = os.getenv('GMAIL_ADDRESS')
-        app_password = os.getenv('GMAIL_APP_PASSWORD')
+    if provider == "gmail":
+        email_addr = os.getenv("GMAIL_ADDRESS")
+        app_password = os.getenv("GMAIL_APP_PASSWORD")
 
         if email_addr and app_password:
             return GmailIntegration(db, email_addr, app_password)
 
-    elif provider == 'outlook':
-        access_token = os.getenv('OUTLOOK_ACCESS_TOKEN')
+    elif provider == "outlook":
+        access_token = os.getenv("OUTLOOK_ACCESS_TOKEN")
 
         if access_token:
             return OutlookIntegration(db, access_token)

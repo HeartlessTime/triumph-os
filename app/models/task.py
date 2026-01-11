@@ -5,42 +5,55 @@ from app.database import Base
 
 
 class Task(Base):
-    __tablename__ = 'tasks'
+    __tablename__ = "tasks"
 
     id = Column(Integer, primary_key=True)
-    opportunity_id = Column(Integer, ForeignKey('opportunities.id', ondelete='CASCADE'), nullable=True, index=True)
+    opportunity_id = Column(
+        Integer,
+        ForeignKey("opportunities.id", ondelete="CASCADE"),
+        nullable=True,
+        index=True,
+    )
     title = Column(String(255), nullable=False)
     description = Column(Text, nullable=True)
     due_date = Column(Date, nullable=True, index=True)
-    priority = Column(String(20), nullable=False, default='Medium')
-    status = Column(String(20), nullable=False, default='Open', index=True)
+    priority = Column(String(20), nullable=False, default="Medium")
+    status = Column(String(20), nullable=False, default="Open", index=True)
     completed_at = Column(DateTime, nullable=True)
-    completed_by_id = Column(Integer, ForeignKey('users.id'), nullable=True)
-    assigned_to_id = Column(Integer, ForeignKey('users.id'), nullable=True)
-    created_by_id = Column(Integer, ForeignKey('users.id'), nullable=True)
+    completed_by_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+    assigned_to_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+    created_by_id = Column(Integer, ForeignKey("users.id"), nullable=True)
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
-    updated_at = Column(DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
+    updated_at = Column(
+        DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow
+    )
 
     # Relationships
     opportunity = relationship("Opportunity", back_populates="tasks")
-    completed_by = relationship("User", back_populates="completed_tasks", foreign_keys=[completed_by_id])
-    assigned_to = relationship("User", back_populates="assigned_tasks", foreign_keys=[assigned_to_id])
-    created_by = relationship("User", back_populates="created_tasks", foreign_keys=[created_by_id])
+    completed_by = relationship(
+        "User", back_populates="completed_tasks", foreign_keys=[completed_by_id]
+    )
+    assigned_to = relationship(
+        "User", back_populates="assigned_tasks", foreign_keys=[assigned_to_id]
+    )
+    created_by = relationship(
+        "User", back_populates="created_tasks", foreign_keys=[created_by_id]
+    )
 
-    PRIORITIES = ['Low', 'Medium', 'High', 'Urgent']
-    STATUSES = ['Open', 'Completed']
+    PRIORITIES = ["Low", "Medium", "High", "Urgent"]
+    STATUSES = ["Open", "Completed"]
 
     PRIORITY_COLORS = {
-        'Low': '#6c757d',
-        'Medium': '#0d6efd',
-        'High': '#fd7e14',
-        'Urgent': '#dc3545',
+        "Low": "#6c757d",
+        "Medium": "#0d6efd",
+        "High": "#fd7e14",
+        "Urgent": "#dc3545",
     }
 
     @property
     def is_overdue(self):
         """Check if task is overdue."""
-        if self.status == 'Completed':
+        if self.status == "Completed":
             return False
         if self.due_date:
             return self.due_date < date.today()
@@ -56,11 +69,11 @@ class Task(Base):
 
     @property
     def priority_color(self):
-        return self.PRIORITY_COLORS.get(self.priority, '#6c757d')
+        return self.PRIORITY_COLORS.get(self.priority, "#6c757d")
 
     def complete(self, completed_by_user_id: int = None):
         """Mark task as complete."""
-        self.status = 'Completed'
+        self.status = "Completed"
         self.completed_at = datetime.utcnow()
         self.updated_at = datetime.utcnow()
         # Only set completed_by_id if not already set (preserve original completer)
@@ -70,7 +83,7 @@ class Task(Base):
 
     def reopen(self):
         """Reopen a completed task."""
-        self.status = 'Open'
+        self.status = "Open"
         return self
 
     def __repr__(self):

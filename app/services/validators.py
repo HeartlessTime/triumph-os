@@ -15,6 +15,7 @@ from app.models import Account, Contact, Opportunity
 
 class ValidationResult:
     """Container for validation results including warnings."""
+
     def __init__(self):
         self.errors: List[str] = []
         self.warnings: List[str] = []
@@ -48,10 +49,9 @@ def _is_empty(value: Any) -> bool:
 # ACCOUNT VALIDATION
 # ============================================================
 
+
 def validate_account(
-    data: Dict[str, Any],
-    db: Session,
-    existing_id: Optional[int] = None
+    data: Dict[str, Any], db: Session, existing_id: Optional[int] = None
 ) -> ValidationResult:
     """
     Validate account data.
@@ -89,9 +89,7 @@ def validate_account(
 
     if name:
         # Check for same name (case-insensitive)
-        query = db.query(Account).filter(
-            Account.name.ilike(name)
-        )
+        query = db.query(Account).filter(Account.name.ilike(name))
         if existing_id:
             query = query.filter(Account.id != existing_id)
 
@@ -102,8 +100,7 @@ def validate_account(
     if city and state:
         # Check for same city + state
         query = db.query(Account).filter(
-            Account.city.ilike(city),
-            Account.state.ilike(state)
+            Account.city.ilike(city), Account.state.ilike(state)
         )
         if existing_id:
             query = query.filter(Account.id != existing_id)
@@ -121,10 +118,9 @@ def validate_account(
 # CONTACT VALIDATION
 # ============================================================
 
+
 def validate_contact(
-    data: Dict[str, Any],
-    db: Session,
-    existing_id: Optional[int] = None
+    data: Dict[str, Any], db: Session, existing_id: Optional[int] = None
 ) -> ValidationResult:
     """
     Validate contact data.
@@ -163,15 +159,15 @@ def validate_contact(
 
     # --- DUPLICATE EMAIL (BLOCK) ---
     if email:
-        query = db.query(Contact).filter(
-            Contact.email.ilike(email)
-        )
+        query = db.query(Contact).filter(Contact.email.ilike(email))
         if existing_id:
             query = query.filter(Contact.id != existing_id)
 
         dupe_email = query.first()
         if dupe_email:
-            result.add_error(f"Email '{email}' is already used by {dupe_email.full_name}")
+            result.add_error(
+                f"Email '{email}' is already used by {dupe_email.full_name}"
+            )
 
     # --- DUPLICATE NAME + ACCOUNT (WARN ONLY) ---
     first_name = data.get("first_name", "").strip() if data.get("first_name") else ""
@@ -182,7 +178,7 @@ def validate_contact(
         query = db.query(Contact).filter(
             Contact.first_name.ilike(first_name),
             Contact.last_name.ilike(last_name),
-            Contact.account_id == account_id
+            Contact.account_id == account_id,
         )
         if existing_id:
             query = query.filter(Contact.id != existing_id)
@@ -200,11 +196,12 @@ def validate_contact(
 # OPPORTUNITY VALIDATION
 # ============================================================
 
+
 def validate_opportunity(
     data: Dict[str, Any],
     db: Session,
     existing_id: Optional[int] = None,
-    old_stage: Optional[str] = None
+    old_stage: Optional[str] = None,
 ) -> ValidationResult:
     """
     Validate opportunity data.
@@ -289,7 +286,7 @@ def validate_opportunity(
         query = db.query(Opportunity).filter(
             Opportunity.name.ilike(name),
             Opportunity.account_id == account_id,
-            Opportunity.created_at >= seven_days_ago
+            Opportunity.created_at >= seven_days_ago,
         )
         if existing_id:
             query = query.filter(Opportunity.id != existing_id)
@@ -303,19 +300,13 @@ def validate_opportunity(
     return result
 
 
-def validate_opportunity_create(
-    data: Dict[str, Any],
-    db: Session
-) -> ValidationResult:
+def validate_opportunity_create(data: Dict[str, Any], db: Session) -> ValidationResult:
     """Validate opportunity on create (no existing ID, no old stage)."""
     return validate_opportunity(data, db, existing_id=None, old_stage=None)
 
 
 def validate_opportunity_update(
-    data: Dict[str, Any],
-    db: Session,
-    existing_id: int,
-    old_stage: str
+    data: Dict[str, Any], db: Session, existing_id: int, old_stage: str
 ) -> ValidationResult:
     """Validate opportunity on update (with existing ID and old stage)."""
     return validate_opportunity(data, db, existing_id=existing_id, old_stage=old_stage)

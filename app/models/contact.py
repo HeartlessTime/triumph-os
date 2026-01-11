@@ -1,14 +1,28 @@
-from datetime import datetime, date
-from sqlalchemy import Column, Integer, String, Text, DateTime, Date, Boolean, ForeignKey
+from datetime import datetime
+from sqlalchemy import (
+    Column,
+    Integer,
+    String,
+    Text,
+    DateTime,
+    Date,
+    Boolean,
+    ForeignKey,
+)
 from sqlalchemy.orm import relationship
 from app.database import Base
 
 
 class Contact(Base):
-    __tablename__ = 'contacts'
+    __tablename__ = "contacts"
 
     id = Column(Integer, primary_key=True)
-    account_id = Column(Integer, ForeignKey('accounts.id', ondelete='CASCADE'), nullable=False, index=True)
+    account_id = Column(
+        Integer,
+        ForeignKey("accounts.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
     first_name = Column(String(100), nullable=False)
     last_name = Column(String(100), nullable=False)
     title = Column(String(100), nullable=True)
@@ -20,7 +34,9 @@ class Contact(Base):
     last_contacted = Column(Date, nullable=True)
     next_followup = Column(Date, nullable=True)
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
-    updated_at = Column(DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
+    updated_at = Column(
+        DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow
+    )
 
     # Relationships
     account = relationship("Account", back_populates="contacts")

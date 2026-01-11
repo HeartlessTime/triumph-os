@@ -15,7 +15,9 @@ import sys
 import os
 
 # Add project root to path
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+sys.path.insert(
+    0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+)
 
 from app.database import SessionLocal
 from app.models.account import Account
@@ -36,7 +38,9 @@ def remove_demo_data():
         print("Scanning for demo data...")
 
         # Count demo data before deletion
-        demo_accounts = db.query(Account).filter(Account.name.like(f"{DEMO_PREFIX}%")).all()
+        demo_accounts = (
+            db.query(Account).filter(Account.name.like(f"{DEMO_PREFIX}%")).all()
+        )
         demo_tasks = db.query(Task).filter(Task.title.like(f"{DEMO_PREFIX}%")).all()
 
         # Get counts (Activities and Contacts will cascade with Accounts/Opportunities)
@@ -48,17 +52,35 @@ def remove_demo_data():
             return False
 
         # Count related data
-        contact_count = db.query(Contact).filter(Contact.account_id.in_(account_ids)).count() if account_ids else 0
-        opp_count = db.query(Opportunity).filter(Opportunity.account_id.in_(account_ids)).count() if account_ids else 0
+        contact_count = (
+            db.query(Contact).filter(Contact.account_id.in_(account_ids)).count()
+            if account_ids
+            else 0
+        )
+        opp_count = (
+            db.query(Opportunity)
+            .filter(Opportunity.account_id.in_(account_ids))
+            .count()
+            if account_ids
+            else 0
+        )
 
         # Get opportunity IDs for activity/task counts
-        demo_opps = db.query(Opportunity).filter(Opportunity.account_id.in_(account_ids)).all() if account_ids else []
+        demo_opps = (
+            db.query(Opportunity).filter(Opportunity.account_id.in_(account_ids)).all()
+            if account_ids
+            else []
+        )
         opp_ids = [o.id for o in demo_opps]
 
-        activity_count = db.query(Activity).filter(Activity.opportunity_id.in_(opp_ids)).count() if opp_ids else 0
+        activity_count = (
+            db.query(Activity).filter(Activity.opportunity_id.in_(opp_ids)).count()
+            if opp_ids
+            else 0
+        )
         task_count = len(demo_tasks)
 
-        print(f"\nFound demo data:")
+        print("\nFound demo data:")
         print(f"  - {account_count} Accounts")
         print(f"  - {contact_count} Contacts")
         print(f"  - {opp_count} Opportunities")
@@ -77,26 +99,46 @@ def remove_demo_data():
 
         # Delete in order to respect foreign key constraints
         # Tasks first (some may be standalone)
-        deleted_tasks = db.query(Task).filter(Task.title.like(f"{DEMO_PREFIX}%")).delete(synchronize_session=False)
+        deleted_tasks = (
+            db.query(Task)
+            .filter(Task.title.like(f"{DEMO_PREFIX}%"))
+            .delete(synchronize_session=False)
+        )
         print(f"  Deleted {deleted_tasks} tasks")
 
         # Activities (will also cascade when opportunities are deleted)
         if opp_ids:
-            deleted_activities = db.query(Activity).filter(Activity.opportunity_id.in_(opp_ids)).delete(synchronize_session=False)
+            deleted_activities = (
+                db.query(Activity)
+                .filter(Activity.opportunity_id.in_(opp_ids))
+                .delete(synchronize_session=False)
+            )
             print(f"  Deleted {deleted_activities} activities")
 
         # Opportunities (cascade from accounts, but let's be explicit)
         if account_ids:
-            deleted_opps = db.query(Opportunity).filter(Opportunity.account_id.in_(account_ids)).delete(synchronize_session=False)
+            deleted_opps = (
+                db.query(Opportunity)
+                .filter(Opportunity.account_id.in_(account_ids))
+                .delete(synchronize_session=False)
+            )
             print(f"  Deleted {deleted_opps} opportunities")
 
         # Contacts (cascade from accounts, but let's be explicit)
         if account_ids:
-            deleted_contacts = db.query(Contact).filter(Contact.account_id.in_(account_ids)).delete(synchronize_session=False)
+            deleted_contacts = (
+                db.query(Contact)
+                .filter(Contact.account_id.in_(account_ids))
+                .delete(synchronize_session=False)
+            )
             print(f"  Deleted {deleted_contacts} contacts")
 
         # Finally, accounts
-        deleted_accounts = db.query(Account).filter(Account.name.like(f"{DEMO_PREFIX}%")).delete(synchronize_session=False)
+        deleted_accounts = (
+            db.query(Account)
+            .filter(Account.name.like(f"{DEMO_PREFIX}%"))
+            .delete(synchronize_session=False)
+        )
         print(f"  Deleted {deleted_accounts} accounts")
 
         db.commit()
@@ -121,7 +163,9 @@ def remove_demo_data_no_confirm():
 
     try:
         # Get account IDs first
-        demo_accounts = db.query(Account).filter(Account.name.like(f"{DEMO_PREFIX}%")).all()
+        demo_accounts = (
+            db.query(Account).filter(Account.name.like(f"{DEMO_PREFIX}%")).all()
+        )
         account_ids = [a.id for a in demo_accounts]
 
         if not account_ids:
@@ -129,20 +173,32 @@ def remove_demo_data_no_confirm():
             return False
 
         # Get opportunity IDs
-        demo_opps = db.query(Opportunity).filter(Opportunity.account_id.in_(account_ids)).all()
+        demo_opps = (
+            db.query(Opportunity).filter(Opportunity.account_id.in_(account_ids)).all()
+        )
         opp_ids = [o.id for o in demo_opps]
 
         # Delete in order
-        db.query(Task).filter(Task.title.like(f"{DEMO_PREFIX}%")).delete(synchronize_session=False)
+        db.query(Task).filter(Task.title.like(f"{DEMO_PREFIX}%")).delete(
+            synchronize_session=False
+        )
 
         if opp_ids:
-            db.query(Activity).filter(Activity.opportunity_id.in_(opp_ids)).delete(synchronize_session=False)
+            db.query(Activity).filter(Activity.opportunity_id.in_(opp_ids)).delete(
+                synchronize_session=False
+            )
 
         if account_ids:
-            db.query(Opportunity).filter(Opportunity.account_id.in_(account_ids)).delete(synchronize_session=False)
-            db.query(Contact).filter(Contact.account_id.in_(account_ids)).delete(synchronize_session=False)
+            db.query(Opportunity).filter(
+                Opportunity.account_id.in_(account_ids)
+            ).delete(synchronize_session=False)
+            db.query(Contact).filter(Contact.account_id.in_(account_ids)).delete(
+                synchronize_session=False
+            )
 
-        db.query(Account).filter(Account.name.like(f"{DEMO_PREFIX}%")).delete(synchronize_session=False)
+        db.query(Account).filter(Account.name.like(f"{DEMO_PREFIX}%")).delete(
+            synchronize_session=False
+        )
 
         db.commit()
         print("Demo data removed successfully!")

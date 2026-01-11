@@ -11,7 +11,6 @@ router = APIRouter(prefix="/tasks", tags=["tasks"])
 templates = Jinja2Templates(directory="app/templates")
 
 
-
 @router.post("/opportunity/{opp_id}/add")
 async def add_task(
     request: Request,
@@ -21,7 +20,7 @@ async def add_task(
     due_date: str = Form(None),
     priority: str = Form("Medium"),
     assigned_to_id: int = Form(None),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """Add a task to an opportunity."""
     opportunity = db.query(Opportunity).filter(Opportunity.id == opp_id).first()
@@ -46,11 +45,7 @@ async def add_task(
 
 
 @router.post("/{task_id}/complete")
-async def complete_task(
-    request: Request,
-    task_id: int,
-    db: Session = Depends(get_db)
-):
+async def complete_task(request: Request, task_id: int, db: Session = Depends(get_db)):
     """Mark a task as complete and create audit Activity."""
     task = db.query(Task).filter(Task.id == task_id).first()
     if not task:
@@ -62,7 +57,7 @@ async def complete_task(
     # Create audit Activity for task completion
     activity = Activity(
         opportunity_id=task.opportunity_id,  # May be None for standalone tasks
-        activity_type='task_completed',
+        activity_type="task_completed",
         subject=f"Completed task: {task.title}",
         description=f"Task completed by {current_user.full_name}",
         activity_date=datetime.utcnow(),
@@ -76,16 +71,14 @@ async def complete_task(
     if referer:
         return RedirectResponse(url=referer, status_code=303)
     if task.opportunity_id:
-        return RedirectResponse(url=f"/opportunities/{task.opportunity_id}", status_code=303)
+        return RedirectResponse(
+            url=f"/opportunities/{task.opportunity_id}", status_code=303
+        )
     return RedirectResponse(url="/", status_code=303)
 
 
 @router.post("/{task_id}/reopen")
-async def reopen_task(
-    request: Request,
-    task_id: int,
-    db: Session = Depends(get_db)
-):
+async def reopen_task(request: Request, task_id: int, db: Session = Depends(get_db)):
     """Reopen a completed task."""
     task = db.query(Task).filter(Task.id == task_id).first()
     if not task:
@@ -95,16 +88,14 @@ async def reopen_task(
     db.commit()
 
     if task.opportunity_id:
-        return RedirectResponse(url=f"/opportunities/{task.opportunity_id}", status_code=303)
+        return RedirectResponse(
+            url=f"/opportunities/{task.opportunity_id}", status_code=303
+        )
     return RedirectResponse(url="/", status_code=303)
 
 
 @router.get("/{task_id}", response_class=HTMLResponse)
-async def view_task(
-    request: Request,
-    task_id: int,
-    db: Session = Depends(get_db)
-):
+async def view_task(request: Request, task_id: int, db: Session = Depends(get_db)):
     """Display task detail page with activity history."""
     task = db.query(Task).filter(Task.id == task_id).first()
     if not task:
@@ -113,23 +104,26 @@ async def view_task(
     # Get activities from the parent opportunity (newest first)
     activities = []
     if task.opportunity_id:
-        activities = db.query(Activity).filter(
-            Activity.opportunity_id == task.opportunity_id
-        ).order_by(Activity.activity_date.desc()).limit(20).all()
+        activities = (
+            db.query(Activity)
+            .filter(Activity.opportunity_id == task.opportunity_id)
+            .order_by(Activity.activity_date.desc())
+            .limit(20)
+            .all()
+        )
 
-    return templates.TemplateResponse("tasks/view.html", {
-        "request": request,
-        "task": task,
-        "activities": activities,
-    })
+    return templates.TemplateResponse(
+        "tasks/view.html",
+        {
+            "request": request,
+            "task": task,
+            "activities": activities,
+        },
+    )
 
 
 @router.get("/{task_id}/edit", response_class=HTMLResponse)
-async def edit_task_form(
-    request: Request,
-    task_id: int,
-    db: Session = Depends(get_db)
-):
+async def edit_task_form(request: Request, task_id: int, db: Session = Depends(get_db)):
     """Display edit task form."""
     task = db.query(Task).filter(Task.id == task_id).first()
     if not task:
@@ -137,12 +131,15 @@ async def edit_task_form(
 
     users = db.query(User).filter(User.is_active == True).order_by(User.full_name).all()
 
-    return templates.TemplateResponse("tasks/edit.html", {
-        "request": request,
-        "task": task,
-        "users": users,
-        "priorities": Task.PRIORITIES,
-    })
+    return templates.TemplateResponse(
+        "tasks/edit.html",
+        {
+            "request": request,
+            "task": task,
+            "users": users,
+            "priorities": Task.PRIORITIES,
+        },
+    )
 
 
 @router.post("/{task_id}/edit")
@@ -154,7 +151,7 @@ async def update_task(
     due_date: str = Form(None),
     priority: str = Form("Medium"),
     assigned_to_id: int = Form(None),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """Update a task."""
     task = db.query(Task).filter(Task.id == task_id).first()
@@ -170,16 +167,14 @@ async def update_task(
     db.commit()
 
     if task.opportunity_id:
-        return RedirectResponse(url=f"/opportunities/{task.opportunity_id}", status_code=303)
+        return RedirectResponse(
+            url=f"/opportunities/{task.opportunity_id}", status_code=303
+        )
     return RedirectResponse(url="/", status_code=303)
 
 
 @router.post("/{task_id}/delete")
-async def delete_task(
-    request: Request,
-    task_id: int,
-    db: Session = Depends(get_db)
-):
+async def delete_task(request: Request, task_id: int, db: Session = Depends(get_db)):
     """Delete a task."""
     task = db.query(Task).filter(Task.id == task_id).first()
     if not task:

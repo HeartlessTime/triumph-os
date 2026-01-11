@@ -19,10 +19,10 @@ from typing import Optional
 
 # Stage to follow-up days mapping
 STAGE_FOLLOWUP_DAYS = {
-    'Prospecting': 14,
-    'Proposal': 14,
-    'Bid Sent': 7,
-    'Negotiation': 3,
+    "Prospecting": 14,
+    "Proposal": 14,
+    "Bid Sent": 7,
+    "Negotiation": 3,
 }
 
 
@@ -53,7 +53,7 @@ def calculate_next_followup(
     stage: str,
     last_contacted: Optional[date],
     bid_date: Optional[date],
-    today: Optional[date] = None
+    today: Optional[date] = None,
 ) -> Optional[date]:
     """
     Calculate the next follow-up date based on opportunity stage and dates.
@@ -76,7 +76,7 @@ def calculate_next_followup(
         today = date.today()
 
     # If opportunity is closed, no follow-up needed
-    if stage in ('Won', 'Lost'):
+    if stage in ("Won", "Lost"):
         return None
 
     # If bid date has passed, urgent follow-up (unless contacted today)
@@ -102,16 +102,16 @@ def should_recalculate_followup(
     old_last_contacted: Optional[date],
     new_last_contacted: Optional[date],
     old_bid_date: Optional[date],
-    new_bid_date: Optional[date]
+    new_bid_date: Optional[date],
 ) -> bool:
     """
     Determine if follow-up date should be recalculated.
-    
+
     Returns True if:
     - Stage changed
     - Last contacted date changed
     - Bid date changed
-    
+
     Args:
         old_stage: Previous stage value
         new_stage: New stage value
@@ -119,7 +119,7 @@ def should_recalculate_followup(
         new_last_contacted: New last_contacted date
         old_bid_date: Previous bid_date
         new_bid_date: New bid_date
-        
+
     Returns:
         True if follow-up should be recalculated
     """
@@ -132,14 +132,16 @@ def should_recalculate_followup(
     return False
 
 
-def get_followup_status(next_followup: Optional[date], today: Optional[date] = None) -> dict:
+def get_followup_status(
+    next_followup: Optional[date], today: Optional[date] = None
+) -> dict:
     """
     Get the status information for a follow-up date.
-    
+
     Args:
         next_followup: The next follow-up date
         today: Current date (defaults to date.today())
-        
+
     Returns:
         Dictionary with status info:
         - status: 'overdue', 'due_today', 'upcoming', 'none'
@@ -148,37 +150,29 @@ def get_followup_status(next_followup: Optional[date], today: Optional[date] = N
     """
     if today is None:
         today = date.today()
-    
+
     if not next_followup:
-        return {
-            'status': 'none',
-            'days_until': None,
-            'css_class': ''
-        }
-    
+        return {"status": "none", "days_until": None, "css_class": ""}
+
     days_until = (next_followup - today).days
-    
+
     if days_until < 0:
         return {
-            'status': 'overdue',
-            'days_until': days_until,
-            'css_class': 'text-danger fw-bold'
+            "status": "overdue",
+            "days_until": days_until,
+            "css_class": "text-danger fw-bold",
         }
     elif days_until == 0:
         return {
-            'status': 'due_today',
-            'days_until': 0,
-            'css_class': 'text-warning fw-bold'
+            "status": "due_today",
+            "days_until": 0,
+            "css_class": "text-warning fw-bold",
         }
     elif days_until <= 3:
         return {
-            'status': 'due_soon',
-            'days_until': days_until,
-            'css_class': 'text-warning'
+            "status": "due_soon",
+            "days_until": days_until,
+            "css_class": "text-warning",
         }
     else:
-        return {
-            'status': 'safe',
-            'days_until': days_until,
-            'css_class': 'text-success'
-        }
+        return {"status": "safe", "days_until": days_until, "css_class": "text-success"}

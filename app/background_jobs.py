@@ -2,6 +2,7 @@
 Background job scheduler for periodic tasks.
 Uses APScheduler for running background jobs like email sync.
 """
+
 import os
 import logging
 from datetime import datetime, timedelta
@@ -22,7 +23,9 @@ class BackgroundJobScheduler:
 
     def __init__(self):
         self.scheduler = BackgroundScheduler()
-        self.email_sync_enabled = os.getenv('EMAIL_SYNC_ENABLED', 'false').lower() == 'true'
+        self.email_sync_enabled = (
+            os.getenv("EMAIL_SYNC_ENABLED", "false").lower() == "true"
+        )
 
     def start(self):
         """Start the background job scheduler."""
@@ -33,9 +36,9 @@ class BackgroundJobScheduler:
                 self.scheduler.add_job(
                     func=sync_emails_job,
                     trigger=IntervalTrigger(minutes=15),
-                    id='email_sync_job',
-                    name='Sync emails and create activities',
-                    replace_existing=True
+                    id="email_sync_job",
+                    name="Sync emails and create activities",
+                    replace_existing=True,
                 )
                 logger.info("Email sync job scheduled to run every 15 minutes")
 
@@ -69,10 +72,12 @@ def sync_emails_job():
             return
 
         # Get Gmail integration
-        email_integration = get_email_integration(db, provider='gmail')
+        email_integration = get_email_integration(db, provider="gmail")
 
         if not email_integration:
-            logger.warning("Email integration not configured. Set GMAIL_ADDRESS and GMAIL_APP_PASSWORD env vars.")
+            logger.warning(
+                "Email integration not configured. Set GMAIL_ADDRESS and GMAIL_APP_PASSWORD env vars."
+            )
             return
 
         # Sync emails from last 24 hours
@@ -81,8 +86,8 @@ def sync_emails_job():
 
         logger.info(f"Email sync completed: {stats}")
 
-        if stats['errors']:
-            for error in stats['errors']:
+        if stats["errors"]:
+            for error in stats["errors"]:
                 logger.error(f"Email sync error: {error}")
 
     except Exception as e:

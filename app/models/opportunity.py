@@ -1,6 +1,16 @@
-from datetime import datetime, date, timedelta
+from datetime import datetime, date
 from decimal import Decimal
-from sqlalchemy import Column, Integer, String, Text, DateTime, Date, Numeric, ForeignKey, JSON
+from sqlalchemy import (
+    Column,
+    Integer,
+    String,
+    Text,
+    DateTime,
+    Date,
+    Numeric,
+    ForeignKey,
+    JSON,
+)
 from sqlalchemy import Boolean, Time
 from sqlalchemy.orm import relationship
 from app.database import Base
@@ -8,10 +18,15 @@ from app.database import Base
 
 class OpportunityScope(Base):
     """Junction table for Opportunity-ScopePackage many-to-many."""
-    __tablename__ = 'opportunity_scopes'
 
-    opportunity_id = Column(Integer, ForeignKey('opportunities.id', ondelete='CASCADE'), primary_key=True)
-    scope_package_id = Column(Integer, ForeignKey('scope_packages.id', ondelete='CASCADE'), primary_key=True)
+    __tablename__ = "opportunity_scopes"
+
+    opportunity_id = Column(
+        Integer, ForeignKey("opportunities.id", ondelete="CASCADE"), primary_key=True
+    )
+    scope_package_id = Column(
+        Integer, ForeignKey("scope_packages.id", ondelete="CASCADE"), primary_key=True
+    )
 
     # Relationships
     opportunity = relationship("Opportunity", back_populates="scope_links")
@@ -19,13 +34,18 @@ class OpportunityScope(Base):
 
 
 class Opportunity(Base):
-    __tablename__ = 'opportunities'
+    __tablename__ = "opportunities"
 
     id = Column(Integer, primary_key=True)
-    account_id = Column(Integer, ForeignKey('accounts.id', ondelete='CASCADE'), nullable=False, index=True)
+    account_id = Column(
+        Integer,
+        ForeignKey("accounts.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
     name = Column(String(255), nullable=False)
     description = Column(Text, nullable=True)
-    stage = Column(String(50), nullable=False, default='Prospecting', index=True)
+    stage = Column(String(50), nullable=False, default="Prospecting", index=True)
     # Make probability optional in DB; keep default for legacy rows
     probability = Column(Integer, nullable=True, default=10)
     # Removed overall GC contract `value` (stored elsewhere); keep lv + hdd split
@@ -47,11 +67,11 @@ class Opportunity(Base):
     # Split values: low-voltage expected value and HDD/underground estimate
     lv_value = Column(Numeric(15, 2), nullable=True)
     hdd_value = Column(Numeric(15, 2), nullable=True)
-    owner_id = Column(Integer, ForeignKey('users.id'), nullable=True)
-    assigned_estimator_id = Column(Integer, ForeignKey('users.id'), nullable=True)
-    estimating_status = Column(String(50), nullable=False, default='Not Started')
+    owner_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+    assigned_estimator_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+    estimating_status = Column(String(50), nullable=False, default="Not Started")
     estimating_checklist = Column(JSON, nullable=True)
-    primary_contact_id = Column(Integer, ForeignKey('contacts.id'), nullable=True)
+    primary_contact_id = Column(Integer, ForeignKey("contacts.id"), nullable=True)
     source = Column(String(100), nullable=True)
     notes = Column(Text, nullable=True)
     # General contractors bidding on this project (store list of account ids)
@@ -61,70 +81,102 @@ class Opportunity(Base):
     # Quick links (list of url strings or objects)
     quick_links = Column(JSON, nullable=True)
     # End-user / owner account (e.g., Austin ISD)
-    end_user_account_id = Column(Integer, ForeignKey('accounts.id'), nullable=True)
+    end_user_account_id = Column(Integer, ForeignKey("accounts.id"), nullable=True)
     # Stalled reason for tracking why opportunity is not progressing
     stalled_reason = Column(String(100), nullable=True)
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
-    updated_at = Column(DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
+    updated_at = Column(
+        DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow
+    )
 
     # Relationships
-    account = relationship("Account", back_populates="opportunities", foreign_keys=[account_id])
-    end_user_account = relationship("Account", back_populates="end_user_opportunities", foreign_keys=[end_user_account_id])
-    owner = relationship("User", back_populates="owned_opportunities", foreign_keys=[owner_id])
-    assigned_estimator = relationship("User", back_populates="assigned_estimates", foreign_keys=[assigned_estimator_id])
+    account = relationship(
+        "Account", back_populates="opportunities", foreign_keys=[account_id]
+    )
+    end_user_account = relationship(
+        "Account",
+        back_populates="end_user_opportunities",
+        foreign_keys=[end_user_account_id],
+    )
+    owner = relationship(
+        "User", back_populates="owned_opportunities", foreign_keys=[owner_id]
+    )
+    assigned_estimator = relationship(
+        "User",
+        back_populates="assigned_estimates",
+        foreign_keys=[assigned_estimator_id],
+    )
     primary_contact = relationship("Contact", back_populates="opportunities")
-    scope_links = relationship("OpportunityScope", back_populates="opportunity", cascade="all, delete-orphan")
-    estimates = relationship("Estimate", back_populates="opportunity", cascade="all, delete-orphan", order_by="desc(Estimate.version)")
-    activities = relationship("Activity", back_populates="opportunity", cascade="all, delete-orphan", order_by="desc(Activity.activity_date)")
-    tasks = relationship("Task", back_populates="opportunity", cascade="all, delete-orphan")
-    documents = relationship("Document", back_populates="opportunity", cascade="all, delete-orphan")
-    vendor_quote_requests = relationship("VendorQuoteRequest", back_populates="opportunity", cascade="all, delete-orphan")
+    scope_links = relationship(
+        "OpportunityScope", back_populates="opportunity", cascade="all, delete-orphan"
+    )
+    estimates = relationship(
+        "Estimate",
+        back_populates="opportunity",
+        cascade="all, delete-orphan",
+        order_by="desc(Estimate.version)",
+    )
+    activities = relationship(
+        "Activity",
+        back_populates="opportunity",
+        cascade="all, delete-orphan",
+        order_by="desc(Activity.activity_date)",
+    )
+    tasks = relationship(
+        "Task", back_populates="opportunity", cascade="all, delete-orphan"
+    )
+    documents = relationship(
+        "Document", back_populates="opportunity", cascade="all, delete-orphan"
+    )
+    vendor_quote_requests = relationship(
+        "VendorQuoteRequest", back_populates="opportunity", cascade="all, delete-orphan"
+    )
 
     STAGES = [
-        ('Prospecting', 10),
-        ('Proposal', 40),
-        ('Bid Sent', 60),
-        ('Negotiation', 80),
-        ('Won', 100),
-        ('Lost', 0),
+        ("Prospecting", 10),
+        ("Proposal", 40),
+        ("Bid Sent", 60),
+        ("Negotiation", 80),
+        ("Won", 100),
+        ("Lost", 0),
     ]
 
     STAGE_NAMES = [s[0] for s in STAGES]
     STAGE_PROBABILITIES = {s[0]: s[1] for s in STAGES}
 
     ESTIMATING_STATUSES = [
-        'Not Started',
-        'In Progress',
-        'Review',
-        'Complete',
-        'On Hold'
+        "Not Started",
+        "In Progress",
+        "Review",
+        "Complete",
+        "On Hold",
     ]
 
     SOURCES = [
-        'Referral',
-        'Website',
-        'Cold Call',
-        'Trade Show',
-        'Repeat Customer',
-        'Advertisement',
-        'Other'
+        "Referral",
+        "Website",
+        "Cold Call",
+        "Trade Show",
+        "Repeat Customer",
+        "Advertisement",
+        "Other",
     ]
 
     STALLED_REASONS = [
-        'Waiting on GC',
-        'Waiting on bid results',
-        'Waiting on drawings',
-        'Budget unclear',
-        'Internal delay',
+        "Waiting on GC",
+        "Waiting on bid results",
+        "Waiting on drawings",
+        "Budget unclear",
+        "Internal delay",
     ]
 
     DEFAULT_CHECKLIST = [
-        {'item': 'Review bid documents', 'done': False},
-        {'item': 'Site visit scheduled', 'done': False},
-        {'item': 'Takeoff complete', 'done': False},
-        {'item': 'Vendor quotes received', 'done': False},
-        {'item': 'Labor estimate complete', 'done': False},
-        {'item': 'Management review', 'done': False},
+        {"item": "Review bid documents", "done": False},
+        {"item": "Site visit scheduled", "done": False},
+        {"item": "Takeoff complete", "done": False},
+        {"item": "Vendor quotes received", "done": False},
+        {"item": "Labor estimate complete", "done": False},
+        {"item": "Management review", "done": False},
     ]
 
     @property
@@ -135,7 +187,7 @@ class Opportunity(Base):
     @property
     def scope_names(self):
         """Return comma-separated list of scope names."""
-        return ', '.join(s.name for s in self.scopes)
+        return ", ".join(s.name for s in self.scopes)
 
     @property
     def latest_estimate(self):
@@ -150,11 +202,11 @@ class Opportunity(Base):
 
     @property
     def open_tasks(self):
-        return [t for t in self.tasks if t.status == 'Open']
+        return [t for t in self.tasks if t.status == "Open"]
 
     @property
     def completed_tasks(self):
-        return [t for t in self.tasks if t.status == 'Completed']
+        return [t for t in self.tasks if t.status == "Completed"]
 
     @property
     def value(self):
@@ -168,7 +220,7 @@ class Opportunity(Base):
 
     @property
     def is_open(self):
-        return self.stage not in ['Won', 'Lost']
+        return self.stage not in ["Won", "Lost"]
 
     @property
     def days_until_bid(self):
@@ -191,7 +243,7 @@ class Opportunity(Base):
         if not self.estimating_checklist:
             return (0, 0)
         total = len(self.estimating_checklist)
-        done = sum(1 for item in self.estimating_checklist if item.get('done', False))
+        done = sum(1 for item in self.estimating_checklist if item.get("done", False))
         return (done, total)
 
     @property
@@ -205,7 +257,7 @@ class Opportunity(Base):
         +2 primary_contact set
         +2 notes present
         """
-        if self.stage in ('Won', 'Lost'):
+        if self.stage in ("Won", "Lost"):
             return None
 
         score = 0
@@ -240,11 +292,11 @@ class Opportunity(Base):
         if score is None:
             return None
         if score >= 8:
-            return 'success'  # Green
+            return "success"  # Green
         elif score >= 5:
-            return 'warning'  # Yellow
+            return "warning"  # Yellow
         else:
-            return 'danger'   # Red
+            return "danger"  # Red
 
     def get_default_probability(self):
         """Get default probability for current stage."""

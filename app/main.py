@@ -50,15 +50,16 @@ class AuthMiddleware(BaseHTTPMiddleware):
         user_id = request.session.get("user_id")
         if not user_id:
             # Redirect to login with next parameter
-            return RedirectResponse(
-                url=f"/login?next={path}",
-                status_code=303
-            )
+            return RedirectResponse(url=f"/login?next={path}", status_code=303)
 
         # Fetch and store current user on request.state
         db = SessionLocal()
         try:
-            user = db.query(User).filter(User.id == user_id, User.is_active == True).first()
+            user = (
+                db.query(User)
+                .filter(User.id == user_id, User.is_active == True)
+                .first()
+            )
             if not user:
                 # User was deleted or deactivated
                 request.session.clear()
@@ -125,5 +126,7 @@ app = create_app()
 
 if __name__ == "__main__":
     import uvicorn
+
     port = int(os.getenv("PORT", "8000"))
+    # nosec B104 - Intentional dev binding; controlled by HOST env var
     uvicorn.run("app.main:app", host="0.0.0.0", port=port, reload=True)

@@ -19,10 +19,12 @@ import sys
 import os
 from datetime import datetime, date, timedelta
 from decimal import Decimal
-from typing import List, Optional
+from typing import List
 
 # Add project root to path
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+sys.path.insert(
+    0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+)
 
 from app.database import SessionLocal
 from app.models.account import Account
@@ -65,7 +67,7 @@ DEMO_ACCOUNTS = [
         "city": "Austin",
         "state": "TX",
         "zip_code": "78701",
-        "notes": "Large national GC, focus on commercial projects. Key decision maker is Mike Chen."
+        "notes": "Large national GC, focus on commercial projects. Key decision maker is Mike Chen.",
     },
     {
         "name": "Demo - McCarthy Building",
@@ -76,7 +78,7 @@ DEMO_ACCOUNTS = [
         "city": "Austin",
         "state": "TX",
         "zip_code": "78701",
-        "notes": "Healthcare and education specialist. Good payment terms."
+        "notes": "Healthcare and education specialist. Good payment terms.",
     },
     {
         "name": "Demo - DPR Construction",
@@ -87,7 +89,7 @@ DEMO_ACCOUNTS = [
         "city": "Austin",
         "state": "TX",
         "zip_code": "78701",
-        "notes": "Tech-forward builder. Data center and tech campus expertise."
+        "notes": "Tech-forward builder. Data center and tech campus expertise.",
     },
     {
         "name": "Demo - Hensel Phelps",
@@ -98,7 +100,7 @@ DEMO_ACCOUNTS = [
         "city": "Austin",
         "state": "TX",
         "zip_code": "78701",
-        "notes": "Government and institutional focus. Strict compliance requirements."
+        "notes": "Government and institutional focus. Strict compliance requirements.",
     },
     {
         "name": "Demo - Skanska USA",
@@ -109,7 +111,7 @@ DEMO_ACCOUNTS = [
         "city": "Austin",
         "state": "TX",
         "zip_code": "78701",
-        "notes": "International presence. Sustainability-focused projects."
+        "notes": "International presence. Sustainability-focused projects.",
     },
     {
         "name": "Demo - Brasfield & Gorrie",
@@ -120,7 +122,7 @@ DEMO_ACCOUNTS = [
         "city": "Austin",
         "state": "TX",
         "zip_code": "78701",
-        "notes": "Southeast regional strength. Growing Texas presence."
+        "notes": "Southeast regional strength. Growing Texas presence.",
     },
     {
         "name": "Demo - Austin Commercial",
@@ -131,7 +133,7 @@ DEMO_ACCOUNTS = [
         "city": "Austin",
         "state": "TX",
         "zip_code": "78701",
-        "notes": "Local Austin GC. Strong relationships with city permitting."
+        "notes": "Local Austin GC. Strong relationships with city permitting.",
     },
     {
         "name": "Demo - Harvey Builders",
@@ -142,7 +144,7 @@ DEMO_ACCOUNTS = [
         "city": "Austin",
         "state": "TX",
         "zip_code": "78701",
-        "notes": "Texas-based, retail and mixed-use specialist."
+        "notes": "Texas-based, retail and mixed-use specialist.",
     },
     {
         "name": "Demo - Balfour Beatty",
@@ -153,7 +155,7 @@ DEMO_ACCOUNTS = [
         "city": "Austin",
         "state": "TX",
         "zip_code": "78701",
-        "notes": "UK-based, infrastructure and education focus."
+        "notes": "UK-based, infrastructure and education focus.",
     },
     {
         "name": "Demo - Whiting-Turner",
@@ -164,7 +166,7 @@ DEMO_ACCOUNTS = [
         "city": "Austin",
         "state": "TX",
         "zip_code": "78702",
-        "notes": "Diversified portfolio. Quick turnaround on bid requests."
+        "notes": "Diversified portfolio. Quick turnaround on bid requests.",
     },
 ]
 
@@ -174,39 +176,177 @@ DEMO_ACCOUNTS = [
 # =============================================================================
 DEMO_CONTACTS = [
     # Turner Construction (0)
-    {"account_idx": 0, "first_name": "Mike", "last_name": "Chen", "title": "Senior Project Manager", "email": "mchen@demo-turner.com", "phone": "(512) 555-1001", "mobile": "(512) 555-1002", "is_primary": True, "last_contacted": days_ago(3), "next_followup": days_from_now(2)},
-    {"account_idx": 0, "first_name": "Sarah", "last_name": "Williams", "title": "Estimator", "email": "swilliams@demo-turner.com", "phone": "(512) 555-1003", "is_primary": False, "last_contacted": days_ago(10)},
-
+    {
+        "account_idx": 0,
+        "first_name": "Mike",
+        "last_name": "Chen",
+        "title": "Senior Project Manager",
+        "email": "mchen@demo-turner.com",
+        "phone": "(512) 555-1001",
+        "mobile": "(512) 555-1002",
+        "is_primary": True,
+        "last_contacted": days_ago(3),
+        "next_followup": days_from_now(2),
+    },
+    {
+        "account_idx": 0,
+        "first_name": "Sarah",
+        "last_name": "Williams",
+        "title": "Estimator",
+        "email": "swilliams@demo-turner.com",
+        "phone": "(512) 555-1003",
+        "is_primary": False,
+        "last_contacted": days_ago(10),
+    },
     # McCarthy Building (1)
-    {"account_idx": 1, "first_name": "Jennifer", "last_name": "Martinez", "title": "Project Director", "email": "jmartinez@demo-mccarthy.com", "phone": "(512) 555-1010", "mobile": "(512) 555-1011", "is_primary": True, "last_contacted": days_ago(5), "next_followup": days_from_now(5)},
-    {"account_idx": 1, "first_name": "Tom", "last_name": "Anderson", "title": "Chief Estimator", "email": "tanderson@demo-mccarthy.com", "phone": "(512) 555-1012", "is_primary": False, "last_contacted": days_ago(14)},
-
+    {
+        "account_idx": 1,
+        "first_name": "Jennifer",
+        "last_name": "Martinez",
+        "title": "Project Director",
+        "email": "jmartinez@demo-mccarthy.com",
+        "phone": "(512) 555-1010",
+        "mobile": "(512) 555-1011",
+        "is_primary": True,
+        "last_contacted": days_ago(5),
+        "next_followup": days_from_now(5),
+    },
+    {
+        "account_idx": 1,
+        "first_name": "Tom",
+        "last_name": "Anderson",
+        "title": "Chief Estimator",
+        "email": "tanderson@demo-mccarthy.com",
+        "phone": "(512) 555-1012",
+        "is_primary": False,
+        "last_contacted": days_ago(14),
+    },
     # DPR Construction (2)
-    {"account_idx": 2, "first_name": "David", "last_name": "Kim", "title": "Vice President", "email": "dkim@demo-dpr.com", "phone": "(512) 555-1020", "mobile": "(512) 555-1021", "is_primary": True, "last_contacted": days_ago(1), "next_followup": days_from_now(3)},
-
+    {
+        "account_idx": 2,
+        "first_name": "David",
+        "last_name": "Kim",
+        "title": "Vice President",
+        "email": "dkim@demo-dpr.com",
+        "phone": "(512) 555-1020",
+        "mobile": "(512) 555-1021",
+        "is_primary": True,
+        "last_contacted": days_ago(1),
+        "next_followup": days_from_now(3),
+    },
     # Hensel Phelps (3)
-    {"account_idx": 3, "first_name": "Lisa", "last_name": "Thompson", "title": "Senior Estimator", "email": "lthompson@demo-hensel.com", "phone": "(512) 555-1030", "is_primary": True, "last_contacted": days_ago(7), "next_followup": days_ago(2)},  # Overdue followup
-    {"account_idx": 3, "first_name": "Robert", "last_name": "Garcia", "title": "Project Manager", "email": "rgarcia@demo-hensel.com", "phone": "(512) 555-1031", "is_primary": False},
-
+    {
+        "account_idx": 3,
+        "first_name": "Lisa",
+        "last_name": "Thompson",
+        "title": "Senior Estimator",
+        "email": "lthompson@demo-hensel.com",
+        "phone": "(512) 555-1030",
+        "is_primary": True,
+        "last_contacted": days_ago(7),
+        "next_followup": days_ago(2),
+    },  # Overdue followup
+    {
+        "account_idx": 3,
+        "first_name": "Robert",
+        "last_name": "Garcia",
+        "title": "Project Manager",
+        "email": "rgarcia@demo-hensel.com",
+        "phone": "(512) 555-1031",
+        "is_primary": False,
+    },
     # Skanska USA (4)
-    {"account_idx": 4, "first_name": "Amanda", "last_name": "Brown", "title": "Preconstruction Manager", "email": "abrown@demo-skanska.com", "phone": "(512) 555-1040", "mobile": "(512) 555-1041", "is_primary": True, "last_contacted": days_ago(2)},
-
+    {
+        "account_idx": 4,
+        "first_name": "Amanda",
+        "last_name": "Brown",
+        "title": "Preconstruction Manager",
+        "email": "abrown@demo-skanska.com",
+        "phone": "(512) 555-1040",
+        "mobile": "(512) 555-1041",
+        "is_primary": True,
+        "last_contacted": days_ago(2),
+    },
     # Brasfield & Gorrie (5)
-    {"account_idx": 5, "first_name": "Chris", "last_name": "Davis", "title": "Project Executive", "email": "cdavis@demo-brasfield.com", "phone": "(512) 555-1050", "is_primary": True, "last_contacted": days_ago(21)},
-
+    {
+        "account_idx": 5,
+        "first_name": "Chris",
+        "last_name": "Davis",
+        "title": "Project Executive",
+        "email": "cdavis@demo-brasfield.com",
+        "phone": "(512) 555-1050",
+        "is_primary": True,
+        "last_contacted": days_ago(21),
+    },
     # Austin Commercial (6)
-    {"account_idx": 6, "first_name": "Maria", "last_name": "Rodriguez", "title": "Owner", "email": "mrodriguez@demo-austincomm.com", "phone": "(512) 555-1060", "mobile": "(512) 555-1061", "is_primary": True, "last_contacted": days_ago(4), "next_followup": days_from_now(1)},
-    {"account_idx": 6, "first_name": "James", "last_name": "Wilson", "title": "Estimator", "email": "jwilson@demo-austincomm.com", "phone": "(512) 555-1062", "is_primary": False},
-
+    {
+        "account_idx": 6,
+        "first_name": "Maria",
+        "last_name": "Rodriguez",
+        "title": "Owner",
+        "email": "mrodriguez@demo-austincomm.com",
+        "phone": "(512) 555-1060",
+        "mobile": "(512) 555-1061",
+        "is_primary": True,
+        "last_contacted": days_ago(4),
+        "next_followup": days_from_now(1),
+    },
+    {
+        "account_idx": 6,
+        "first_name": "James",
+        "last_name": "Wilson",
+        "title": "Estimator",
+        "email": "jwilson@demo-austincomm.com",
+        "phone": "(512) 555-1062",
+        "is_primary": False,
+    },
     # Harvey Builders (7)
-    {"account_idx": 7, "first_name": "Kevin", "last_name": "Lee", "title": "Chief Estimator", "email": "klee@demo-harvey.com", "phone": "(512) 555-1070", "is_primary": True, "last_contacted": days_ago(30)},
-
+    {
+        "account_idx": 7,
+        "first_name": "Kevin",
+        "last_name": "Lee",
+        "title": "Chief Estimator",
+        "email": "klee@demo-harvey.com",
+        "phone": "(512) 555-1070",
+        "is_primary": True,
+        "last_contacted": days_ago(30),
+    },
     # Balfour Beatty (8)
-    {"account_idx": 8, "first_name": "Patricia", "last_name": "Moore", "title": "Regional Director", "email": "pmoore@demo-balfour.com", "phone": "(512) 555-1080", "mobile": "(512) 555-1081", "is_primary": True, "last_contacted": days_ago(8), "next_followup": days_from_now(7)},
-    {"account_idx": 8, "first_name": "Steven", "last_name": "Taylor", "title": "Estimating Manager", "email": "staylor@demo-balfour.com", "phone": "(512) 555-1082", "is_primary": False, "last_contacted": days_ago(15)},
-
+    {
+        "account_idx": 8,
+        "first_name": "Patricia",
+        "last_name": "Moore",
+        "title": "Regional Director",
+        "email": "pmoore@demo-balfour.com",
+        "phone": "(512) 555-1080",
+        "mobile": "(512) 555-1081",
+        "is_primary": True,
+        "last_contacted": days_ago(8),
+        "next_followup": days_from_now(7),
+    },
+    {
+        "account_idx": 8,
+        "first_name": "Steven",
+        "last_name": "Taylor",
+        "title": "Estimating Manager",
+        "email": "staylor@demo-balfour.com",
+        "phone": "(512) 555-1082",
+        "is_primary": False,
+        "last_contacted": days_ago(15),
+    },
     # Whiting-Turner (9)
-    {"account_idx": 9, "first_name": "Nancy", "last_name": "Jackson", "title": "VP of Preconstruction", "email": "njackson@demo-whiting.com", "phone": "(512) 555-1090", "mobile": "(512) 555-1091", "is_primary": True, "last_contacted": today(), "next_followup": days_from_now(4)},
+    {
+        "account_idx": 9,
+        "first_name": "Nancy",
+        "last_name": "Jackson",
+        "title": "VP of Preconstruction",
+        "email": "njackson@demo-whiting.com",
+        "phone": "(512) 555-1090",
+        "mobile": "(512) 555-1091",
+        "is_primary": True,
+        "last_contacted": today(),
+        "next_followup": days_from_now(4),
+    },
 ]
 
 
@@ -245,7 +385,6 @@ DEMO_OPPORTUNITIES = [
         "project_type": "Retail",
         "stalled_reason": "Waiting on drawings",
     },
-
     # Proposal stage (2)
     {
         "account_idx": 1,
@@ -279,7 +418,6 @@ DEMO_OPPORTUNITIES = [
         "project_type": "Manufacturing",
         "stalled_reason": None,
     },
-
     # Bid Sent stage (2)
     {
         "account_idx": 3,
@@ -311,7 +449,6 @@ DEMO_OPPORTUNITIES = [
         "project_type": "Commercial",
         "stalled_reason": "Waiting on GC",
     },
-
     # Negotiation stage (2)
     {
         "account_idx": 4,
@@ -346,7 +483,6 @@ DEMO_OPPORTUNITIES = [
         "project_type": "Education",
         "stalled_reason": None,
     },
-
     # Won (1)
     {
         "account_idx": 9,
@@ -364,7 +500,6 @@ DEMO_OPPORTUNITIES = [
         "project_type": "Commercial",
         "stalled_reason": None,
     },
-
     # Lost (1)
     {
         "account_idx": 7,
@@ -389,34 +524,144 @@ DEMO_OPPORTUNITIES = [
 # =============================================================================
 DEMO_TASKS = [
     # Tasks for Domain Tower Data Center (opp 0)
-    {"opp_idx": 0, "title": "Demo - Schedule site visit with Mike", "description": "Coordinate with Turner PM for site walkthrough", "due_date": days_from_now(3), "priority": "High", "status": "Open"},
-    {"opp_idx": 0, "title": "Demo - Get fiber pricing from CommScope", "description": "Need OM4 and single-mode pricing for data center", "due_date": days_from_now(5), "priority": "Medium", "status": "Open"},
-    {"opp_idx": 0, "title": "Demo - Review bid documents", "description": "Initial review of drawings and specs", "due_date": days_ago(2), "priority": "High", "status": "Complete", "completed_at": datetime_ago(1)},
-
+    {
+        "opp_idx": 0,
+        "title": "Demo - Schedule site visit with Mike",
+        "description": "Coordinate with Turner PM for site walkthrough",
+        "due_date": days_from_now(3),
+        "priority": "High",
+        "status": "Open",
+    },
+    {
+        "opp_idx": 0,
+        "title": "Demo - Get fiber pricing from CommScope",
+        "description": "Need OM4 and single-mode pricing for data center",
+        "due_date": days_from_now(5),
+        "priority": "Medium",
+        "status": "Open",
+    },
+    {
+        "opp_idx": 0,
+        "title": "Demo - Review bid documents",
+        "description": "Initial review of drawings and specs",
+        "due_date": days_ago(2),
+        "priority": "High",
+        "status": "Complete",
+        "completed_at": datetime_ago(1),
+    },
     # Tasks for Dell Children's Hospital (opp 2)
-    {"opp_idx": 2, "title": "Demo - Nurse call vendor coordination", "description": "Meeting with Rauland rep for pricing", "due_date": days_from_now(2), "priority": "High", "status": "Open"},
-    {"opp_idx": 2, "title": "Demo - Floor-by-floor breakdown", "description": "Jennifer needs detailed estimate per floor", "due_date": days_from_now(7), "priority": "Medium", "status": "Open"},
-    {"opp_idx": 2, "title": "Demo - RTLS system research", "description": "Compare Versus and CenTrak options", "due_date": days_ago(5), "priority": "Medium", "status": "Complete", "completed_at": datetime_ago(3)},
-
+    {
+        "opp_idx": 2,
+        "title": "Demo - Nurse call vendor coordination",
+        "description": "Meeting with Rauland rep for pricing",
+        "due_date": days_from_now(2),
+        "priority": "High",
+        "status": "Open",
+    },
+    {
+        "opp_idx": 2,
+        "title": "Demo - Floor-by-floor breakdown",
+        "description": "Jennifer needs detailed estimate per floor",
+        "due_date": days_from_now(7),
+        "priority": "Medium",
+        "status": "Open",
+    },
+    {
+        "opp_idx": 2,
+        "title": "Demo - RTLS system research",
+        "description": "Compare Versus and CenTrak options",
+        "due_date": days_ago(5),
+        "priority": "Medium",
+        "status": "Complete",
+        "completed_at": datetime_ago(3),
+    },
     # Tasks for Tesla Gigafactory (opp 3)
-    {"opp_idx": 3, "title": "Demo - Industrial networking proposal", "description": "Finalize Cisco IE switch configuration", "due_date": days_from_now(1), "priority": "Urgent", "status": "Open"},
-    {"opp_idx": 3, "title": "Demo - CCTV camera count verification", "description": "Review drawings for camera locations", "due_date": days_from_now(3), "priority": "High", "status": "Open"},
-
+    {
+        "opp_idx": 3,
+        "title": "Demo - Industrial networking proposal",
+        "description": "Finalize Cisco IE switch configuration",
+        "due_date": days_from_now(1),
+        "priority": "Urgent",
+        "status": "Open",
+    },
+    {
+        "opp_idx": 3,
+        "title": "Demo - CCTV camera count verification",
+        "description": "Review drawings for camera locations",
+        "due_date": days_from_now(3),
+        "priority": "High",
+        "status": "Open",
+    },
     # Tasks for Austin ISD Elementary (opp 4)
-    {"opp_idx": 4, "title": "Demo - Follow up on bid results", "description": "Call Lisa for status update", "due_date": days_ago(1), "priority": "High", "status": "Open"},  # Overdue
-
+    {
+        "opp_idx": 4,
+        "title": "Demo - Follow up on bid results",
+        "description": "Call Lisa for status update",
+        "due_date": days_ago(1),
+        "priority": "High",
+        "status": "Open",
+    },  # Overdue
     # Tasks for UT Research Building (opp 6)
-    {"opp_idx": 6, "title": "Demo - Value engineering options", "description": "Prepare 3 scope reduction alternatives", "due_date": days_from_now(4), "priority": "High", "status": "Open"},
-    {"opp_idx": 6, "title": "Demo - Clean room cabling specs", "description": "Research plenum-rated options", "due_date": days_ago(7), "priority": "Medium", "status": "Complete", "completed_at": datetime_ago(5)},
-
+    {
+        "opp_idx": 6,
+        "title": "Demo - Value engineering options",
+        "description": "Prepare 3 scope reduction alternatives",
+        "due_date": days_from_now(4),
+        "priority": "High",
+        "status": "Open",
+    },
+    {
+        "opp_idx": 6,
+        "title": "Demo - Clean room cabling specs",
+        "description": "Research plenum-rated options",
+        "due_date": days_ago(7),
+        "priority": "Medium",
+        "status": "Complete",
+        "completed_at": datetime_ago(5),
+    },
     # Tasks for Google Campus (opp 8) - Won project
-    {"opp_idx": 8, "title": "Demo - Kickoff meeting prep", "description": "Prepare project schedule and team assignments", "due_date": days_from_now(2), "priority": "High", "status": "Open"},
-    {"opp_idx": 8, "title": "Demo - Submittals preparation", "description": "Start compiling product submittals", "due_date": days_from_now(14), "priority": "Medium", "status": "Open"},
-    {"opp_idx": 8, "title": "Demo - Contract review complete", "description": "Legal review of subcontract", "due_date": days_ago(10), "priority": "Urgent", "status": "Complete", "completed_at": datetime_ago(8)},
-
+    {
+        "opp_idx": 8,
+        "title": "Demo - Kickoff meeting prep",
+        "description": "Prepare project schedule and team assignments",
+        "due_date": days_from_now(2),
+        "priority": "High",
+        "status": "Open",
+    },
+    {
+        "opp_idx": 8,
+        "title": "Demo - Submittals preparation",
+        "description": "Start compiling product submittals",
+        "due_date": days_from_now(14),
+        "priority": "Medium",
+        "status": "Open",
+    },
+    {
+        "opp_idx": 8,
+        "title": "Demo - Contract review complete",
+        "description": "Legal review of subcontract",
+        "due_date": days_ago(10),
+        "priority": "Urgent",
+        "status": "Complete",
+        "completed_at": datetime_ago(8),
+    },
     # General tasks (not linked to opportunities)
-    {"opp_idx": None, "title": "Demo - Update insurance certificates", "description": "Annual renewal due", "due_date": days_from_now(10), "priority": "Medium", "status": "Open"},
-    {"opp_idx": None, "title": "Demo - Safety training renewal", "description": "OSHA 30 refresher", "due_date": days_from_now(30), "priority": "Low", "status": "Open"},
+    {
+        "opp_idx": None,
+        "title": "Demo - Update insurance certificates",
+        "description": "Annual renewal due",
+        "due_date": days_from_now(10),
+        "priority": "Medium",
+        "status": "Open",
+    },
+    {
+        "opp_idx": None,
+        "title": "Demo - Safety training renewal",
+        "description": "OSHA 30 refresher",
+        "due_date": days_from_now(30),
+        "priority": "Low",
+        "status": "Open",
+    },
 ]
 
 
@@ -425,42 +670,174 @@ DEMO_TASKS = [
 # =============================================================================
 DEMO_ACTIVITIES = [
     # Activities for Domain Tower Data Center (opp 0)
-    {"opp_idx": 0, "contact_idx": 0, "activity_type": "call", "subject": "Demo - Initial project discussion", "description": "Discussed scope and timeline. Mike mentioned urgency due to tenant move-in date.", "activity_date": datetime_ago(3)},
-    {"opp_idx": 0, "contact_idx": 1, "activity_type": "email", "subject": "Demo - Sent preliminary pricing", "description": "Emailed ROM estimate to Sarah for internal review.", "activity_date": datetime_ago(2)},
-
+    {
+        "opp_idx": 0,
+        "contact_idx": 0,
+        "activity_type": "call",
+        "subject": "Demo - Initial project discussion",
+        "description": "Discussed scope and timeline. Mike mentioned urgency due to tenant move-in date.",
+        "activity_date": datetime_ago(3),
+    },
+    {
+        "opp_idx": 0,
+        "contact_idx": 1,
+        "activity_type": "email",
+        "subject": "Demo - Sent preliminary pricing",
+        "description": "Emailed ROM estimate to Sarah for internal review.",
+        "activity_date": datetime_ago(2),
+    },
     # Activities for Dell Children's Hospital (opp 2)
-    {"opp_idx": 2, "contact_idx": 2, "activity_type": "meeting", "subject": "Demo - Preconstruction kickoff", "description": "Met with Jennifer and team. Walked through bid documents. Good opportunity.", "activity_date": datetime_ago(5)},
-    {"opp_idx": 2, "contact_idx": 3, "activity_type": "call", "subject": "Demo - Takeoff clarification", "description": "Called Tom to clarify cable tray routing questions.", "activity_date": datetime_ago(14)},
-    {"opp_idx": 2, "contact_idx": 2, "activity_type": "email", "subject": "Demo - RFI response received", "description": "Jennifer sent clarification on nurse call integration points.", "activity_date": datetime_ago(8)},
-
+    {
+        "opp_idx": 2,
+        "contact_idx": 2,
+        "activity_type": "meeting",
+        "subject": "Demo - Preconstruction kickoff",
+        "description": "Met with Jennifer and team. Walked through bid documents. Good opportunity.",
+        "activity_date": datetime_ago(5),
+    },
+    {
+        "opp_idx": 2,
+        "contact_idx": 3,
+        "activity_type": "call",
+        "subject": "Demo - Takeoff clarification",
+        "description": "Called Tom to clarify cable tray routing questions.",
+        "activity_date": datetime_ago(14),
+    },
+    {
+        "opp_idx": 2,
+        "contact_idx": 2,
+        "activity_type": "email",
+        "subject": "Demo - RFI response received",
+        "description": "Jennifer sent clarification on nurse call integration points.",
+        "activity_date": datetime_ago(8),
+    },
     # Activities for Tesla Gigafactory (opp 3)
-    {"opp_idx": 3, "contact_idx": 4, "activity_type": "site_visit", "subject": "Demo - Manufacturing floor walkthrough", "description": "Site visit with David. Identified additional conduit requirements in production area.", "activity_date": datetime_ago(1)},
-    {"opp_idx": 3, "contact_idx": 4, "activity_type": "call", "subject": "Demo - Proposal timeline discussion", "description": "David confirmed EOW deadline. Will expedite.", "activity_date": datetime_ago(3)},
-
+    {
+        "opp_idx": 3,
+        "contact_idx": 4,
+        "activity_type": "site_visit",
+        "subject": "Demo - Manufacturing floor walkthrough",
+        "description": "Site visit with David. Identified additional conduit requirements in production area.",
+        "activity_date": datetime_ago(1),
+    },
+    {
+        "opp_idx": 3,
+        "contact_idx": 4,
+        "activity_type": "call",
+        "subject": "Demo - Proposal timeline discussion",
+        "description": "David confirmed EOW deadline. Will expedite.",
+        "activity_date": datetime_ago(3),
+    },
     # Activities for Austin ISD Elementary (opp 4)
-    {"opp_idx": 4, "contact_idx": 5, "activity_type": "email", "subject": "Demo - Bid submission confirmation", "description": "Submitted bid via BuildingConnected. Lisa acknowledged receipt.", "activity_date": datetime_ago(7)},
-    {"opp_idx": 4, "contact_idx": 5, "activity_type": "call", "subject": "Demo - Pre-bid clarification", "description": "Called Lisa about PA system zone requirements.", "activity_date": datetime_ago(10)},
-
+    {
+        "opp_idx": 4,
+        "contact_idx": 5,
+        "activity_type": "email",
+        "subject": "Demo - Bid submission confirmation",
+        "description": "Submitted bid via BuildingConnected. Lisa acknowledged receipt.",
+        "activity_date": datetime_ago(7),
+    },
+    {
+        "opp_idx": 4,
+        "contact_idx": 5,
+        "activity_type": "call",
+        "subject": "Demo - Pre-bid clarification",
+        "description": "Called Lisa about PA system zone requirements.",
+        "activity_date": datetime_ago(10),
+    },
     # Activities for Downtown Office Tower (opp 5)
-    {"opp_idx": 5, "contact_idx": 9, "activity_type": "meeting", "subject": "Demo - Final scope review", "description": "Met with Maria to finalize AV scope. Added 2 additional conference rooms.", "activity_date": datetime_ago(4)},
-    {"opp_idx": 5, "contact_idx": 10, "activity_type": "email", "subject": "Demo - Revised proposal sent", "description": "Sent updated proposal with additional conference room AV.", "activity_date": datetime_ago(3)},
-
+    {
+        "opp_idx": 5,
+        "contact_idx": 9,
+        "activity_type": "meeting",
+        "subject": "Demo - Final scope review",
+        "description": "Met with Maria to finalize AV scope. Added 2 additional conference rooms.",
+        "activity_date": datetime_ago(4),
+    },
+    {
+        "opp_idx": 5,
+        "contact_idx": 10,
+        "activity_type": "email",
+        "subject": "Demo - Revised proposal sent",
+        "description": "Sent updated proposal with additional conference room AV.",
+        "activity_date": datetime_ago(3),
+    },
     # Activities for UT Research Building (opp 6)
-    {"opp_idx": 6, "contact_idx": 7, "activity_type": "meeting", "subject": "Demo - Negotiation meeting", "description": "Discussed value engineering options with Amanda. She's pushing for 5% reduction.", "activity_date": datetime_ago(2)},
-    {"opp_idx": 6, "contact_idx": 7, "activity_type": "call", "subject": "Demo - Budget discussion", "description": "Amanda mentioned university budget constraints. Need creative solutions.", "activity_date": datetime_ago(5)},
-
+    {
+        "opp_idx": 6,
+        "contact_idx": 7,
+        "activity_type": "meeting",
+        "subject": "Demo - Negotiation meeting",
+        "description": "Discussed value engineering options with Amanda. She's pushing for 5% reduction.",
+        "activity_date": datetime_ago(2),
+    },
+    {
+        "opp_idx": 6,
+        "contact_idx": 7,
+        "activity_type": "call",
+        "subject": "Demo - Budget discussion",
+        "description": "Amanda mentioned university budget constraints. Need creative solutions.",
+        "activity_date": datetime_ago(5),
+    },
     # Activities for Round Rock ISD (opp 7)
-    {"opp_idx": 7, "contact_idx": 12, "activity_type": "call", "subject": "Demo - Scope confirmation call", "description": "Patricia confirming athletic facility requirements. Added stadium speakers.", "activity_date": datetime_ago(8)},
-    {"opp_idx": 7, "contact_idx": 13, "activity_type": "email", "subject": "Demo - Bond documentation sent", "description": "Sent performance bond quote to Steven.", "activity_date": datetime_ago(12)},
-
+    {
+        "opp_idx": 7,
+        "contact_idx": 12,
+        "activity_type": "call",
+        "subject": "Demo - Scope confirmation call",
+        "description": "Patricia confirming athletic facility requirements. Added stadium speakers.",
+        "activity_date": datetime_ago(8),
+    },
+    {
+        "opp_idx": 7,
+        "contact_idx": 13,
+        "activity_type": "email",
+        "subject": "Demo - Bond documentation sent",
+        "description": "Sent performance bond quote to Steven.",
+        "activity_date": datetime_ago(12),
+    },
     # Activities for Google Campus (opp 8) - Won
-    {"opp_idx": 8, "contact_idx": 14, "activity_type": "meeting", "subject": "Demo - Contract signing", "description": "Signed subcontract with Nancy. Project officially awarded!", "activity_date": datetime_ago(30)},
-    {"opp_idx": 8, "contact_idx": 14, "activity_type": "call", "subject": "Demo - Kickoff scheduling", "description": "Scheduled kickoff meeting for next week.", "activity_date": datetime_ago(0)},
-    {"opp_idx": 8, "contact_idx": 14, "activity_type": "email", "subject": "Demo - Insurance certificate sent", "description": "Sent updated COI per contract requirements.", "activity_date": datetime_ago(25)},
-
+    {
+        "opp_idx": 8,
+        "contact_idx": 14,
+        "activity_type": "meeting",
+        "subject": "Demo - Contract signing",
+        "description": "Signed subcontract with Nancy. Project officially awarded!",
+        "activity_date": datetime_ago(30),
+    },
+    {
+        "opp_idx": 8,
+        "contact_idx": 14,
+        "activity_type": "call",
+        "subject": "Demo - Kickoff scheduling",
+        "description": "Scheduled kickoff meeting for next week.",
+        "activity_date": datetime_ago(0),
+    },
+    {
+        "opp_idx": 8,
+        "contact_idx": 14,
+        "activity_type": "email",
+        "subject": "Demo - Insurance certificate sent",
+        "description": "Sent updated COI per contract requirements.",
+        "activity_date": datetime_ago(25),
+    },
     # Activities for HEB Distribution (opp 9) - Lost
-    {"opp_idx": 9, "contact_idx": 11, "activity_type": "call", "subject": "Demo - Award notification", "description": "Kevin called to inform us we lost. Competitor was 15% lower. Thanked us for bidding.", "activity_date": datetime_ago(20)},
-    {"opp_idx": 9, "contact_idx": 11, "activity_type": "email", "subject": "Demo - Thank you follow-up", "description": "Sent thank you email. Requested feedback and asked to stay on bid list.", "activity_date": datetime_ago(19)},
+    {
+        "opp_idx": 9,
+        "contact_idx": 11,
+        "activity_type": "call",
+        "subject": "Demo - Award notification",
+        "description": "Kevin called to inform us we lost. Competitor was 15% lower. Thanked us for bidding.",
+        "activity_date": datetime_ago(20),
+    },
+    {
+        "opp_idx": 9,
+        "contact_idx": 11,
+        "activity_type": "email",
+        "subject": "Demo - Thank you follow-up",
+        "description": "Sent thank you email. Requested feedback and asked to stay on bid list.",
+        "activity_date": datetime_ago(19),
+    },
 ]
 
 
@@ -472,7 +849,9 @@ def seed_demo_data():
         # Check if demo data already exists
         existing = db.query(Account).filter(Account.name.like("Demo - %")).first()
         if existing:
-            print("Demo data already exists. Run remove_demo_data.py first to clean up.")
+            print(
+                "Demo data already exists. Run remove_demo_data.py first to clean up."
+            )
             return False
 
         print("Creating demo data...")

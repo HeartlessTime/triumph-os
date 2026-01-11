@@ -1,6 +1,7 @@
 """
 Authentication routes for login/logout.
 """
+
 from fastapi import APIRouter, Request, Depends, Form
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
@@ -20,10 +21,13 @@ async def login_page(request: Request):
     if request.session.get("user_id"):
         return RedirectResponse(url="/", status_code=303)
 
-    return templates.TemplateResponse("auth/login.html", {
-        "request": request,
-        "error": None,
-    })
+    return templates.TemplateResponse(
+        "auth/login.html",
+        {
+            "request": request,
+            "error": None,
+        },
+    )
 
 
 @router.post("/login")
@@ -31,16 +35,20 @@ async def login(
     request: Request,
     email: str = Form(...),
     password: str = Form(...),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """Process login form submission."""
     user = authenticate_user(db, email, password)
 
     if not user:
-        return templates.TemplateResponse("auth/login.html", {
-            "request": request,
-            "error": "Invalid email or password",
-        }, status_code=401)
+        return templates.TemplateResponse(
+            "auth/login.html",
+            {
+                "request": request,
+                "error": "Invalid email or password",
+            },
+            status_code=401,
+        )
 
     # Set user_id in session
     request.session["user_id"] = user.id

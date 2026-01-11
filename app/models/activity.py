@@ -5,16 +5,21 @@ from app.database import Base
 
 
 class Activity(Base):
-    __tablename__ = 'activities'
+    __tablename__ = "activities"
 
     id = Column(Integer, primary_key=True)
-    opportunity_id = Column(Integer, ForeignKey('opportunities.id', ondelete='CASCADE'), nullable=True, index=True)
+    opportunity_id = Column(
+        Integer,
+        ForeignKey("opportunities.id", ondelete="CASCADE"),
+        nullable=True,
+        index=True,
+    )
     activity_type = Column(String(50), nullable=False)  # call, meeting, email, note
     subject = Column(String(255), nullable=False)
     description = Column(Text, nullable=True)
     activity_date = Column(DateTime, nullable=False, index=True)
-    contact_id = Column(Integer, ForeignKey('contacts.id'), nullable=True)
-    created_by_id = Column(Integer, ForeignKey('users.id'), nullable=True)
+    contact_id = Column(Integer, ForeignKey("contacts.id"), nullable=True)
+    created_by_id = Column(Integer, ForeignKey("users.id"), nullable=True)
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
 
     # Relationships
@@ -23,21 +28,21 @@ class Activity(Base):
     created_by = relationship("User", back_populates="created_activities")
 
     ACTIVITY_TYPES = [
-        ('call', 'Phone Call'),
-        ('meeting', 'Meeting'),
-        ('email', 'Email'),
-        ('note', 'Note'),
-        ('site_visit', 'Site Visit'),
-        ('task_completed', 'Task Completed'),
+        ("call", "Phone Call"),
+        ("meeting", "Meeting"),
+        ("email", "Email"),
+        ("note", "Note"),
+        ("site_visit", "Site Visit"),
+        ("task_completed", "Task Completed"),
     ]
 
     TYPE_ICONS = {
-        'call': '📞',
-        'meeting': '🤝',
-        'email': '✉️',
-        'note': '📝',
-        'site_visit': '🏗️',
-        'task_completed': '✅',
+        "call": "📞",
+        "meeting": "🤝",
+        "email": "✉️",
+        "note": "📝",
+        "site_visit": "🏗️",
+        "task_completed": "✅",
     }
 
     @property
@@ -51,7 +56,7 @@ class Activity(Base):
     @property
     def icon(self):
         """Get icon for activity type."""
-        return self.TYPE_ICONS.get(self.activity_type, '📋')
+        return self.TYPE_ICONS.get(self.activity_type, "📋")
 
     def __repr__(self):
         return f"<Activity {self.activity_type}: {self.subject}>"

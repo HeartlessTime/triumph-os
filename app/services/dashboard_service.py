@@ -7,98 +7,142 @@ from app.services.followup import get_followup_status
 
 
 def get_dashboard_data(db: Session, today: date) -> dict:
-    open_stages = ['Prospecting', 'Proposal', 'Bid Sent', 'Negotiation']
+    open_stages = ["Prospecting", "Proposal", "Bid Sent", "Negotiation"]
 
-    pipeline_value = db.query(
-        func.sum(func.coalesce(Opportunity.lv_value, 0) + func.coalesce(Opportunity.hdd_value, 0))
-    ).filter(Opportunity.stage.in_(open_stages)).scalar() or 0
+    pipeline_value = (
+        db.query(
+            func.sum(
+                func.coalesce(Opportunity.lv_value, 0)
+                + func.coalesce(Opportunity.hdd_value, 0)
+            )
+        )
+        .filter(Opportunity.stage.in_(open_stages))
+        .scalar()
+        or 0
+    )
 
-    stalled_count = db.query(func.count(Opportunity.id))\
+    stalled_count = (
+        db.query(func.count(Opportunity.id))
         .filter(
             Opportunity.stage.in_(open_stages),
             Opportunity.stalled_reason.isnot(None),
-            Opportunity.stalled_reason != ''
-        )\
-        .scalar() or 0
+            Opportunity.stalled_reason != "",
+        )
+        .scalar()
+        or 0
+    )
 
-    open_opportunities = db.query(func.count(Opportunity.id))\
-        .filter(Opportunity.stage.in_(open_stages))\
-        .scalar() or 0
+    open_opportunities = (
+        db.query(func.count(Opportunity.id))
+        .filter(Opportunity.stage.in_(open_stages))
+        .scalar()
+        or 0
+    )
 
     first_of_month = today.replace(day=1)
-    won_this_month = db.query(
-        func.sum(func.coalesce(Opportunity.lv_value, 0) + func.coalesce(Opportunity.hdd_value, 0))
-    ).filter(
-        Opportunity.stage == 'Won',
-        Opportunity.close_date >= first_of_month
-    ).scalar() or 0
+    won_this_month = (
+        db.query(
+            func.sum(
+                func.coalesce(Opportunity.lv_value, 0)
+                + func.coalesce(Opportunity.hdd_value, 0)
+            )
+        )
+        .filter(Opportunity.stage == "Won", Opportunity.close_date >= first_of_month)
+        .scalar()
+        or 0
+    )
 
     # Eager load account for template rendering (opp.account.name)
-    followup_opps = db.query(Opportunity)\
-        .options(selectinload(Opportunity.account))\
+    followup_opps = (
+        db.query(Opportunity)
+        .options(selectinload(Opportunity.account))
         .filter(
             Opportunity.stage.in_(open_stages),
             Opportunity.next_followup.isnot(None),
-            Opportunity.next_followup <= today
-        )\
-        .order_by(Opportunity.next_followup)\
-        .limit(10)\
+            Opportunity.next_followup <= today,
+        )
+        .order_by(Opportunity.next_followup)
+        .limit(10)
         .all()
+    )
 
     for opp in followup_opps:
         opp.followup_status = get_followup_status(opp.next_followup, today)
 
     # Eager load account for template rendering (opp.account.name)
-    upcoming_bids = db.query(Opportunity)\
-        .options(selectinload(Opportunity.account))\
+    upcoming_bids = (
+        db.query(Opportunity)
+        .options(selectinload(Opportunity.account))
         .filter(
             Opportunity.stage.in_(open_stages),
             Opportunity.bid_date.isnot(None),
             Opportunity.bid_date >= today,
-            Opportunity.bid_date <= today + timedelta(days=14)
-        )\
-        .order_by(Opportunity.bid_date)\
-        .limit(10)\
+            Opportunity.bid_date <= today + timedelta(days=14),
+        )
+        .order_by(Opportunity.bid_date)
+        .limit(10)
         .all()
+    )
 
     # Eager load opportunity for template rendering (task.opportunity.name)
-    my_tasks = db.query(Task)\
-        .options(selectinload(Task.opportunity))\
-        .filter(Task.status == 'Open')\
-        .order_by(Task.due_date.nullslast(), Task.priority.desc())\
-        .limit(10)\
+    my_tasks = (
+        db.query(Task)
+        .options(selectinload(Task.opportunity))
+        .filter(Task.status == "Open")
+        .order_by(Task.due_date.nullslast(), Task.priority.desc())
+        .limit(10)
         .all()
+    )
 
     # Eager load opportunity for template rendering (activity.opportunity.name)
-    recent_activities = db.query(Activity)\
-        .options(selectinload(Activity.opportunity))\
-        .order_by(Activity.activity_date.desc())\
-        .limit(10)\
+    recent_activities = (
+        db.query(Activity)
+        .options(selectinload(Activity.opportunity))
+        .order_by(Activity.activity_date.desc())
+        .limit(10)
         .all()
+    )
 
-    stage_counts = db.query(
-        Opportunity.stage,
-        func.count(Opportunity.id),
-        func.sum(func.coalesce(Opportunity.lv_value, 0) + func.coalesce(Opportunity.hdd_value, 0))
-    ).filter(
-        Opportunity.stage.in_(open_stages)
-    ).group_by(Opportunity.stage).all()
+    stage_counts = (
+        db.query(
+            Opportunity.stage,
+            func.count(Opportunity.id),
+            func.sum(
+                func.coalesce(Opportunity.lv_value, 0)
+                + func.coalesce(Opportunity.hdd_value, 0)
+            ),
+        )
+        .filter(Opportunity.stage.in_(open_stages))
+        .group_by(Opportunity.stage)
+        .all()
+    )
 
-    stage_data = {row[0]: {'count': row[1], 'value': float(row[2] or 0)} for row in stage_counts}
+    stage_data = {
+        row[0]: {"count": row[1], "value": float(row[2] or 0)} for row in stage_counts
+    }
 
-    estimators = db.query(User).filter(User.role == 'Estimator').all()
+    estimators = db.query(User).filter(User.role == "Estimator").all()
     estimator_capacity = []
     for estimator in estimators:
-        active_count = db.query(func.count(Opportunity.id)).filter(
-            Opportunity.assigned_estimator_id == estimator.id,
-            Opportunity.stage.in_(open_stages)
-        ).scalar() or 0
+        active_count = (
+            db.query(func.count(Opportunity.id))
+            .filter(
+                Opportunity.assigned_estimator_id == estimator.id,
+                Opportunity.stage.in_(open_stages),
+            )
+            .scalar()
+            or 0
+        )
 
-        estimator_capacity.append({
-            'name': estimator.full_name,
-            'active_opportunities': active_count,
-            'capacity_level': 'green' if active_count <= 4 else ('yellow' if active_count <= 7 else 'red')
-        })
+        estimator_capacity.append(
+            {
+                "name": estimator.full_name,
+                "active_opportunities": active_count,
+                "capacity_level": "green"
+                if active_count <= 4
+                else ("yellow" if active_count <= 7 else "red"),
+            }
+        )
 
     return {
         "pipeline_value": pipeline_value,

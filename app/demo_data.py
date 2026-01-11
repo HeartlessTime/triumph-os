@@ -1,10 +1,8 @@
 """Demo data for fallback when database is unavailable."""
+
 from datetime import datetime, date, timedelta
 from decimal import Decimal
-from app.models import (
-    Account, Contact, Opportunity, OpportunityScope,
-    Activity, Task, User
-)
+from app.models import Account, Contact, Opportunity, Activity, Task
 
 
 def get_demo_accounts():
@@ -202,19 +200,21 @@ def get_demo_opportunities():
     o1.assigned_estimator_id = 1
     o1.estimating_status = "In Progress"
     o1.estimating_checklist = [
-        {'item': 'Review bid documents', 'done': True},
-        {'item': 'Site visit scheduled', 'done': True},
-        {'item': 'Takeoff complete', 'done': True},
-        {'item': 'Vendor quotes received', 'done': False},
-        {'item': 'Labor estimate complete', 'done': False},
-        {'item': 'Management review', 'done': False},
+        {"item": "Review bid documents", "done": True},
+        {"item": "Site visit scheduled", "done": True},
+        {"item": "Takeoff complete", "done": True},
+        {"item": "Vendor quotes received", "done": False},
+        {"item": "Labor estimate complete", "done": False},
+        {"item": "Management review", "done": False},
     ]
     o1.primary_contact_id = 1
     o1.source = "Repeat Customer"
-    o1.notes = "GC is pre-qualified. Strong relationship. Competitive bid with 3 other subs."
+    o1.notes = (
+        "GC is pre-qualified. Strong relationship. Competitive bid with 3 other subs."
+    )
     o1.created_at = datetime.utcnow() - timedelta(days=45)
     o1.gcs = [1]
-    o1.related_contact_ids = [1,2]
+    o1.related_contact_ids = [1, 2]
     o1.quick_links = ["https://triumph.example/bids/sunbelt-downtown"]
     o1.end_user_account_id = 3
     opportunities.append(o1)
@@ -224,7 +224,9 @@ def get_demo_opportunities():
     o2.id = 2
     o2.account_id = 2
     o2.name = "Metro - Riverside Apartments Phase 2"
-    o2.description = "250-unit apartment complex, access control and CCTV for common areas"
+    o2.description = (
+        "250-unit apartment complex, access control and CCTV for common areas"
+    )
     o2.stage = "Bid Sent"
     o2.probability = 75
     o2.bid_date = today + timedelta(days=7)
@@ -249,7 +251,9 @@ def get_demo_opportunities():
     o3.id = 3
     o3.account_id = 3
     o3.name = "Regional Medical - Emergency Dept Expansion"
-    o3.description = "New emergency department wing, nurse call, fire alarm, access control"
+    o3.description = (
+        "New emergency department wing, nurse call, fire alarm, access control"
+    )
     o3.stage = "Proposal"
     o3.probability = 40
     o3.bid_date = today + timedelta(days=60)
@@ -365,7 +369,9 @@ def get_demo_activities():
     a1.contact_id = 1
     a1.activity_type = "Call"
     a1.subject = "Discussed bid schedule and submittal requirements"
-    a1.notes = "Michael confirmed bid deadline is firm. Requested value engineering options."
+    a1.notes = (
+        "Michael confirmed bid deadline is firm. Requested value engineering options."
+    )
     a1.activity_date = today - timedelta(days=3)
     a1.duration = 30
     a1.created_by_id = 1
@@ -389,7 +395,9 @@ def get_demo_activities():
     a3.opportunity_id = 1
     a3.activity_type = "Meeting"
     a3.subject = "Pre-bid site walk"
-    a3.notes = "Attended mandatory site walk. Took photos. Identified MEP coordination issues."
+    a3.notes = (
+        "Attended mandatory site walk. Took photos. Identified MEP coordination issues."
+    )
     a3.activity_date = today - timedelta(days=10)
     a3.duration = 120
     a3.created_by_id = 1
@@ -402,7 +410,9 @@ def get_demo_activities():
     a4.contact_id = 5
     a4.activity_type = "Call"
     a4.subject = "Initial project discussion"
-    a4.notes = "Robert provided project overview. Bid documents to be released next week."
+    a4.notes = (
+        "Robert provided project overview. Bid documents to be released next week."
+    )
     a4.activity_date = today - timedelta(days=7)
     a4.duration = 45
     a4.created_by_id = 1
@@ -491,7 +501,12 @@ _demo_tasks = None
 
 def init_demo_data():
     """Initialize demo data (call once on startup)."""
-    global _demo_accounts, _demo_contacts, _demo_opportunities, _demo_activities, _demo_tasks
+    global \
+        _demo_accounts, \
+        _demo_contacts, \
+        _demo_opportunities, \
+        _demo_activities, \
+        _demo_tasks
     _demo_accounts = get_demo_accounts()
     _demo_contacts = get_demo_contacts()
     _demo_opportunities = get_demo_opportunities()

@@ -13,14 +13,12 @@ from fastapi import APIRouter, Request, Depends, Form
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session, selectinload
-from sqlalchemy import func  # kept for potential future use
 
 from app.database import get_db
-from app.models import Account, Contact, Opportunity, Activity, Task, WeeklySummaryNote, User
+from app.models import Account, Contact, Opportunity, Activity, Task, WeeklySummaryNote
 
 router = APIRouter(prefix="/summary", tags=["summary"])
 templates = Jinja2Templates(directory="app/templates")
-
 
 
 def get_week_start_monday(for_date: Optional[date] = None) -> date:
@@ -36,7 +34,9 @@ def get_week_boundaries_for_week(week_start: date):
     return week_start, week_start + timedelta(days=6)
 
 
-def load_notes_for_week(db: Session, week_start: date, user_id: Optional[int] = None) -> Dict[str, str]:
+def load_notes_for_week(
+    db: Session, week_start: date, user_id: Optional[int] = None
+) -> Dict[str, str]:
     """
     Load all notes for a given week, keyed by section.
 
@@ -64,7 +64,7 @@ def get_executive_summary(
     db: Session,
     start_datetime: datetime,
     end_datetime: datetime,
-    user_id: Optional[int] = None
+    user_id: Optional[int] = None,
 ) -> Dict:
     """
     Get executive summary metrics for a date range.
@@ -81,12 +81,16 @@ def get_executive_summary(
     # ----------------------------
     # MASTER ACTIVITY QUERY
     # ----------------------------
-    activity_query = db.query(Activity).options(
-        selectinload(Activity.contact).selectinload(Contact.account),
-        selectinload(Activity.opportunity)
-    ).filter(
-        Activity.activity_date >= start_datetime,
-        Activity.activity_date <= end_datetime
+    activity_query = (
+        db.query(Activity)
+        .options(
+            selectinload(Activity.contact).selectinload(Contact.account),
+            selectinload(Activity.opportunity),
+        )
+        .filter(
+            Activity.activity_date >= start_datetime,
+            Activity.activity_date <= end_datetime,
+        )
     )
 
     if user_id is not None:
@@ -110,11 +114,13 @@ def get_executive_summary(
     opportunities_touched_count = len(opportunities_touched_ids)
 
     if opportunities_touched_ids:
-        opportunities_touched = db.query(Opportunity).options(
-            selectinload(Opportunity.account)
-        ).filter(
-            Opportunity.id.in_(opportunities_touched_ids)
-        ).order_by(Opportunity.updated_at.desc()).all()
+        opportunities_touched = (
+            db.query(Opportunity)
+            .options(selectinload(Opportunity.account))
+            .filter(Opportunity.id.in_(opportunities_touched_ids))
+            .order_by(Opportunity.updated_at.desc())
+            .all()
+        )
     else:
         opportunities_touched = []
 
@@ -122,8 +128,7 @@ def get_executive_summary(
     # NEW ACCOUNTS
     # ----------------------------
     accounts_query = db.query(Account).filter(
-        Account.created_at >= start_datetime,
-        Account.created_at <= end_datetime
+        Account.created_at >= start_datetime, Account.created_at <= end_datetime
     )
     if user_id is not None:
         accounts_query = accounts_query.filter(Account.created_by_id == user_id)
@@ -134,11 +139,12 @@ def get_executive_summary(
     # ----------------------------
     # NEW CONTACTS
     # ----------------------------
-    contacts_query = db.query(Contact).options(
-        selectinload(Contact.account)
-    ).filter(
-        Contact.created_at >= start_datetime,
-        Contact.created_at <= end_datetime
+    contacts_query = (
+        db.query(Contact)
+        .options(selectinload(Contact.account))
+        .filter(
+            Contact.created_at >= start_datetime, Contact.created_at <= end_datetime
+        )
     )
 
     # For personal summary, only show contacts from user's accounts or touched opportunities
@@ -148,7 +154,9 @@ def get_executive_summary(
             touched_account_ids = [opp.account_id for opp in opportunities_touched]
             user_account_ids = list(set(user_account_ids + touched_account_ids))
         if user_account_ids:
-            contacts_query = contacts_query.filter(Contact.account_id.in_(user_account_ids))
+            contacts_query = contacts_query.filter(
+                Contact.account_id.in_(user_account_ids)
+            )
         else:
             # No accounts = no contacts for this user
             contacts_query = contacts_query.filter(Contact.id == -1)  # Always false
@@ -160,8 +168,7 @@ def get_executive_summary(
     # NEW OPPORTUNITIES
     # ----------------------------
     opps_query = db.query(Opportunity).filter(
-        Opportunity.created_at >= start_datetime,
-        Opportunity.created_at <= end_datetime
+        Opportunity.created_at >= start_datetime, Opportunity.created_at <= end_datetime
     )
     if user_id is not None:
         opps_query = opps_query.filter(Opportunity.owner_id == user_id)
@@ -172,12 +179,14 @@ def get_executive_summary(
     # ----------------------------
     # TASKS COMPLETED
     # ----------------------------
-    tasks_query = db.query(Task).options(
-        selectinload(Task.opportunity)
-    ).filter(
-        Task.status == 'Completed',
-        Task.updated_at >= start_datetime,
-        Task.updated_at <= end_datetime
+    tasks_query = (
+        db.query(Task)
+        .options(selectinload(Task.opportunity))
+        .filter(
+            Task.status == "Completed",
+            Task.updated_at >= start_datetime,
+            Task.updated_at <= end_datetime,
+        )
     )
     if user_id is not None:
         # Personal: tasks completed BY this user
@@ -189,31 +198,42 @@ def get_executive_summary(
     # ----------------------------
     # OUTREACH CONTACTS (from activities)
     # ----------------------------
-    outreach_types = ['call', 'meeting', 'email', 'site_visit']
-    outreach_activities = [a for a in activities_logged if a.activity_type in outreach_types]
-    outreach_contact_ids = list(set(a.contact_id for a in outreach_activities if a.contact_id))
+    outreach_types = ["call", "meeting", "email", "site_visit"]
+    outreach_activities = [
+        a for a in activities_logged if a.activity_type in outreach_types
+    ]
+    outreach_contact_ids = list(
+        set(a.contact_id for a in outreach_activities if a.contact_id)
+    )
 
     if outreach_contact_ids:
-        outreach_contacts = db.query(Contact).options(
-            selectinload(Contact.account)
-        ).filter(
-            Contact.id.in_(outreach_contact_ids)
-        ).all()
+        outreach_contacts = (
+            db.query(Contact)
+            .options(selectinload(Contact.account))
+            .filter(Contact.id.in_(outreach_contact_ids))
+            .all()
+        )
     else:
         outreach_contacts = []
 
     # ----------------------------
     # PIPELINE CHANGES (from activities)
     # ----------------------------
-    pipeline_activities = [a for a in activities_logged if 'Stage changed' in (a.subject or '')]
-    pipeline_opp_ids = list(set(a.opportunity_id for a in pipeline_activities if a.opportunity_id))
+    pipeline_activities = [
+        a for a in activities_logged if "Stage changed" in (a.subject or "")
+    ]
+    pipeline_opp_ids = list(
+        set(a.opportunity_id for a in pipeline_activities if a.opportunity_id)
+    )
 
     if pipeline_opp_ids:
-        pipeline_changes = db.query(Opportunity).options(
-            selectinload(Opportunity.account)
-        ).filter(
-            Opportunity.id.in_(pipeline_opp_ids)
-        ).order_by(Opportunity.updated_at.desc()).all()
+        pipeline_changes = (
+            db.query(Opportunity)
+            .options(selectinload(Opportunity.account))
+            .filter(Opportunity.id.in_(pipeline_opp_ids))
+            .order_by(Opportunity.updated_at.desc())
+            .all()
+        )
     else:
         pipeline_changes = []
 
@@ -239,9 +259,7 @@ def get_executive_summary(
 
 @router.get("/weekly", response_class=HTMLResponse)
 async def weekly_summary(
-    request: Request,
-    week_start: Optional[date] = None,
-    db: Session = Depends(get_db)
+    request: Request, week_start: Optional[date] = None, db: Session = Depends(get_db)
 ):
     """
     Weekly summary page showing work completed in a specific week.
@@ -263,7 +281,7 @@ async def weekly_summary(
     prev_week = week_start - timedelta(days=7)
     next_week = week_start + timedelta(days=7)
     current_week = get_week_start_monday()
-    is_current_week = (week_start == current_week)
+    is_current_week = week_start == current_week
 
     # Get team-wide executive summary (user_id=None)
     summary = get_executive_summary(db, start_datetime, end_datetime, user_id=None)
@@ -271,37 +289,52 @@ async def weekly_summary(
     # Generate summary sentence (team-wide language)
     summary_parts = []
     if summary["contacts_logged_count"] > 0:
-        summary_parts.append(f"{summary['contacts_logged_count']} contact{'s' if summary['contacts_logged_count'] != 1 else ''} logged")
+        summary_parts.append(
+            f"{summary['contacts_logged_count']} contact{'s' if summary['contacts_logged_count'] != 1 else ''} logged"
+        )
     if summary["activities_logged_count"] > 0:
-        summary_parts.append(f"{summary['activities_logged_count']} activit{'ies' if summary['activities_logged_count'] != 1 else 'y'} recorded")
+        summary_parts.append(
+            f"{summary['activities_logged_count']} activit{'ies' if summary['activities_logged_count'] != 1 else 'y'} recorded"
+        )
     if summary["tasks_completed_count"] > 0:
-        summary_parts.append(f"{summary['tasks_completed_count']} task{'s' if summary['tasks_completed_count'] != 1 else ''} completed")
+        summary_parts.append(
+            f"{summary['tasks_completed_count']} task{'s' if summary['tasks_completed_count'] != 1 else ''} completed"
+        )
     if summary["new_opportunities_count"] > 0:
-        summary_parts.append(f"{summary['new_opportunities_count']} new opportunit{'ies' if summary['new_opportunities_count'] != 1 else 'y'}")
+        summary_parts.append(
+            f"{summary['new_opportunities_count']} new opportunit{'ies' if summary['new_opportunities_count'] != 1 else 'y'}"
+        )
 
-    week_label = "This week" if is_current_week else f"Week of {start_date.strftime('%b %d')}"
+    week_label = (
+        "This week" if is_current_week else f"Week of {start_date.strftime('%b %d')}"
+    )
     if summary_parts:
-        summary_sentence = f"{week_label} the team logged " + ", ".join(summary_parts) + "."
+        summary_sentence = (
+            f"{week_label} the team logged " + ", ".join(summary_parts) + "."
+        )
     else:
         summary_sentence = f"No team activity recorded for {week_label.lower()}."
 
     # Load team notes (user_id = NULL)
     section_notes = load_notes_for_week(db, week_start, user_id=None)
 
-    return templates.TemplateResponse("summary/weekly.html", {
-        "request": request,
-        "start_date": start_date,
-        "end_date": end_date,
-        "week_start": week_start,
-        "prev_week": prev_week,
-        "next_week": next_week,
-        "is_current_week": is_current_week,
-        "summary_sentence": summary_sentence,
-        # Notes
-        "section_notes": section_notes,
-        # Spread all summary data
-        **summary,
-    })
+    return templates.TemplateResponse(
+        "summary/weekly.html",
+        {
+            "request": request,
+            "start_date": start_date,
+            "end_date": end_date,
+            "week_start": week_start,
+            "prev_week": prev_week,
+            "next_week": next_week,
+            "is_current_week": is_current_week,
+            "summary_sentence": summary_sentence,
+            # Notes
+            "section_notes": section_notes,
+            # Spread all summary data
+            **summary,
+        },
+    )
 
 
 @router.post("/weekly/notes")
@@ -311,7 +344,7 @@ async def save_weekly_note(
     section: str = Form(...),
     notes: str = Form(""),
     note_type: str = Form("team"),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """
     Save or update a note for a specific section and week.
@@ -338,8 +371,7 @@ async def save_weekly_note(
     # Find existing note or create new one
     # Query must match week_start + section + user_id (including NULL)
     query = db.query(WeeklySummaryNote).filter(
-        WeeklySummaryNote.week_start == week_start,
-        WeeklySummaryNote.section == section
+        WeeklySummaryNote.week_start == week_start, WeeklySummaryNote.section == section
     )
     if user_id is None:
         query = query.filter(WeeklySummaryNote.user_id.is_(None))
@@ -358,7 +390,7 @@ async def save_weekly_note(
             user_id=user_id,
             notes=notes,
             created_at=datetime.utcnow(),
-            updated_at=datetime.utcnow()
+            updated_at=datetime.utcnow(),
         )
         db.add(new_note)
 
@@ -369,9 +401,7 @@ async def save_weekly_note(
 
 @router.get("/my-weekly", response_class=HTMLResponse)
 async def my_weekly_summary(
-    request: Request,
-    week_start: Optional[date] = None,
-    db: Session = Depends(get_db)
+    request: Request, week_start: Optional[date] = None, db: Session = Depends(get_db)
 ):
     """
     Personal weekly summary showing work the current user completed.
@@ -399,7 +429,7 @@ async def my_weekly_summary(
     prev_week = week_start - timedelta(days=7)
     next_week = week_start + timedelta(days=7)
     current_week_monday = get_week_start_monday()
-    is_current_week = (week_start == current_week_monday)
+    is_current_week = week_start == current_week_monday
 
     # Get personal executive summary (user_id=current user)
     summary = get_executive_summary(db, start_datetime, end_datetime, user_id=user_id)
@@ -407,34 +437,49 @@ async def my_weekly_summary(
     # Generate summary sentence (personal language)
     summary_parts = []
     if summary["contacts_logged_count"] > 0:
-        summary_parts.append(f"{summary['contacts_logged_count']} contact{'s' if summary['contacts_logged_count'] != 1 else ''}")
+        summary_parts.append(
+            f"{summary['contacts_logged_count']} contact{'s' if summary['contacts_logged_count'] != 1 else ''}"
+        )
     if summary["activities_logged_count"] > 0:
-        summary_parts.append(f"{summary['activities_logged_count']} activit{'ies' if summary['activities_logged_count'] != 1 else 'y'}")
+        summary_parts.append(
+            f"{summary['activities_logged_count']} activit{'ies' if summary['activities_logged_count'] != 1 else 'y'}"
+        )
     if summary["tasks_completed_count"] > 0:
-        summary_parts.append(f"{summary['tasks_completed_count']} task{'s' if summary['tasks_completed_count'] != 1 else ''}")
+        summary_parts.append(
+            f"{summary['tasks_completed_count']} task{'s' if summary['tasks_completed_count'] != 1 else ''}"
+        )
     if summary["new_opportunities_count"] > 0:
-        summary_parts.append(f"{summary['new_opportunities_count']} new opportunit{'ies' if summary['new_opportunities_count'] != 1 else 'y'}")
+        summary_parts.append(
+            f"{summary['new_opportunities_count']} new opportunit{'ies' if summary['new_opportunities_count'] != 1 else 'y'}"
+        )
 
-    week_label = "This week" if is_current_week else f"Week of {start_date.strftime('%b %d')}"
+    week_label = (
+        "This week" if is_current_week else f"Week of {start_date.strftime('%b %d')}"
+    )
     if summary_parts:
         summary_sentence = f"{week_label} you logged " + ", ".join(summary_parts) + "."
     else:
-        summary_sentence = f"You haven't logged any activity for {week_label.lower()} yet."
+        summary_sentence = (
+            f"You haven't logged any activity for {week_label.lower()} yet."
+        )
 
     # Personal notes for this user
     section_notes = load_notes_for_week(db, week_start, user_id=user_id)
 
-    return templates.TemplateResponse("summary/my_weekly.html", {
-        "request": request,
-        "start_date": start_date,
-        "end_date": end_date,
-        "week_start": week_start,
-        "prev_week": prev_week,
-        "next_week": next_week,
-        "is_current_week": is_current_week,
-        "summary_sentence": summary_sentence,
-        # Notes
-        "section_notes": section_notes,
-        # Spread all summary data
-        **summary,
-    })
+    return templates.TemplateResponse(
+        "summary/my_weekly.html",
+        {
+            "request": request,
+            "start_date": start_date,
+            "end_date": end_date,
+            "week_start": week_start,
+            "prev_week": prev_week,
+            "next_week": next_week,
+            "is_current_week": is_current_week,
+            "summary_sentence": summary_sentence,
+            # Notes
+            "section_notes": section_notes,
+            # Spread all summary data
+            **summary,
+        },
+    )

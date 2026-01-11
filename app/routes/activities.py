@@ -11,6 +11,7 @@ from app.services.followup import calculate_next_followup
 router = APIRouter(prefix="/activities", tags=["activities"])
 templates = Jinja2Templates(directory="app/templates")
 
+
 @router.post("/opportunity/{opp_id}/add")
 async def add_activity(
     request: Request,
@@ -21,7 +22,7 @@ async def add_activity(
     activity_date: str = Form(None),
     contact_id: int = Form(None),
     update_last_contacted: bool = Form(True),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """Add an activity to an opportunity."""
     opportunity = db.query(Opportunity).filter(Opportunity.id == opp_id).first()
@@ -54,7 +55,7 @@ async def add_activity(
         opportunity.next_followup = calculate_next_followup(
             stage=opportunity.stage,
             last_contacted=opportunity.last_contacted,
-            bid_date=opportunity.bid_date
+            bid_date=opportunity.bid_date,
         )
 
     db.commit()
@@ -64,25 +65,29 @@ async def add_activity(
 
 @router.get("/{activity_id}/edit", response_class=HTMLResponse)
 async def edit_activity_form(
-    request: Request,
-    activity_id: int,
-    db: Session = Depends(get_db)
+    request: Request, activity_id: int, db: Session = Depends(get_db)
 ):
     """Display edit activity form."""
     activity = db.query(Activity).filter(Activity.id == activity_id).first()
     if not activity:
         raise HTTPException(status_code=404, detail="Activity not found")
 
-    contacts = db.query(Contact).filter(
-        Contact.account_id == activity.opportunity.account_id
-    ).order_by(Contact.last_name).all()
+    contacts = (
+        db.query(Contact)
+        .filter(Contact.account_id == activity.opportunity.account_id)
+        .order_by(Contact.last_name)
+        .all()
+    )
 
-    return templates.TemplateResponse("activities/edit.html", {
-        "request": request,
-        "activity": activity,
-        "contacts": contacts,
-        "activity_types": Activity.ACTIVITY_TYPES,
-    })
+    return templates.TemplateResponse(
+        "activities/edit.html",
+        {
+            "request": request,
+            "activity": activity,
+            "contacts": contacts,
+            "activity_types": Activity.ACTIVITY_TYPES,
+        },
+    )
 
 
 @router.post("/{activity_id}/edit")
@@ -94,7 +99,7 @@ async def update_activity(
     description: str = Form(None),
     activity_date: str = Form(...),
     contact_id: int = Form(None),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """Update an activity."""
     activity = db.query(Activity).filter(Activity.id == activity_id).first()
@@ -109,14 +114,14 @@ async def update_activity(
 
     db.commit()
 
-    return RedirectResponse(url=f"/opportunities/{activity.opportunity_id}", status_code=303)
+    return RedirectResponse(
+        url=f"/opportunities/{activity.opportunity_id}", status_code=303
+    )
 
 
 @router.post("/{activity_id}/delete")
 async def delete_activity(
-    request: Request,
-    activity_id: int,
-    db: Session = Depends(get_db)
+    request: Request, activity_id: int, db: Session = Depends(get_db)
 ):
     """Delete an activity."""
     activity = db.query(Activity).filter(Activity.id == activity_id).first()

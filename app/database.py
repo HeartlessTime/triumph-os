@@ -24,7 +24,9 @@ def get_database_url() -> str:
 def get_engine():
     """Get or create database engine."""
     DATABASE_URL = get_database_url()
-    return create_engine(DATABASE_URL, echo=os.getenv("DEBUG", "false").lower() == "true")
+    return create_engine(
+        DATABASE_URL, echo=os.getenv("DEBUG", "false").lower() == "true"
+    )
 
 
 engine = get_engine()

@@ -14,13 +14,14 @@ from app.services.validators import validate_account
 router = APIRouter(prefix="/accounts", tags=["accounts"])
 templates = Jinja2Templates(directory="app/templates")
 
+
 def normalize_url(url: Optional[str]) -> Optional[str]:
     """Prepend https:// if URL doesn't start with http:// or https://."""
     if not url:
         return None
     url = url.strip()
-    if url and not url.startswith(('http://', 'https://')):
-        return f'https://{url}'
+    if url and not url.startswith(("http://", "https://")):
+        return f"https://{url}"
     return url
 
 
@@ -30,7 +31,7 @@ async def list_accounts(
     search: str = None,
     industry: str = None,
     sort: str = None,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """List all accounts with optional filtering."""
     # Eager load contacts and opportunities to avoid N+1 for:
@@ -39,8 +40,7 @@ async def list_accounts(
     # - account.open_opportunities_count property (iterates opportunities)
     # - account.total_pipeline_value property (iterates opportunities)
     query = db.query(Account).options(
-        selectinload(Account.contacts),
-        selectinload(Account.opportunities)
+        selectinload(Account.contacts), selectinload(Account.opportunities)
     )
 
     if search:
@@ -62,17 +62,17 @@ async def list_accounts(
         pipeline_subq = (
             db.query(
                 Opportunity.account_id,
-                func.sum(Opportunity.lv_value + Opportunity.hdd_value).label('total_value')
+                func.sum(Opportunity.lv_value + Opportunity.hdd_value).label(
+                    "total_value"
+                ),
             )
-            .filter(Opportunity.stage.notin_(['Won', 'Lost']))
+            .filter(Opportunity.stage.notin_(["Won", "Lost"]))
             .group_by(Opportunity.account_id)
             .subquery()
         )
-        query = (
-            query
-            .outerjoin(pipeline_subq, Account.id == pipeline_subq.c.account_id)
-            .order_by(pipeline_subq.c.total_value.desc().nullslast())
-        )
+        query = query.outerjoin(
+            pipeline_subq, Account.id == pipeline_subq.c.account_id
+        ).order_by(pipeline_subq.c.total_value.desc().nullslast())
     elif sort != "last_contacted":
         # Default sort (skip if last_contacted - handled in Python below)
         query = query.order_by(Account.name.asc())
@@ -83,33 +83,36 @@ async def list_accounts(
     if sort == "last_contacted":
         accounts.sort(
             key=lambda a: a.last_contacted or date.min,
-            reverse=False  # Oldest first (those not contacted recently at top)
+            reverse=False,  # Oldest first (those not contacted recently at top)
         )
 
-    return templates.TemplateResponse("accounts/list.html", {
-        "request": request,
-        "accounts": accounts,
-        "search": search,
-        "industry": industry,
-        "industries": Account.INDUSTRIES,
-        "sort": sort,
-    })
+    return templates.TemplateResponse(
+        "accounts/list.html",
+        {
+            "request": request,
+            "accounts": accounts,
+            "search": search,
+            "industry": industry,
+            "industries": Account.INDUSTRIES,
+            "sort": sort,
+        },
+    )
 
 
 @router.get("/new", response_class=HTMLResponse)
-async def new_account_form(
-    request: Request,
-    db: Session = Depends(get_db)
-):
+async def new_account_form(request: Request, db: Session = Depends(get_db)):
     """Display new account form."""
-    return templates.TemplateResponse("accounts/form.html", {
-        "request": request,
-        "account": None,
-        "industries": Account.INDUSTRIES,
-        "is_new": True,
-        "error": None,
-        "warnings": [],
-    })
+    return templates.TemplateResponse(
+        "accounts/form.html",
+        {
+            "request": request,
+            "account": None,
+            "industries": Account.INDUSTRIES,
+            "is_new": True,
+            "error": None,
+            "warnings": [],
+        },
+    )
 
 
 @router.post("/new")
@@ -125,7 +128,7 @@ async def create_account(
     zip_code: str = Form(None),
     notes: str = Form(None),
     confirm_warnings: bool = Form(False),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """Create a new account with validation."""
     current_user = request.state.current_user
@@ -143,45 +146,51 @@ async def create_account(
 
     # If errors, re-render form with error message
     if not result.is_valid:
-        return templates.TemplateResponse("accounts/form.html", {
-            "request": request,
-            "account": None,
-            "industries": Account.INDUSTRIES,
-            "is_new": True,
-            "error": "; ".join(result.errors),
-            "warnings": [],
-            # Preserve form values
-            "form_name": name,
-            "form_industry": industry,
-            "form_website": website,
-            "form_phone": phone,
-            "form_address": address,
-            "form_city": city,
-            "form_state": state,
-            "form_zip_code": zip_code,
-            "form_notes": notes,
-        })
+        return templates.TemplateResponse(
+            "accounts/form.html",
+            {
+                "request": request,
+                "account": None,
+                "industries": Account.INDUSTRIES,
+                "is_new": True,
+                "error": "; ".join(result.errors),
+                "warnings": [],
+                # Preserve form values
+                "form_name": name,
+                "form_industry": industry,
+                "form_website": website,
+                "form_phone": phone,
+                "form_address": address,
+                "form_city": city,
+                "form_state": state,
+                "form_zip_code": zip_code,
+                "form_notes": notes,
+            },
+        )
 
     # If warnings and not confirmed, show warnings
     if result.warnings and not confirm_warnings:
-        return templates.TemplateResponse("accounts/form.html", {
-            "request": request,
-            "account": None,
-            "industries": Account.INDUSTRIES,
-            "is_new": True,
-            "error": None,
-            "warnings": result.warnings,
-            # Preserve form values
-            "form_name": name,
-            "form_industry": industry,
-            "form_website": website,
-            "form_phone": phone,
-            "form_address": address,
-            "form_city": city,
-            "form_state": state,
-            "form_zip_code": zip_code,
-            "form_notes": notes,
-        })
+        return templates.TemplateResponse(
+            "accounts/form.html",
+            {
+                "request": request,
+                "account": None,
+                "industries": Account.INDUSTRIES,
+                "is_new": True,
+                "error": None,
+                "warnings": result.warnings,
+                # Preserve form values
+                "form_name": name,
+                "form_industry": industry,
+                "form_website": website,
+                "form_phone": phone,
+                "form_address": address,
+                "form_city": city,
+                "form_state": state,
+                "form_zip_code": zip_code,
+                "form_notes": notes,
+            },
+        )
 
     # Create account with ownership
     account = Account(
@@ -205,31 +214,32 @@ async def create_account(
 
 @router.get("/{account_id}", response_class=HTMLResponse)
 async def view_account(
-    request: Request,
-    account_id: int,
-    db: Session = Depends(get_db)
+    request: Request, account_id: int, db: Session = Depends(get_db)
 ):
     """View account details."""
     # Eager load contacts and opportunities to avoid N+1 in template
     # Template accesses account.contacts (list) and account.opportunities (list)
-    account = db.query(Account).options(
-        selectinload(Account.contacts),
-        selectinload(Account.opportunities)
-    ).filter(Account.id == account_id).first()
+    account = (
+        db.query(Account)
+        .options(selectinload(Account.contacts), selectinload(Account.opportunities))
+        .filter(Account.id == account_id)
+        .first()
+    )
     if not account:
         raise HTTPException(status_code=404, detail="Account not found")
 
-    return templates.TemplateResponse("accounts/view.html", {
-        "request": request,
-        "account": account,
-    })
+    return templates.TemplateResponse(
+        "accounts/view.html",
+        {
+            "request": request,
+            "account": account,
+        },
+    )
 
 
 @router.get("/{account_id}/edit", response_class=HTMLResponse)
 async def edit_account_form(
-    request: Request,
-    account_id: int,
-    db: Session = Depends(get_db)
+    request: Request, account_id: int, db: Session = Depends(get_db)
 ):
     """Display edit account form."""
     account = db.query(Account).filter(Account.id == account_id).first()
@@ -239,15 +249,18 @@ async def edit_account_form(
     # Normalize website URL for display (ensure https:// prefix)
     display_website = normalize_url(account.website) if account.website else None
 
-    return templates.TemplateResponse("accounts/form.html", {
-        "request": request,
-        "account": account,
-        "display_website": display_website,
-        "industries": Account.INDUSTRIES,
-        "is_new": False,
-        "error": None,
-        "warnings": [],
-    })
+    return templates.TemplateResponse(
+        "accounts/form.html",
+        {
+            "request": request,
+            "account": account,
+            "display_website": display_website,
+            "industries": Account.INDUSTRIES,
+            "is_new": False,
+            "error": None,
+            "warnings": [],
+        },
+    )
 
 
 @router.post("/{account_id}/edit")
@@ -264,7 +277,7 @@ async def update_account(
     zip_code: str = Form(None),
     notes: str = Form(None),
     confirm_warnings: bool = Form(False),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """Update an existing account with validation."""
     account = db.query(Account).filter(Account.id == account_id).first()
@@ -284,47 +297,53 @@ async def update_account(
 
     # If errors, re-render form with error message
     if not result.is_valid:
-        return templates.TemplateResponse("accounts/form.html", {
-            "request": request,
-            "account": account,
-            "display_website": normalize_url(website),
-            "industries": Account.INDUSTRIES,
-            "is_new": False,
-            "error": "; ".join(result.errors),
-            "warnings": [],
-            # Override with submitted values
-            "form_name": name,
-            "form_industry": industry,
-            "form_website": website,
-            "form_phone": phone,
-            "form_address": address,
-            "form_city": city,
-            "form_state": state,
-            "form_zip_code": zip_code,
-            "form_notes": notes,
-        })
+        return templates.TemplateResponse(
+            "accounts/form.html",
+            {
+                "request": request,
+                "account": account,
+                "display_website": normalize_url(website),
+                "industries": Account.INDUSTRIES,
+                "is_new": False,
+                "error": "; ".join(result.errors),
+                "warnings": [],
+                # Override with submitted values
+                "form_name": name,
+                "form_industry": industry,
+                "form_website": website,
+                "form_phone": phone,
+                "form_address": address,
+                "form_city": city,
+                "form_state": state,
+                "form_zip_code": zip_code,
+                "form_notes": notes,
+            },
+        )
 
     # If warnings and not confirmed, show warnings
     if result.warnings and not confirm_warnings:
-        return templates.TemplateResponse("accounts/form.html", {
-            "request": request,
-            "account": account,
-            "display_website": normalize_url(website),
-            "industries": Account.INDUSTRIES,
-            "is_new": False,
-            "error": None,
-            "warnings": result.warnings,
-            # Override with submitted values
-            "form_name": name,
-            "form_industry": industry,
-            "form_website": website,
-            "form_phone": phone,
-            "form_address": address,
-            "form_city": city,
-            "form_state": state,
-            "form_zip_code": zip_code,
-            "form_notes": notes,
-        })
+        return templates.TemplateResponse(
+            "accounts/form.html",
+            {
+                "request": request,
+                "account": account,
+                "display_website": normalize_url(website),
+                "industries": Account.INDUSTRIES,
+                "is_new": False,
+                "error": None,
+                "warnings": result.warnings,
+                # Override with submitted values
+                "form_name": name,
+                "form_industry": industry,
+                "form_website": website,
+                "form_phone": phone,
+                "form_address": address,
+                "form_city": city,
+                "form_state": state,
+                "form_zip_code": zip_code,
+                "form_notes": notes,
+            },
+        )
 
     account.name = name
     account.industry = industry or None
@@ -343,9 +362,7 @@ async def update_account(
 
 @router.post("/{account_id}/delete")
 async def delete_account(
-    request: Request,
-    account_id: int,
-    db: Session = Depends(get_db)
+    request: Request, account_id: int, db: Session = Depends(get_db)
 ):
     """Delete an account with safety checks."""
     account = db.query(Account).filter(Account.id == account_id).first()
@@ -353,11 +370,13 @@ async def delete_account(
         raise HTTPException(status_code=404, detail="Account not found")
 
     # Block deletion if account has any opportunities
-    opp_count = db.query(Opportunity).filter(Opportunity.account_id == account_id).count()
+    opp_count = (
+        db.query(Opportunity).filter(Opportunity.account_id == account_id).count()
+    )
     if opp_count > 0:
         raise HTTPException(
             status_code=400,
-            detail=f"Cannot delete account with {opp_count} opportunity(ies). Delete opportunities first."
+            detail=f"Cannot delete account with {opp_count} opportunity(ies). Delete opportunities first.",
         )
 
     # Delete all contacts under this account

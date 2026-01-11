@@ -5,7 +5,7 @@ from app.database import Base
 
 
 class ScopePackage(Base):
-    __tablename__ = 'scope_packages'
+    __tablename__ = "scope_packages"
 
     id = Column(Integer, primary_key=True)
     name = Column(String(100), nullable=False)

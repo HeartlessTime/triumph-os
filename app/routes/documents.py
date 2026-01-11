@@ -2,7 +2,7 @@ import os
 import uuid
 import shutil
 from fastapi import APIRouter, Request, Depends, Form, HTTPException, UploadFile, File
-from fastapi.responses import HTMLResponse, RedirectResponse, FileResponse
+from fastapi.responses import RedirectResponse, FileResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 
@@ -23,7 +23,7 @@ async def upload_document(
     file: UploadFile = File(...),
     name: str = Form(None),
     document_type: str = Form("other"),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """Upload a document to an opportunity."""
     opportunity = db.query(Opportunity).filter(Opportunity.id == opp_id).first()
@@ -35,7 +35,7 @@ async def upload_document(
 
     # Generate unique filename
     original_filename = file.filename
-    ext = os.path.splitext(original_filename)[1] if '.' in original_filename else ''
+    ext = os.path.splitext(original_filename)[1] if "." in original_filename else ""
     unique_filename = f"{uuid.uuid4().hex}{ext}"
     file_path = os.path.join(UPLOAD_DIR, unique_filename)
 
@@ -65,9 +65,7 @@ async def upload_document(
 
 @router.get("/{doc_id}/download")
 async def download_document(
-    request: Request,
-    doc_id: int,
-    db: Session = Depends(get_db)
+    request: Request, doc_id: int, db: Session = Depends(get_db)
 ):
     """Download a document."""
     document = db.query(Document).filter(Document.id == doc_id).first()
@@ -80,16 +78,12 @@ async def download_document(
     return FileResponse(
         path=document.file_path,
         filename=document.original_filename,
-        media_type=document.mime_type or "application/octet-stream"
+        media_type=document.mime_type or "application/octet-stream",
     )
 
 
 @router.get("/{doc_id}/view")
-async def view_document(
-    request: Request,
-    doc_id: int,
-    db: Session = Depends(get_db)
-):
+async def view_document(request: Request, doc_id: int, db: Session = Depends(get_db)):
     """View a document inline (for PDFs, images)."""
     document = db.query(Document).filter(Document.id == doc_id).first()
     if not document:
@@ -102,16 +96,14 @@ async def view_document(
     return FileResponse(
         path=document.file_path,
         media_type=document.mime_type or "application/octet-stream",
-        headers={"Content-Disposition": f"inline; filename=\"{document.original_filename}\""}
+        headers={
+            "Content-Disposition": f'inline; filename="{document.original_filename}"'
+        },
     )
 
 
 @router.post("/{doc_id}/delete")
-async def delete_document(
-    request: Request,
-    doc_id: int,
-    db: Session = Depends(get_db)
-):
+async def delete_document(request: Request, doc_id: int, db: Session = Depends(get_db)):
     """Delete a document."""
     document = db.query(Document).filter(Document.id == doc_id).first()
     if not document:
@@ -136,7 +128,7 @@ async def update_document(
     doc_id: int,
     name: str = Form(...),
     document_type: str = Form("other"),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """Update document metadata."""
     document = db.query(Document).filter(Document.id == doc_id).first()
@@ -148,4 +140,6 @@ async def update_document(
 
     db.commit()
 
-    return RedirectResponse(url=f"/opportunities/{document.opportunity_id}", status_code=303)
+    return RedirectResponse(
+        url=f"/opportunities/{document.opportunity_id}", status_code=303
+    )

@@ -42,8 +42,7 @@ def get_password_hash(password: str) -> str:
 
 
 def get_current_user_optional(
-    request: Request,
-    db: Session = Depends(get_db)
+    request: Request, db: Session = Depends(get_db)
 ) -> Optional[User]:
     """
     Get the current user from session if logged in.
@@ -53,17 +52,10 @@ def get_current_user_optional(
     if not user_id:
         return None
 
-    return (
-        db.query(User)
-        .filter(User.id == user_id, User.is_active.is_(True))
-        .first()
-    )
+    return db.query(User).filter(User.id == user_id, User.is_active.is_(True)).first()
 
 
-def get_current_user(
-    request: Request,
-    db: Session = Depends(get_db)
-) -> User:
+def get_current_user(request: Request, db: Session = Depends(get_db)) -> User:
     """
     Get the current user from session.
     Raises HTTPException if not authenticated.
@@ -75,8 +67,7 @@ def get_current_user(
 
 
 async def require_user(
-    request: Request,
-    db: Session = Depends(get_db)
+    request: Request, db: Session = Depends(get_db)
 ) -> Optional[User]:
     """
     Dependency that returns the user or None.
@@ -85,11 +76,7 @@ async def require_user(
     return get_current_user_optional(request, db)
 
 
-def authenticate_user(
-    db: Session,
-    email: str,
-    password: str
-) -> Optional[User]:
+def authenticate_user(db: Session, email: str, password: str) -> Optional[User]:
     """
     Authenticate a user by email and password.
     Returns the user if authentication succeeds, None otherwise.
