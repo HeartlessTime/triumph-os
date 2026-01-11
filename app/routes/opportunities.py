@@ -14,6 +14,7 @@ from app.models import (
     User, ScopePackage, Activity, Task, Document
 )
 from app.services.followup import calculate_next_followup, get_followup_status
+from app.services.validators import validate_opportunity_create, validate_opportunity_update
 
 router = APIRouter(prefix="/opportunities", tags=["opportunities"])
 templates = Jinja2Templates(directory="app/templates")
@@ -178,6 +179,8 @@ async def intake_form(
             "selected_account_id": account_id,
             "stages": Opportunity.STAGES,
             "sources": Opportunity.SOURCES,
+            "error": None,
+            "warnings": [],
         }
     )
 
@@ -194,17 +197,99 @@ async def create_opportunity(
     lv_value: Optional[str] = Form(None),
     hdd_value: Optional[str] = Form(None),
     bid_date: Optional[str] = Form(None),
+    bid_date_tbd: bool = Form(False),
     owner_id: Optional[int] = Form(None),
     assigned_estimator_id: Optional[int] = Form(None),
     scope_names: List[str] = Form(default=[]),
     scope_other_text: Optional[str] = Form(None),
     gc_ids: List[str] = Form(default=[]),
+    confirm_warnings: bool = Form(False),
     db: Session = Depends(get_db)
 ):
     def clean_num(val: Optional[str]):
         return Decimal(val.replace(",", "")) if val else None
 
     current_user = request.state.current_user
+
+    # Build data dict for validation
+    data = {
+        "account_id": account_id,
+        "name": name,
+        "stage": stage,
+        "lv_value": lv_value,
+        "hdd_value": hdd_value,
+        "bid_date": bid_date,
+        "bid_date_tbd": bid_date_tbd,
+        "owner_id": owner_id if owner_id else current_user.id,
+    }
+
+    # Validate opportunity data
+    result = validate_opportunity_create(data, db)
+
+    # If errors, re-render form with error message
+    if not result.is_valid:
+        accounts = db.query(Account).order_by(Account.name).all()
+        scope_packages = db.query(ScopePackage).filter(ScopePackage.is_active == True).order_by(ScopePackage.sort_order).all()
+        users = db.query(User).filter(User.is_active == True).order_by(User.full_name).all()
+        sales_users = [u for u in users if u.role in ("Sales", "Admin")]
+        estimators = [u for u in users if u.role in ("Estimator", "Admin")]
+        contacts = db.query(Contact).filter(Contact.account_id == account_id).order_by(Contact.last_name).all() if account_id else []
+
+        return templates.TemplateResponse("opportunities/intake.html", {
+            "request": request,
+            "accounts": accounts,
+            "scope_packages": scope_packages,
+            "sales_users": sales_users,
+            "estimators": estimators,
+            "contacts": contacts,
+            "selected_account_id": account_id,
+            "stages": Opportunity.STAGES,
+            "sources": Opportunity.SOURCES,
+            "error": "; ".join(result.errors),
+            "warnings": [],
+            # Preserve form values
+            "form_name": name,
+            "form_lv_value": lv_value,
+            "form_hdd_value": hdd_value,
+            "form_bid_date": bid_date,
+            "form_bid_date_tbd": bid_date_tbd,
+            "form_stage": stage,
+            "form_owner_id": owner_id,
+            "form_assigned_estimator_id": assigned_estimator_id,
+        })
+
+    # If warnings and not confirmed, show warnings
+    if result.warnings and not confirm_warnings:
+        accounts = db.query(Account).order_by(Account.name).all()
+        scope_packages = db.query(ScopePackage).filter(ScopePackage.is_active == True).order_by(ScopePackage.sort_order).all()
+        users = db.query(User).filter(User.is_active == True).order_by(User.full_name).all()
+        sales_users = [u for u in users if u.role in ("Sales", "Admin")]
+        estimators = [u for u in users if u.role in ("Estimator", "Admin")]
+        contacts = db.query(Contact).filter(Contact.account_id == account_id).order_by(Contact.last_name).all() if account_id else []
+
+        return templates.TemplateResponse("opportunities/intake.html", {
+            "request": request,
+            "accounts": accounts,
+            "scope_packages": scope_packages,
+            "sales_users": sales_users,
+            "estimators": estimators,
+            "contacts": contacts,
+            "selected_account_id": account_id,
+            "stages": Opportunity.STAGES,
+            "sources": Opportunity.SOURCES,
+            "error": None,
+            "warnings": result.warnings,
+            # Preserve form values
+            "form_name": name,
+            "form_lv_value": lv_value,
+            "form_hdd_value": hdd_value,
+            "form_bid_date": bid_date,
+            "form_bid_date_tbd": bid_date_tbd,
+            "form_stage": stage,
+            "form_owner_id": owner_id,
+            "form_assigned_estimator_id": assigned_estimator_id,
+        })
+
     opportunity = Opportunity(
         account_id=account_id,
         name=name,
@@ -468,6 +553,8 @@ async def edit_opportunity_form(
             "stalled_reasons": Opportunity.STALLED_REASONS,
             "selected_scope_names": selected_scope_names,
             "selected_scope_other_text": selected_scope_other_text,
+            "error": None,
+            "warnings": [],
         }
     )
 
@@ -483,6 +570,7 @@ async def update_opportunity(
     lv_value: str = Form(None),
     hdd_value: str = Form(None),
     bid_date: str = Form(None),
+    bid_date_tbd: bool = Form(False),
     bid_time: str = Form(None),
     owner_id: int = Form(None),
     assigned_estimator_id: int = Form(None),
@@ -504,6 +592,7 @@ async def update_opportunity(
     gc_ids: List[str] = Form(default=[]),
     scope_names: List[str] = Form(default=[]),
     scope_other_text: Optional[str] = Form(None),
+    confirm_warnings: bool = Form(False),
     db: Session = Depends(get_db)
 ):
     opportunity = db.query(Opportunity).filter(Opportunity.id == opp_id).first()
@@ -515,8 +604,74 @@ async def update_opportunity(
             return None
         return Decimal(str(val).replace(",", ""))
 
-    # Capture old stage for activity logging
+    # Capture old stage for activity logging and validation
     old_stage = opportunity.stage
+    current_user = request.state.current_user
+
+    # Build data dict for validation
+    data = {
+        "account_id": account_id,
+        "name": name,
+        "stage": stage,
+        "lv_value": lv_value,
+        "hdd_value": hdd_value,
+        "bid_date": bid_date,
+        "bid_date_tbd": bid_date_tbd,
+        "owner_id": owner_id if owner_id else current_user.id,
+    }
+
+    # Validate opportunity data
+    result = validate_opportunity_update(data, db, existing_id=opp_id, old_stage=old_stage)
+
+    # If errors, re-render form with error message
+    if not result.is_valid:
+        accounts = db.query(Account).order_by(Account.name).all()
+        contacts = db.query(Contact).filter(Contact.account_id == opportunity.account_id).order_by(Contact.last_name).all()
+        users = db.query(User).filter(User.is_active == True).order_by(User.full_name).all()
+        sales_users = [u for u in users if u.role in ("Sales", "Admin")]
+        estimators = [u for u in users if u.role in ("Estimator", "Admin")]
+        selected_scope_names = [s.name for s in opportunity.scopes] if opportunity.scopes else []
+
+        return templates.TemplateResponse("opportunities/edit.html", {
+            "request": request,
+            "opportunity": opportunity,
+            "accounts": accounts,
+            "contacts": contacts,
+            "sales_users": sales_users,
+            "estimators": estimators,
+            "stages": Opportunity.STAGES,
+            "sources": Opportunity.SOURCES,
+            "stalled_reasons": Opportunity.STALLED_REASONS,
+            "selected_scope_names": selected_scope_names,
+            "selected_scope_other_text": scope_other_text or "",
+            "error": "; ".join(result.errors),
+            "warnings": [],
+        })
+
+    # If warnings and not confirmed, show warnings
+    if result.warnings and not confirm_warnings:
+        accounts = db.query(Account).order_by(Account.name).all()
+        contacts = db.query(Contact).filter(Contact.account_id == opportunity.account_id).order_by(Contact.last_name).all()
+        users = db.query(User).filter(User.is_active == True).order_by(User.full_name).all()
+        sales_users = [u for u in users if u.role in ("Sales", "Admin")]
+        estimators = [u for u in users if u.role in ("Estimator", "Admin")]
+        selected_scope_names = [s.name for s in opportunity.scopes] if opportunity.scopes else []
+
+        return templates.TemplateResponse("opportunities/edit.html", {
+            "request": request,
+            "opportunity": opportunity,
+            "accounts": accounts,
+            "contacts": contacts,
+            "sales_users": sales_users,
+            "estimators": estimators,
+            "stages": Opportunity.STAGES,
+            "sources": Opportunity.SOURCES,
+            "stalled_reasons": Opportunity.STALLED_REASONS,
+            "selected_scope_names": selected_scope_names,
+            "selected_scope_other_text": scope_other_text or "",
+            "error": None,
+            "warnings": result.warnings,
+        })
 
     opportunity.account_id = account_id
     opportunity.name = name
@@ -527,7 +682,7 @@ async def update_opportunity(
     opportunity.hdd_value = clean_num(hdd_value)
     opportunity.bid_date = datetime.strptime(bid_date, "%Y-%m-%d").date() if bid_date else None
     opportunity.bid_time = datetime.strptime(bid_time, "%H:%M").time() if bid_time else None
-    opportunity.owner_id = owner_id or None
+    opportunity.owner_id = owner_id if owner_id else current_user.id  # Enforce ownership
     opportunity.assigned_estimator_id = assigned_estimator_id or None
     opportunity.primary_contact_id = primary_contact_id or None
     opportunity.source = source or None
@@ -579,7 +734,6 @@ async def update_opportunity(
     update_opportunity_followup(opportunity)
 
     # Log stage change as activity for pipeline tracking
-    current_user = request.state.current_user
     if old_stage != stage:
         activity = Activity(
             opportunity_id=opp_id,

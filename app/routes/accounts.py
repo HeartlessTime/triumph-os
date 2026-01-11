@@ -9,6 +9,7 @@ from datetime import date
 
 from app.database import get_db
 from app.models import Account, Opportunity, Contact
+from app.services.validators import validate_account
 
 router = APIRouter(prefix="/accounts", tags=["accounts"])
 templates = Jinja2Templates(directory="app/templates")
@@ -106,6 +107,8 @@ async def new_account_form(
         "account": None,
         "industries": Account.INDUSTRIES,
         "is_new": True,
+        "error": None,
+        "warnings": [],
     })
 
 
@@ -121,10 +124,66 @@ async def create_account(
     state: str = Form(None),
     zip_code: str = Form(None),
     notes: str = Form(None),
+    confirm_warnings: bool = Form(False),
     db: Session = Depends(get_db)
 ):
-    """Create a new account."""
+    """Create a new account with validation."""
     current_user = request.state.current_user
+
+    # Build data dict for validation
+    data = {
+        "name": name,
+        "industry": industry,
+        "city": city,
+        "state": state,
+    }
+
+    # Validate account data
+    result = validate_account(data, db, existing_id=None)
+
+    # If errors, re-render form with error message
+    if not result.is_valid:
+        return templates.TemplateResponse("accounts/form.html", {
+            "request": request,
+            "account": None,
+            "industries": Account.INDUSTRIES,
+            "is_new": True,
+            "error": "; ".join(result.errors),
+            "warnings": [],
+            # Preserve form values
+            "form_name": name,
+            "form_industry": industry,
+            "form_website": website,
+            "form_phone": phone,
+            "form_address": address,
+            "form_city": city,
+            "form_state": state,
+            "form_zip_code": zip_code,
+            "form_notes": notes,
+        })
+
+    # If warnings and not confirmed, show warnings
+    if result.warnings and not confirm_warnings:
+        return templates.TemplateResponse("accounts/form.html", {
+            "request": request,
+            "account": None,
+            "industries": Account.INDUSTRIES,
+            "is_new": True,
+            "error": None,
+            "warnings": result.warnings,
+            # Preserve form values
+            "form_name": name,
+            "form_industry": industry,
+            "form_website": website,
+            "form_phone": phone,
+            "form_address": address,
+            "form_city": city,
+            "form_state": state,
+            "form_zip_code": zip_code,
+            "form_notes": notes,
+        })
+
+    # Create account with ownership
     account = Account(
         name=name,
         industry=industry or None,
@@ -186,6 +245,8 @@ async def edit_account_form(
         "display_website": display_website,
         "industries": Account.INDUSTRIES,
         "is_new": False,
+        "error": None,
+        "warnings": [],
     })
 
 
@@ -202,12 +263,68 @@ async def update_account(
     state: str = Form(None),
     zip_code: str = Form(None),
     notes: str = Form(None),
+    confirm_warnings: bool = Form(False),
     db: Session = Depends(get_db)
 ):
-    """Update an existing account."""
+    """Update an existing account with validation."""
     account = db.query(Account).filter(Account.id == account_id).first()
     if not account:
         raise HTTPException(status_code=404, detail="Account not found")
+
+    # Build data dict for validation
+    data = {
+        "name": name,
+        "industry": industry,
+        "city": city,
+        "state": state,
+    }
+
+    # Validate account data (exclude self from duplicate check)
+    result = validate_account(data, db, existing_id=account_id)
+
+    # If errors, re-render form with error message
+    if not result.is_valid:
+        return templates.TemplateResponse("accounts/form.html", {
+            "request": request,
+            "account": account,
+            "display_website": normalize_url(website),
+            "industries": Account.INDUSTRIES,
+            "is_new": False,
+            "error": "; ".join(result.errors),
+            "warnings": [],
+            # Override with submitted values
+            "form_name": name,
+            "form_industry": industry,
+            "form_website": website,
+            "form_phone": phone,
+            "form_address": address,
+            "form_city": city,
+            "form_state": state,
+            "form_zip_code": zip_code,
+            "form_notes": notes,
+        })
+
+    # If warnings and not confirmed, show warnings
+    if result.warnings and not confirm_warnings:
+        return templates.TemplateResponse("accounts/form.html", {
+            "request": request,
+            "account": account,
+            "display_website": normalize_url(website),
+            "industries": Account.INDUSTRIES,
+            "is_new": False,
+            "error": None,
+            "warnings": result.warnings,
+            # Override with submitted values
+            "form_name": name,
+            "form_industry": industry,
+            "form_website": website,
+            "form_phone": phone,
+            "form_address": address,
+            "form_city": city,
+            "form_state": state,
+            "form_zip_code": zip_code,
+            "form_notes": notes,
+        })
 
     account.name = name
     account.industry = industry or None

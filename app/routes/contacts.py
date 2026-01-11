@@ -7,6 +7,7 @@ from datetime import datetime, date, timedelta
 from app.database import get_db
 from app.models import Contact, Account, Opportunity, Activity
 from app.services.followup import calculate_next_followup
+from app.services.validators import validate_contact
 
 
 def update_contact_followup(contact: Contact):
@@ -76,6 +77,8 @@ async def new_contact_form(
         "accounts": accounts,
         "selected_account_id": account_id_int,
         "is_new": True,
+        "error": None,
+        "warnings": [],
     })
 
 
@@ -91,9 +94,67 @@ async def create_contact(
     mobile: str = Form(None),
     is_primary: bool = Form(False),
     notes: str = Form(None),
+    confirm_warnings: bool = Form(False),
     db: Session = Depends(get_db)
 ):
-    """Create a new contact."""
+    """Create a new contact with validation."""
+    accounts = db.query(Account).order_by(Account.name).all()
+
+    # Build data dict for validation
+    data = {
+        "first_name": first_name,
+        "last_name": last_name,
+        "account_id": account_id,
+        "email": email,
+        "phone": phone,
+        "mobile": mobile,
+    }
+
+    # Validate contact data
+    result = validate_contact(data, db, existing_id=None)
+
+    # If errors, re-render form with error message
+    if not result.is_valid:
+        return templates.TemplateResponse("contacts/form.html", {
+            "request": request,
+            "contact": None,
+            "accounts": accounts,
+            "selected_account_id": account_id,
+            "is_new": True,
+            "error": "; ".join(result.errors),
+            "warnings": [],
+            # Preserve form values
+            "form_first_name": first_name,
+            "form_last_name": last_name,
+            "form_title": title,
+            "form_email": email,
+            "form_phone": phone,
+            "form_mobile": mobile,
+            "form_is_primary": is_primary,
+            "form_notes": notes,
+        })
+
+    # If warnings and not confirmed, show warnings
+    if result.warnings and not confirm_warnings:
+        return templates.TemplateResponse("contacts/form.html", {
+            "request": request,
+            "contact": None,
+            "accounts": accounts,
+            "selected_account_id": account_id,
+            "is_new": True,
+            "error": None,
+            "warnings": result.warnings,
+            # Preserve form values
+            "form_first_name": first_name,
+            "form_last_name": last_name,
+            "form_title": title,
+            "form_email": email,
+            "form_phone": phone,
+            "form_mobile": mobile,
+            "form_is_primary": is_primary,
+            "form_notes": notes,
+        })
+
     # Verify account exists
     account = db.query(Account).filter(Account.id == account_id).first()
     if not account:
@@ -163,6 +224,8 @@ async def edit_contact_form(
         "accounts": accounts,
         "selected_account_id": contact.account_id,
         "is_new": False,
+        "error": None,
+        "warnings": [],
     })
 
 
@@ -180,12 +243,70 @@ async def update_contact(
     is_primary: bool = Form(False),
     notes: str = Form(None),
     last_contacted: str = Form(None),
+    confirm_warnings: bool = Form(False),
     db: Session = Depends(get_db)
 ):
-    """Update an existing contact."""
+    """Update an existing contact with validation."""
     contact = db.query(Contact).filter(Contact.id == contact_id).first()
     if not contact:
         raise HTTPException(status_code=404, detail="Contact not found")
+
+    accounts = db.query(Account).order_by(Account.name).all()
+
+    # Build data dict for validation
+    data = {
+        "first_name": first_name,
+        "last_name": last_name,
+        "account_id": account_id,
+        "email": email,
+        "phone": phone,
+        "mobile": mobile,
+    }
+
+    # Validate contact data (exclude self from duplicate check)
+    result = validate_contact(data, db, existing_id=contact_id)
+
+    # If errors, re-render form with error message
+    if not result.is_valid:
+        return templates.TemplateResponse("contacts/form.html", {
+            "request": request,
+            "contact": contact,
+            "accounts": accounts,
+            "selected_account_id": account_id,
+            "is_new": False,
+            "error": "; ".join(result.errors),
+            "warnings": [],
+            # Preserve form values
+            "form_first_name": first_name,
+            "form_last_name": last_name,
+            "form_title": title,
+            "form_email": email,
+            "form_phone": phone,
+            "form_mobile": mobile,
+            "form_is_primary": is_primary,
+            "form_notes": notes,
+        })
+
+    # If warnings and not confirmed, show warnings
+    if result.warnings and not confirm_warnings:
+        return templates.TemplateResponse("contacts/form.html", {
+            "request": request,
+            "contact": contact,
+            "accounts": accounts,
+            "selected_account_id": account_id,
+            "is_new": False,
+            "error": None,
+            "warnings": result.warnings,
+            # Preserve form values
+            "form_first_name": first_name,
+            "form_last_name": last_name,
+            "form_title": title,
+            "form_email": email,
+            "form_phone": phone,
+            "form_mobile": mobile,
+            "form_is_primary": is_primary,
+            "form_notes": notes,
+        })
 
     # If this contact is becoming primary, unset other primary contacts
     if is_primary and not contact.is_primary:

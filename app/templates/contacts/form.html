@@ -13,12 +13,37 @@
         </nav>
         <h1>{% if is_new %}New Contact{% else %}Edit Contact{% endif %}</h1>
     </div>
-    
+
     <div class="row">
         <div class="col-lg-8">
             <div class="card">
                 <div class="card-body">
+                    <!-- Error Alert -->
+                    {% if error %}
+                    <div class="alert alert-danger mb-3">
+                        <i class="bi bi-exclamation-triangle me-2"></i>{{ error }}
+                    </div>
+                    {% endif %}
+
+                    <!-- Warning Alert with Override -->
+                    {% if warnings %}
+                    <div class="alert alert-warning mb-3">
+                        <i class="bi bi-exclamation-circle me-2"></i><strong>Warning:</strong>
+                        <ul class="mb-2 mt-2">
+                            {% for w in warnings %}
+                            <li>{{ w }}</li>
+                            {% endfor %}
+                        </ul>
+                        <small>Click "Save Anyway" to proceed despite warnings.</small>
+                    </div>
+                    {% endif %}
+
                     <form method="post" action="{% if is_new %}/contacts/new{% else %}/contacts/{{ contact.id }}/edit{% endif %}">
+                        <!-- Hidden field for warning override -->
+                        {% if warnings %}
+                        <input type="hidden" name="confirm_warnings" value="true">
+                        {% endif %}
+
                         <div class="row g-3">
                             <div class="col-12">
                                 <label for="account_id" class="form-label">Account <span class="text-danger">*</span></label>
@@ -29,40 +54,60 @@
                                     {% endfor %}
                                 </select>
                             </div>
-                            
+
                             <div class="col-md-6">
                                 <label for="first_name" class="form-label">First Name <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control" id="first_name" name="first_name" value="{{ contact.first_name if contact else '' }}" required>
+                                <input type="text" class="form-control" id="first_name" name="first_name"
+                                    value="{{ form_first_name if form_first_name is defined else (contact.first_name if contact else '') }}"
+                                    required placeholder="e.g., John">
                             </div>
-                            
+
                             <div class="col-md-6">
                                 <label for="last_name" class="form-label">Last Name <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control" id="last_name" name="last_name" value="{{ contact.last_name if contact else '' }}" required>
+                                <input type="text" class="form-control" id="last_name" name="last_name"
+                                    value="{{ form_last_name if form_last_name is defined else (contact.last_name if contact else '') }}"
+                                    required placeholder="e.g., Smith">
                             </div>
-                            
+
                             <div class="col-12">
                                 <label for="title" class="form-label">Title</label>
-                                <input type="text" class="form-control" id="title" name="title" value="{{ contact.title if contact else '' }}" placeholder="e.g., Project Manager">
+                                <input type="text" class="form-control" id="title" name="title"
+                                    value="{{ form_title if form_title is defined else (contact.title if contact else '') }}"
+                                    placeholder="e.g., Project Manager">
                             </div>
-                            
+
                             <div class="col-12">
-                                <label for="email" class="form-label">Email</label>
-                                <input type="email" class="form-control" id="email" name="email" value="{{ contact.email if contact else '' }}">
+                                <hr class="my-2">
+                                <h6 class="text-muted mb-3">Contact Information <small class="text-danger">(Email or Phone required)</small></h6>
                             </div>
-                            
+
+                            <div class="col-12">
+                                <label for="email" class="form-label">Email <span class="text-danger">*</span></label>
+                                <input type="email" class="form-control" id="email" name="email"
+                                    value="{{ form_email if form_email is defined else (contact.email if contact else '') }}"
+                                    placeholder="e.g., john.smith@company.com">
+                                <small class="text-muted">Required if no phone number provided</small>
+                            </div>
+
                             <div class="col-md-6">
-                                <label for="phone" class="form-label">Office Phone</label>
-                                <input type="tel" class="form-control" id="phone" name="phone" value="{{ contact.phone if contact else '' }}">
+                                <label for="phone" class="form-label">Office Phone <span class="text-danger">*</span></label>
+                                <input type="tel" class="form-control" id="phone" name="phone"
+                                    value="{{ form_phone if form_phone is defined else (contact.phone if contact else '') }}"
+                                    placeholder="(512) 555-1234">
+                                <small class="text-muted">Required if no email provided</small>
                             </div>
-                            
+
                             <div class="col-md-6">
                                 <label for="mobile" class="form-label">Mobile</label>
-                                <input type="tel" class="form-control" id="mobile" name="mobile" value="{{ contact.mobile if contact else '' }}">
+                                <input type="tel" class="form-control" id="mobile" name="mobile"
+                                    value="{{ form_mobile if form_mobile is defined else (contact.mobile if contact else '') }}"
+                                    placeholder="(512) 555-5678">
                             </div>
-                            
+
                             <div class="col-12">
                                 <div class="form-check">
-                                    <input type="checkbox" class="form-check-input" id="is_primary" name="is_primary" value="true" {% if contact and contact.is_primary %}checked{% endif %}>
+                                    <input type="checkbox" class="form-check-input" id="is_primary" name="is_primary" value="true"
+                                        {% if form_is_primary is defined %}{% if form_is_primary %}checked{% endif %}{% elif contact and contact.is_primary %}checked{% endif %}>
                                     <label class="form-check-label" for="is_primary">Primary contact for this account</label>
                                 </div>
                             </div>
@@ -70,23 +115,43 @@
                             {% if not is_new %}
                             <div class="col-md-6">
                                 <label for="last_contacted" class="form-label">Last Contacted</label>
-                                <input type="date" class="form-control" id="last_contacted" name="last_contacted" value="{{ contact.last_contacted.strftime('%Y-%m-%d') if contact and contact.last_contacted else '' }}">
+                                <input type="date" class="form-control" id="last_contacted" name="last_contacted"
+                                    value="{{ contact.last_contacted.strftime('%Y-%m-%d') if contact and contact.last_contacted else '' }}">
                             </div>
                             {% endif %}
 
                             <div class="col-12">
                                 <label for="notes" class="form-label">Notes</label>
-                                <textarea class="form-control" id="notes" name="notes" rows="3">{{ contact.notes if contact else '' }}</textarea>
+                                <textarea class="form-control" id="notes" name="notes" rows="3">{{ form_notes if form_notes is defined else (contact.notes if contact else '') }}</textarea>
                             </div>
                         </div>
-                        
+
                         <div class="mt-4 d-flex gap-2">
                             <button type="submit" class="btn btn-primary">
-                                <i class="bi bi-check-lg me-1"></i> {% if is_new %}Create Contact{% else %}Save Changes{% endif %}
+                                <i class="bi bi-check-lg me-1"></i>
+                                {% if warnings %}Save Anyway{% elif is_new %}Create Contact{% else %}Save Changes{% endif %}
                             </button>
                             <a href="{% if is_new %}/contacts{% else %}/contacts/{{ contact.id }}{% endif %}" class="btn btn-outline-secondary">Cancel</a>
                         </div>
                     </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Help sidebar -->
+        <div class="col-lg-4">
+            <div class="card bg-light">
+                <div class="card-body">
+                    <h6 class="card-title"><i class="bi bi-info-circle me-1"></i> Required Fields</h6>
+                    <p class="card-text small text-muted mb-0">
+                        Fields marked with <span class="text-danger">*</span> are required:
+                    </p>
+                    <ul class="small text-muted mt-2 mb-0">
+                        <li>Account</li>
+                        <li>First Name</li>
+                        <li>Last Name</li>
+                        <li>Email <strong>or</strong> Phone (at least one)</li>
+                    </ul>
                 </div>
             </div>
         </div>
