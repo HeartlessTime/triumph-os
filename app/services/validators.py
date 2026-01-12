@@ -56,8 +56,9 @@ def validate_account(
     """
     Validate account data.
 
-    Required fields: name, industry, city, state
-    Warn (not block) on potential duplicates.
+    Required fields: name only
+    Block on duplicate account name (case-insensitive)
+    City/state do NOT affect validation
 
     Args:
         data: Dict with keys: name, industry, city, state, etc.
@@ -70,46 +71,27 @@ def validate_account(
     result = ValidationResult()
 
     # --- HARD REQUIRED FIELDS ---
+    # Only account name is truly required
     if _is_empty(data.get("name")):
         result.add_error("Account name is required")
 
-    if _is_empty(data.get("industry")):
-        result.add_error("Industry is required")
+    # Industry, city, state are OPTIONAL - do not validate as required
 
-    if _is_empty(data.get("city")):
-        result.add_error("City is required")
-
-    if _is_empty(data.get("state")):
-        result.add_error("State is required")
-
-    # --- DUPLICATE PREVENTION (WARN ONLY) ---
+    # --- DUPLICATE NAME CHECK (BLOCK) ---
     name = data.get("name", "").strip() if data.get("name") else ""
-    city = data.get("city", "").strip() if data.get("city") else ""
-    state = data.get("state", "").strip() if data.get("state") else ""
 
     if name:
-        # Check for same name (case-insensitive)
+        # Check for same name (case-insensitive) - this is a blocking error
         query = db.query(Account).filter(Account.name.ilike(name))
         if existing_id:
             query = query.filter(Account.id != existing_id)
 
         dupe_by_name = query.first()
         if dupe_by_name:
-            result.add_warning(f"An account named '{dupe_by_name.name}' already exists")
+            result.add_error(f"Account already exists: {dupe_by_name.name}")
 
-    if city and state:
-        # Check for same city + state
-        query = db.query(Account).filter(
-            Account.city.ilike(city), Account.state.ilike(state)
-        )
-        if existing_id:
-            query = query.filter(Account.id != existing_id)
-
-        dupe_by_location = query.first()
-        if dupe_by_location and dupe_by_location.name.lower() != name.lower():
-            result.add_warning(
-                f"Another account in {city}, {state} exists: '{dupe_by_location.name}'"
-            )
+    # NOTE: City/state duplicates are intentionally NOT checked.
+    # Multiple accounts can exist in the same city/state.
 
     return result
 

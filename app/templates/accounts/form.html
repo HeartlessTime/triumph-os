@@ -53,8 +53,8 @@
                             </div>
 
                             <div class="col-md-6">
-                                <label for="industry" class="form-label">Industry <span class="text-danger">*</span></label>
-                                <select class="form-select" id="industry" name="industry" required>
+                                <label for="industry" class="form-label">Industry</label>
+                                <select class="form-select" id="industry" name="industry">
                                     <option value="">Select Industry</option>
                                     {% set selected_industry = form_industry if form_industry is defined else (account.industry if account else '') %}
                                     {% for ind in industries %}
@@ -90,17 +90,17 @@
                             </div>
 
                             <div class="col-md-5">
-                                <label for="city" class="form-label">City <span class="text-danger">*</span></label>
+                                <label for="city" class="form-label">City</label>
                                 <input type="text" class="form-control" id="city" name="city"
                                     value="{{ form_city if form_city is defined else (account.city if account else '') }}"
-                                    required placeholder="e.g., Austin">
+                                    placeholder="e.g., Austin">
                             </div>
 
                             <div class="col-md-4">
-                                <label for="state" class="form-label">State <span class="text-danger">*</span></label>
+                                <label for="state" class="form-label">State</label>
                                 <input type="text" class="form-control" id="state" name="state"
                                     value="{{ form_state if form_state is defined else (account.state if account else '') }}"
-                                    required placeholder="e.g., TX">
+                                    placeholder="e.g., TX">
                             </div>
 
                             <div class="col-md-3">
@@ -134,14 +134,14 @@
                 <div class="card-body">
                     <h6 class="card-title"><i class="bi bi-info-circle me-1"></i> Required Fields</h6>
                     <p class="card-text small text-muted mb-0">
-                        Fields marked with <span class="text-danger">*</span> are required:
+                        Only the <span class="text-danger">*</span> field is required:
                     </p>
                     <ul class="small text-muted mt-2 mb-0">
                         <li>Account Name</li>
-                        <li>Industry</li>
-                        <li>City</li>
-                        <li>State</li>
                     </ul>
+                    <p class="card-text small text-muted mt-2 mb-0">
+                        All other fields are optional.
+                    </p>
                 </div>
             </div>
         </div>
