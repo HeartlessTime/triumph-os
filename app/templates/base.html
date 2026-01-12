@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>{% block title %}Triumph OS{% endblock %}</title>
 
     <!-- Fonts -->
@@ -384,11 +384,11 @@
             font-family: 'SF Mono', 'Monaco', 'Inconsolata', monospace;
         }
 
-        /* Responsive */
+        /* Responsive - Tablet (768px - 991.98px): Partial-width sidebar */
         @media (max-width: 991.98px) {
             .sidebar {
                 transform: translateX(-100%);
-                transition: transform 0.3s;
+                transition: transform 0.3s ease-out;
             }
 
             .sidebar.show {
@@ -397,6 +397,50 @@
 
             .main-content {
                 margin-left: 0;
+            }
+        }
+
+        /* Responsive - Mobile (<768px): Full-screen drawer */
+        @media (max-width: 767.98px) {
+            .sidebar {
+                width: 100%;
+                width: 100vw;
+                height: 100%;
+                height: 100vh;
+                height: 100dvh; /* Dynamic viewport height for mobile browsers */
+                padding-bottom: env(safe-area-inset-bottom, 0);
+            }
+
+            .sidebar-brand {
+                padding-top: calc(1.5rem + env(safe-area-inset-top, 0));
+                padding-left: calc(1.5rem + env(safe-area-inset-left, 0));
+                padding-right: calc(1.5rem + env(safe-area-inset-right, 0));
+            }
+
+            .sidebar-nav {
+                padding-left: env(safe-area-inset-left, 0);
+                padding-right: env(safe-area-inset-right, 0);
+            }
+
+            .sidebar-nav .nav-link {
+                padding-left: calc(1.5rem + env(safe-area-inset-left, 0));
+                padding-right: calc(1.5rem + env(safe-area-inset-right, 0));
+            }
+
+            .nav-section {
+                padding-left: calc(1.5rem + env(safe-area-inset-left, 0));
+                padding-right: calc(1.5rem + env(safe-area-inset-right, 0));
+            }
+
+            .sidebar-user {
+                padding-left: calc(1.5rem + env(safe-area-inset-left, 0));
+                padding-right: calc(1.5rem + env(safe-area-inset-right, 0));
+                padding-bottom: calc(1rem + env(safe-area-inset-bottom, 0));
+            }
+
+            /* Hide overlay on mobile - sidebar covers everything */
+            .mobile-overlay.show {
+                display: none;
             }
         }
     </style>
@@ -519,20 +563,37 @@
             const toggle = document.getElementById('sidebarToggle');
             const sidebar = document.querySelector('.sidebar');
             const overlay = document.getElementById('sidebarOverlay');
+
             function open() {
                 if (sidebar) sidebar.classList.add('show');
                 if (overlay) overlay.classList.add('show');
                 document.body.style.overflow = 'hidden';
             }
+
             function close() {
                 if (sidebar) sidebar.classList.remove('show');
                 if (overlay) overlay.classList.remove('show');
                 document.body.style.overflow = '';
             }
+
+            // Open on hamburger click
             if (toggle) toggle.addEventListener('click', open);
+
+            // Close on overlay click (tablet)
             if (overlay) overlay.addEventListener('click', close);
-            // close on escape
+
+            // Close on Escape key
             document.addEventListener('keydown', (e) => { if (e.key === 'Escape') close(); });
+
+            // Close when any nav link is clicked (mobile UX)
+            if (sidebar) {
+                sidebar.querySelectorAll('.nav-link').forEach(function(link) {
+                    link.addEventListener('click', function() {
+                        // Small delay allows the click to register before closing
+                        setTimeout(close, 50);
+                    });
+                });
+            }
         })();
     </script>
     <style>
