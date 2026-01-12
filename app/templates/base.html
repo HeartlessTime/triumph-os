@@ -67,6 +67,11 @@
             font-size: 0.75rem;
         }
 
+        /* Close button - hidden by default (desktop), shown only on mobile */
+        .sidebar-close-btn {
+            display: none;
+        }
+
         .sidebar-nav {
             padding: 1rem 0;
         }
@@ -488,7 +493,9 @@
                 flex-direction: column;
             }
 
+            /* Show close button on mobile only */
             .sidebar-close-btn {
+                display: block;
                 background: transparent;
                 border: none;
                 color: rgba(255,255,255,0.7);
