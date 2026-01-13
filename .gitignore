@@ -55,3 +55,12 @@ Thumbs.db
 .pytest_cache/
 .coverage
 htmlcov/
+
+# Local backups
+*.sql
+
+# Import / data files
+data/
+scripts/uploads/
+uploads/
+
