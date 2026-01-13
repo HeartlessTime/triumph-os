@@ -192,11 +192,30 @@ async def create_opportunity(
     hdd_value: Optional[str] = Form(None),
     bid_date: Optional[str] = Form(None),
     bid_date_tbd: bool = Form(False),
+    bid_time: Optional[str] = Form(None),
+    bid_type: Optional[str] = Form(None),
+    submission_method: Optional[str] = Form(None),
+    bid_form_required: Optional[str] = Form(None),
+    bond_required: Optional[str] = Form(None),
+    prevailing_wage: Optional[str] = Form(None),
+    project_type: Optional[str] = Form(None),
+    rebid: bool = Form(False),
     owner_id: Optional[int] = Form(None),
-    assigned_estimator_id: Optional[int] = Form(None),
+    primary_contact_id: Optional[int] = Form(None),
     scope_names: List[str] = Form(default=[]),
     scope_other_text: Optional[str] = Form(None),
     gc_ids: List[str] = Form(default=[]),
+    # Job Walk fields
+    job_walk_required: bool = Form(False),
+    job_walk_date: Optional[str] = Form(None),
+    job_walk_time: Optional[str] = Form(None),
+    job_walk_notes: Optional[str] = Form(None),
+    # Combined job notes
+    job_notes: Optional[str] = Form(None),
+    # Additional details
+    source: Optional[str] = Form(None),
+    quick_links_text: Optional[str] = Form(None),
+    related_contact_ids: List[str] = Form(default=[]),
     confirm_warnings: bool = Form(False),
     db: Session = Depends(get_db),
 ):
@@ -259,13 +278,11 @@ async def create_opportunity(
                 "warnings": [],
                 # Preserve form values
                 "form_name": name,
-                "form_lv_value": lv_value,
-                "form_hdd_value": hdd_value,
                 "form_bid_date": bid_date,
                 "form_bid_date_tbd": bid_date_tbd,
                 "form_stage": stage,
                 "form_owner_id": owner_id,
-                "form_assigned_estimator_id": assigned_estimator_id,
+                "form_job_notes": job_notes,
             },
         )
 
@@ -308,15 +325,25 @@ async def create_opportunity(
                 "warnings": result.warnings,
                 # Preserve form values
                 "form_name": name,
-                "form_lv_value": lv_value,
-                "form_hdd_value": hdd_value,
                 "form_bid_date": bid_date,
                 "form_bid_date_tbd": bid_date_tbd,
                 "form_stage": stage,
                 "form_owner_id": owner_id,
-                "form_assigned_estimator_id": assigned_estimator_id,
+                "form_job_notes": job_notes,
             },
         )
+
+    # Parse quick links from text (one per line)
+    parsed_quick_links = None
+    if quick_links_text:
+        parsed_quick_links = [
+            line.strip() for line in quick_links_text.strip().split("\n") if line.strip()
+        ]
+
+    # Parse related contact IDs
+    parsed_related_contact_ids = None
+    if related_contact_ids:
+        parsed_related_contact_ids = [int(cid) for cid in related_contact_ids if cid]
 
     opportunity = Opportunity(
         account_id=account_id,
@@ -326,10 +353,29 @@ async def create_opportunity(
         lv_value=clean_num(lv_value),
         hdd_value=clean_num(hdd_value),
         bid_date=datetime.strptime(bid_date, "%Y-%m-%d").date() if bid_date else None,
+        bid_time=datetime.strptime(bid_time, "%H:%M").time() if bid_time else None,
+        bid_type=bid_type or None,
+        submission_method=submission_method or None,
+        bid_form_required=bid_form_required == "true" if bid_form_required else False,
+        bond_required=bond_required == "true" if bond_required else False,
+        prevailing_wage=prevailing_wage or None,
+        project_type=project_type or None,
+        rebid=rebid,
         owner_id=owner_id if owner_id else current_user.id,
-        assigned_estimator_id=assigned_estimator_id,
+        primary_contact_id=primary_contact_id or None,
         last_contacted=date.today(),
         gcs=[int(gc_id) for gc_id in gc_ids if gc_id] if gc_ids else None,
+        # Job Walk fields
+        job_walk_required=job_walk_required,
+        job_walk_date=datetime.strptime(job_walk_date, "%Y-%m-%d").date() if job_walk_date else None,
+        job_walk_time=datetime.strptime(job_walk_time, "%H:%M").time() if job_walk_time else None,
+        job_walk_notes=job_walk_notes or None,
+        # Combined job notes
+        job_notes=job_notes or None,
+        # Additional details
+        source=source or None,
+        quick_links=parsed_quick_links,
+        related_contact_ids=parsed_related_contact_ids,
     )
 
     update_opportunity_followup(opportunity)

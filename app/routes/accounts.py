@@ -386,3 +386,55 @@ async def delete_account(
     db.commit()
 
     return RedirectResponse(url="/accounts", status_code=303)
+
+
+# -----------------------------
+# API Endpoints (JSON)
+# -----------------------------
+from fastapi.responses import JSONResponse
+from pydantic import BaseModel
+from typing import Optional
+
+
+class QuickCreateAccountRequest(BaseModel):
+    name: str
+    email: Optional[str] = None
+    phone: Optional[str] = None
+    address: Optional[str] = None
+
+
+@router.get("/api/{account_id}/contacts")
+async def api_get_account_contacts(account_id: int, db: Session = Depends(get_db)):
+    """API: Get contacts for a specific account (JSON response)."""
+    contacts = (
+        db.query(Contact)
+        .filter(Contact.account_id == account_id)
+        .order_by(Contact.last_name)
+        .all()
+    )
+    return [
+        {"id": c.id, "full_name": c.full_name, "email": c.email, "phone": c.phone}
+        for c in contacts
+    ]
+
+
+@router.post("/api/quick-create")
+async def api_quick_create_account(
+    request: Request,
+    data: QuickCreateAccountRequest,
+    db: Session = Depends(get_db),
+):
+    """API: Quick create an account from intake modal (JSON response)."""
+    current_user = request.state.current_user
+
+    account = Account(
+        name=data.name,
+        phone=data.phone or None,
+        address=data.address or None,
+        created_by_id=current_user.id,
+    )
+    db.add(account)
+    db.commit()
+    db.refresh(account)
+
+    return {"id": account.id, "name": account.name}

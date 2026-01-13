@@ -84,6 +84,13 @@ class Opportunity(Base):
     end_user_account_id = Column(Integer, ForeignKey("accounts.id"), nullable=True)
     # Stalled reason for tracking why opportunity is not progressing
     stalled_reason = Column(String(100), nullable=True)
+    # Job Walk / Pre-Bid Meeting fields
+    job_walk_required = Column(Boolean, nullable=False, default=False)
+    job_walk_date = Column(Date, nullable=True)
+    job_walk_time = Column(Time, nullable=True)
+    job_walk_notes = Column(Text, nullable=True)
+    # Combined job notes field (description + risks + internal notes)
+    job_notes = Column(Text, nullable=True)
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
     updated_at = Column(
         DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow
