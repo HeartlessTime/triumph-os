@@ -65,6 +65,7 @@ def get_executive_summary(
     start_datetime: datetime,
     end_datetime: datetime,
     user_id: Optional[int] = None,
+    include_meetings: bool = True,
 ) -> Dict:
     """
     Get executive summary metrics for a date range.
@@ -74,6 +75,7 @@ def get_executive_summary(
         start_datetime: Start of period
         end_datetime: End of period
         user_id: None for team-wide totals, specific user ID for personal totals
+        include_meetings: If False, exclude meeting activities (for team summaries)
 
     Returns:
         Dict with all summary data (counts and lists)
@@ -95,6 +97,10 @@ def get_executive_summary(
 
     if user_id is not None:
         activity_query = activity_query.filter(Activity.created_by_id == user_id)
+
+    # Exclude meetings from team summaries (include_meetings=False)
+    if not include_meetings:
+        activity_query = activity_query.filter(Activity.activity_type != "meeting")
 
     activities_logged = activity_query.order_by(Activity.activity_date.desc()).all()
     activities_logged_count = len(activities_logged)
@@ -291,8 +297,11 @@ async def weekly_summary(
     current_week = get_week_start_monday()
     is_current_week = week_start == current_week
 
-    # Get team-wide executive summary (user_id=None)
-    summary = get_executive_summary(db, start_datetime, end_datetime, user_id=None)
+    # Get team-wide executive summary (user_id=None, exclude meetings)
+    # Meetings are personal activities and should only appear in My Weekly Summary
+    summary = get_executive_summary(
+        db, start_datetime, end_datetime, user_id=None, include_meetings=False
+    )
 
     # Generate summary sentence (team-wide language)
     summary_parts = []

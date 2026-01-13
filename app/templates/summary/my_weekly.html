@@ -23,6 +23,25 @@
     .summary-card-body::-webkit-scrollbar-thumb:hover {
         background: #aaa;
     }
+    /* Clickable rows - hover styling */
+    tr[data-href] {
+        cursor: pointer;
+    }
+    tr[data-href]:hover td {
+        background-color: rgba(0, 123, 255, 0.08);
+    }
+    /* Activity items - clickable styling */
+    .activity-item[data-href] {
+        cursor: pointer;
+        transition: background-color 0.15s ease;
+        padding: 0.5rem;
+        margin: -0.5rem;
+        margin-bottom: 0.5rem;
+        border-radius: 0.25rem;
+    }
+    .activity-item[data-href]:hover {
+        background-color: rgba(0, 123, 255, 0.08);
+    }
 </style>
 {% endblock %}
 
@@ -40,9 +59,6 @@
             <button type="button" class="btn btn-success" id="copyToClipboard">
                 <i class="bi bi-clipboard me-1"></i> Copy Summary to Clipboard
             </button>
-            <a href="/summary/weekly?week_start={{ week_start }}" class="btn btn-outline-secondary">
-                <i class="bi bi-people me-1"></i> Team Summary
-            </a>
             <a href="/summary/my-weekly?week_start={{ prev_week }}" class="btn btn-outline-secondary">
                 <i class="bi bi-chevron-left"></i> Previous Week
             </a>
@@ -246,7 +262,7 @@
                             </thead>
                             <tbody>
                                 {% for meeting in meetings %}
-                                <tr>
+                                <tr data-href="/activities/{{ meeting.id }}/edit">
                                     <td>
                                         {% if meeting.contact %}
                                         <a href="/contacts/{{ meeting.contact.id }}" class="text-decoration-none">
@@ -303,7 +319,7 @@
                             </thead>
                             <tbody>
                                 {% for task in tasks_completed %}
-                                <tr>
+                                <tr data-href="/tasks/{{ task.id }}/edit">
                                     <td>
                                         {{ task.title }}
                                         {% if task.description %}
@@ -433,7 +449,7 @@
                     {% if activities_logged %}
                     <div class="activity-timeline">
                         {% for activity in activities_logged %}
-                        <div class="activity-item">
+                        <div class="activity-item" data-href="/activities/{{ activity.id }}/edit">
                             <div class="d-flex justify-content-between align-items-start">
                                 <div>
                                     <span class="me-2">{{ activity.icon }}</span>
@@ -448,11 +464,13 @@
                                     <small class="text-muted">{{ activity.activity_date.strftime('%b %d, %I:%M %p') }}</small>
                                 </div>
                             </div>
+                            {% if activity.opportunity %}
                             <div class="mt-1">
                                 <a href="/opportunities/{{ activity.opportunity_id }}" class="text-muted small text-decoration-none">
                                     <i class="bi bi-bullseye me-1"></i>{{ activity.opportunity.name }}
                                 </a>
                             </div>
+                            {% endif %}
                             {% if activity.description %}
                             <p class="text-muted small mb-0 mt-1" style="max-width: 600px;">{{ activity.description[:150] }}{% if activity.description|length > 150 %}...{% endif %}</p>
                             {% endif %}
@@ -517,6 +535,20 @@ Opportunities: {% for opp in new_opportunities %}{{ opp.name }}{% if not loop.la
 </div>
 
 <script>
+// Clickable rows handler - navigates to edit page when row is clicked
+// Does not interfere with links inside the row
+document.addEventListener('click', function(e) {
+    // Find the clickable element (row or activity-item)
+    const clickable = e.target.closest('[data-href]');
+    if (!clickable) return;
+
+    // If user clicked a link inside the row, let it work normally
+    if (e.target.closest('a')) return;
+
+    // Navigate to the edit page
+    window.location.href = clickable.dataset.href;
+});
+
 document.getElementById('copyToClipboard')?.addEventListener('click', function() {
     const weekRange = document.getElementById('weekRange').textContent.trim();
     const outreach = document.getElementById('outreachData').textContent.trim();

@@ -23,6 +23,25 @@
     .summary-card-body::-webkit-scrollbar-thumb:hover {
         background: #aaa;
     }
+    /* Clickable rows - hover styling */
+    tr[data-href] {
+        cursor: pointer;
+    }
+    tr[data-href]:hover td {
+        background-color: rgba(0, 123, 255, 0.08);
+    }
+    /* Activity items - clickable styling */
+    .activity-item[data-href] {
+        cursor: pointer;
+        transition: background-color 0.15s ease;
+        padding: 0.5rem;
+        margin: -0.5rem;
+        margin-bottom: 0.5rem;
+        border-radius: 0.25rem;
+    }
+    .activity-item[data-href]:hover {
+        background-color: rgba(0, 123, 255, 0.08);
+    }
 </style>
 {% endblock %}
 
@@ -224,63 +243,6 @@
             </div>
         </div>
 
-        <!-- Team Meetings This Week -->
-        <div class="col-lg-6">
-            <div class="card h-100">
-                <div class="card-header bg-purple text-white" style="background-color: #6f42c1 !important;">
-                    <h5 class="mb-0"><i class="bi bi-calendar-event me-2"></i>Team Meetings This Week ({{ meetings_count }})</h5>
-                </div>
-                <div class="card-body p-0 summary-card-body">
-                    {% if meetings %}
-                    <div class="table-responsive">
-                        <table class="table table-hover mb-0">
-                            <thead class="table-light" style="position: sticky; top: 0;">
-                                <tr>
-                                    <th>Contact</th>
-                                    <th>Account</th>
-                                    <th>Date</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for meeting in meetings %}
-                                <tr>
-                                    <td>
-                                        {% if meeting.contact %}
-                                        <a href="/contacts/{{ meeting.contact.id }}" class="text-decoration-none">
-                                            {{ meeting.contact.full_name }}
-                                        </a>
-                                        {% if meeting.contact.title %}
-                                        <div class="text-muted small">{{ meeting.contact.title }}</div>
-                                        {% endif %}
-                                        {% else %}
-                                        <span class="text-muted">{{ meeting.subject }}</span>
-                                        {% endif %}
-                                    </td>
-                                    <td>
-                                        {% if meeting.contact and meeting.contact.account %}
-                                        <a href="/accounts/{{ meeting.contact.account.id }}" class="text-decoration-none text-muted">
-                                            {{ meeting.contact.account.name }}
-                                        </a>
-                                        {% else %}
-                                        <span class="text-muted">-</span>
-                                        {% endif %}
-                                    </td>
-                                    <td class="text-muted small">{{ meeting.activity_date.strftime('%b %d') }}</td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                    {% else %}
-                    <div class="text-center text-muted py-4">
-                        <i class="bi bi-calendar-x h1"></i>
-                        <p class="mb-0">No meetings logged this period</p>
-                    </div>
-                    {% endif %}
-                </div>
-            </div>
-        </div>
-
         <!-- Tasks Completed -->
         <div class="col-lg-6">
             <div class="card h-100">
@@ -300,7 +262,7 @@
                             </thead>
                             <tbody>
                                 {% for task in tasks_completed %}
-                                <tr>
+                                <tr data-href="/tasks/{{ task.id }}/edit">
                                     <td>
                                         {{ task.title }}
                                         {% if task.description %}
@@ -430,7 +392,7 @@
                     {% if activities_logged %}
                     <div class="activity-timeline">
                         {% for activity in activities_logged %}
-                        <div class="activity-item">
+                        <div class="activity-item" data-href="/activities/{{ activity.id }}/edit">
                             <div class="d-flex justify-content-between align-items-start">
                                 <div>
                                     <span class="me-2">{{ activity.icon }}</span>
@@ -445,11 +407,13 @@
                                     <small class="text-muted">{{ activity.activity_date.strftime('%b %d, %I:%M %p') }}</small>
                                 </div>
                             </div>
+                            {% if activity.opportunity %}
                             <div class="mt-1">
                                 <a href="/opportunities/{{ activity.opportunity_id }}" class="text-muted small text-decoration-none">
                                     <i class="bi bi-bullseye me-1"></i>{{ activity.opportunity.name }}
                                 </a>
                             </div>
+                            {% endif %}
                             {% if activity.description %}
                             <p class="text-muted small mb-0 mt-1" style="max-width: 600px;">{{ activity.description[:150] }}{% if activity.description|length > 150 %}...{% endif %}</p>
                             {% endif %}
@@ -514,6 +478,20 @@ Opportunities: {% for opp in new_opportunities %}{{ opp.name }}{% if not loop.la
 </div>
 
 <script>
+// Clickable rows handler - navigates to edit page when row is clicked
+// Does not interfere with links inside the row
+document.addEventListener('click', function(e) {
+    // Find the clickable element (row or activity-item)
+    const clickable = e.target.closest('[data-href]');
+    if (!clickable) return;
+
+    // If user clicked a link inside the row, let it work normally
+    if (e.target.closest('a')) return;
+
+    // Navigate to the edit page
+    window.location.href = clickable.dataset.href;
+});
+
 document.getElementById('copyToClipboard').addEventListener('click', function() {
     const weekRange = document.getElementById('weekRange').textContent.trim();
     const outreach = document.getElementById('outreachData').textContent.trim();

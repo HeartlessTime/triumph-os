@@ -435,7 +435,13 @@ async def log_meeting(
 
 
 @router.post("/{contact_id}/log-contact")
-async def log_contact(request: Request, contact_id: int, db: Session = Depends(get_db)):
+async def log_contact(
+    request: Request,
+    contact_id: int,
+    activity_type: str = Form("call"),
+    notes: str = Form(None),
+    db: Session = Depends(get_db),
+):
     """Log contact - updates last_contacted to today and next_followup to 30 days from now.
 
     Creates a follow-up Activity for the contact (appears in summaries/audit log).
@@ -450,13 +456,16 @@ async def log_contact(request: Request, contact_id: int, db: Session = Depends(g
 
     current_user = request.state.current_user
 
+    # Build description from notes or default
+    description = notes.strip() if notes and notes.strip() else f"Logged contact with {contact.full_name} at {contact.account.name}"
+
     # Always create a contact-level follow-up Activity (no opportunity required)
     # This ensures the follow-up appears in weekly summaries and audit log
     followup_activity = Activity(
         opportunity_id=None,
-        activity_type="call",
+        activity_type=activity_type,
         subject=f"Follow-up with {contact.full_name}",
-        description=f"Logged contact with {contact.full_name} at {contact.account.name}",
+        description=description,
         activity_date=datetime.now(),
         contact_id=contact_id,
         created_by_id=current_user.id,
@@ -477,7 +486,7 @@ async def log_contact(request: Request, contact_id: int, db: Session = Depends(g
     for opp in related_opps:
         activity = Activity(
             opportunity_id=opp.id,
-            activity_type="call",
+            activity_type=activity_type,
             subject=f"Contacted {contact.full_name}",
             description=f"Contacted {contact.full_name} regarding {opp.name}",
             activity_date=datetime.now(),

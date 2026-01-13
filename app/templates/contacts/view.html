@@ -22,11 +22,9 @@
                 <a href="/contacts/{{ contact.id }}/edit" class="btn btn-outline-secondary">
                     <i class="bi bi-pencil me-1"></i> Edit
                 </a>
-                <form method="post" action="/contacts/{{ contact.id }}/log-contact" class="d-inline">
-                    <button type="submit" class="btn btn-outline-primary">
-                        <i class="bi bi-telephone me-1"></i> Log Contact
-                    </button>
-                </form>
+                <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#logContactModal">
+                    <i class="bi bi-telephone me-1"></i> Log Contact
+                </button>
                 <button type="button" class="btn btn-outline-success" data-bs-toggle="modal" data-bs-target="#logMeetingModal">
                     <i class="bi bi-calendar-event me-1"></i> Log Meeting
                 </button>
@@ -110,6 +108,44 @@
                     {% endif %}
                 </div>
             </div>
+        </div>
+    </div>
+</div>
+
+<!-- Log Contact Modal -->
+<div class="modal fade" id="logContactModal" tabindex="-1" aria-labelledby="logContactModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="post" action="/contacts/{{ contact.id }}/log-contact">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="logContactModalLabel">
+                        <i class="bi bi-telephone me-2"></i>Log Contact with {{ contact.full_name }}
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="activity_type" class="form-label">Activity Type</label>
+                        <select class="form-select" id="activity_type" name="activity_type">
+                            <option value="call" selected>Phone Call</option>
+                            <option value="meeting">Meeting</option>
+                            <option value="email">Email</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="contact_notes" class="form-label">Notes <span class="text-muted">(optional)</span></label>
+                        <textarea class="form-control" id="contact_notes" name="notes" rows="3"
+                            placeholder="Add notes about this contact..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-check-lg me-1"></i>Log Contact
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 </div>
