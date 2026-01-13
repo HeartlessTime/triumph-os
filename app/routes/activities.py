@@ -1,3 +1,4 @@
+import logging
 from datetime import datetime, date
 from fastapi import APIRouter, Request, Depends, Form, HTTPException
 from fastapi.responses import HTMLResponse, RedirectResponse
@@ -7,6 +8,8 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models import Opportunity, Activity, Contact
 from app.services.followup import calculate_next_followup
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/activities", tags=["activities"])
 templates = Jinja2Templates(directory="app/templates")
@@ -67,17 +70,49 @@ async def add_activity(
 async def edit_activity_form(
     request: Request, activity_id: int, db: Session = Depends(get_db)
 ):
-    """Display edit activity form."""
+    """Display edit activity form.
+
+    Activities can belong to:
+    - An Opportunity (with optional Contact)
+    - A Contact only (no Opportunity)
+    - Neither (orphaned activity - logged but navigable)
+
+    GUARDRAILS:
+    - Never assumes activity.opportunity exists
+    - Safely determines context owner for contact dropdown
+    - Prevents full-table queries by requiring account_id filter
+    - Logs warning for orphaned activities
+    """
+    # 1. Immediate 404 if activity doesn't exist
     activity = db.query(Activity).filter(Activity.id == activity_id).first()
     if not activity:
         raise HTTPException(status_code=404, detail="Activity not found")
 
-    contacts = (
-        db.query(Contact)
-        .filter(Contact.account_id == activity.opportunity.account_id)
-        .order_by(Contact.last_name)
-        .all()
-    )
+    # 2. Determine context owner account_id (NEVER assume opportunity exists)
+    context_account_id = None
+    contacts = []
+
+    if activity.opportunity is not None:
+        # Activity is linked to an opportunity - use opportunity's account
+        context_account_id = activity.opportunity.account_id
+    elif activity.contact is not None:
+        # Activity is linked to a contact only - use contact's account
+        context_account_id = activity.contact.account_id
+    else:
+        # Orphaned activity - has neither opportunity nor contact
+        logger.warning(
+            f"Activity {activity_id} has no opportunity or contact. "
+            f"Type: {activity.activity_type}, Subject: {activity.subject}"
+        )
+
+    # 3. Only query contacts if we have a valid account_id (prevents full-table scan)
+    if context_account_id is not None:
+        contacts = (
+            db.query(Contact)
+            .filter(Contact.account_id == context_account_id)
+            .order_by(Contact.last_name)
+            .all()
+        )
 
     return templates.TemplateResponse(
         "activities/edit.html",
@@ -101,11 +136,31 @@ async def update_activity(
     contact_id: int = Form(None),
     db: Session = Depends(get_db),
 ):
-    """Update an activity."""
+    """Update an activity.
+
+    REDIRECT RULE ORDER (evaluated before any field changes):
+    1. If activity.opportunity exists → /opportunities/{id}
+    2. Else if activity.contact exists → /contacts/{id}
+    3. Else → /summary/my-weekly
+
+    Note: We capture the original contact_id before updating, because
+    the user might clear the contact dropdown but we still want to
+    redirect to the original context.
+    """
     activity = db.query(Activity).filter(Activity.id == activity_id).first()
     if not activity:
         raise HTTPException(status_code=404, detail="Activity not found")
 
+    # Capture redirect destination BEFORE making changes
+    # This ensures redirect goes to the original context, not the new contact
+    if activity.opportunity_id:
+        redirect_url = f"/opportunities/{activity.opportunity_id}"
+    elif activity.contact_id:
+        redirect_url = f"/contacts/{activity.contact_id}"
+    else:
+        redirect_url = "/summary/my-weekly"
+
+    # Apply updates
     activity.activity_type = activity_type
     activity.subject = subject
     activity.description = description or None
@@ -114,22 +169,33 @@ async def update_activity(
 
     db.commit()
 
-    return RedirectResponse(
-        url=f"/opportunities/{activity.opportunity_id}", status_code=303
-    )
+    return RedirectResponse(url=redirect_url, status_code=303)
 
 
 @router.post("/{activity_id}/delete")
 async def delete_activity(
     request: Request, activity_id: int, db: Session = Depends(get_db)
 ):
-    """Delete an activity."""
+    """Delete an activity.
+
+    REDIRECT RULE ORDER (captured before deletion):
+    1. If activity.opportunity_id exists → /opportunities/{id}
+    2. Else if activity.contact_id exists → /contacts/{id}
+    3. Else → /summary/my-weekly
+    """
     activity = db.query(Activity).filter(Activity.id == activity_id).first()
     if not activity:
         raise HTTPException(status_code=404, detail="Activity not found")
 
-    opp_id = activity.opportunity_id
+    # Capture redirect destination BEFORE deleting
+    if activity.opportunity_id:
+        redirect_url = f"/opportunities/{activity.opportunity_id}"
+    elif activity.contact_id:
+        redirect_url = f"/contacts/{activity.contact_id}"
+    else:
+        redirect_url = "/summary/my-weekly"
+
     db.delete(activity)
     db.commit()
 
-    return RedirectResponse(url=f"/opportunities/{opp_id}", status_code=303)
+    return RedirectResponse(url=redirect_url, status_code=303)

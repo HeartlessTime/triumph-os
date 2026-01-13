@@ -202,25 +202,17 @@ def get_executive_summary(
     tasks_completed_count = len(tasks_completed)
 
     # ----------------------------
-    # OUTREACH CONTACTS (from activities)
+    # OUTREACH ACTIVITIES (actual Activity records for editing)
     # ----------------------------
-    outreach_types = ["call", "meeting", "email", "site_visit"]
+    # Return the actual Activity records so each row has a real ID for editing.
+    # Previously returned deduplicated Contact objects which had no Activity ID.
+    outreach_types = ["call", "email", "site_visit", "other"]  # Excludes "meeting" (shown separately)
     outreach_activities = [
-        a for a in activities_logged if a.activity_type in outreach_types
+        a for a in activities_logged
+        if a.activity_type in outreach_types and a.contact_id is not None
     ]
-    outreach_contact_ids = list(
-        set(a.contact_id for a in outreach_activities if a.contact_id)
-    )
-
-    if outreach_contact_ids:
-        outreach_contacts = (
-            db.query(Contact)
-            .options(selectinload(Contact.account))
-            .filter(Contact.id.in_(outreach_contact_ids))
-            .all()
-        )
-    else:
-        outreach_contacts = []
+    # Sort by activity_date descending (most recent first)
+    outreach_activities.sort(key=lambda a: a.activity_date, reverse=True)
 
     # ----------------------------
     # PIPELINE CHANGES (from activities)
@@ -259,8 +251,9 @@ def get_executive_summary(
         "tasks_completed_count": tasks_completed_count,
         "activities_logged_count": activities_logged_count,
         "meetings_count": meetings_count,
+        "outreach_count": len(outreach_activities),
         # Lists
-        "outreach_contacts": outreach_contacts,
+        "outreach_activities": outreach_activities,  # Activity records (editable)
         "pipeline_changes": pipeline_changes,
         "tasks_completed": tasks_completed,
         "new_accounts": new_accounts,

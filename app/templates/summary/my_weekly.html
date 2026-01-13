@@ -127,10 +127,10 @@
         <div class="col-lg-6">
             <div class="card h-100">
                 <div class="card-header bg-success text-white">
-                    <h5 class="mb-0"><i class="bi bi-telephone me-2"></i>Outreach & Follow-ups</h5>
+                    <h5 class="mb-0"><i class="bi bi-telephone me-2"></i>Outreach & Follow-ups ({{ outreach_count }})</h5>
                 </div>
                 <div class="card-body p-0 summary-card-body">
-                    {% if outreach_contacts %}
+                    {% if outreach_activities %}
                     <div class="table-responsive">
                         <table class="table table-hover mb-0">
                             <thead class="table-light" style="position: sticky; top: 0;">
@@ -141,22 +141,31 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                {% for contact in outreach_contacts %}
-                                <tr>
+                                {% for activity in outreach_activities %}
+                                <tr data-href="/activities/{{ activity.id }}/edit">
                                     <td>
-                                        <a href="/contacts/{{ contact.id }}" class="text-decoration-none">
-                                            {{ contact.full_name }}
+                                        <span class="me-1">{{ activity.icon }}</span>
+                                        {% if activity.contact %}
+                                        <a href="/contacts/{{ activity.contact.id }}" class="text-decoration-none">
+                                            {{ activity.contact.full_name }}
                                         </a>
-                                        {% if contact.title %}
-                                        <div class="text-muted small">{{ contact.title }}</div>
+                                        {% if activity.contact.title %}
+                                        <div class="text-muted small">{{ activity.contact.title }}</div>
+                                        {% endif %}
+                                        {% else %}
+                                        <span class="text-muted">{{ activity.subject }}</span>
                                         {% endif %}
                                     </td>
                                     <td>
-                                        <a href="/accounts/{{ contact.account_id }}" class="text-decoration-none text-muted">
-                                            {{ contact.account.name }}
+                                        {% if activity.contact and activity.contact.account %}
+                                        <a href="/accounts/{{ activity.contact.account.id }}" class="text-decoration-none text-muted">
+                                            {{ activity.contact.account.name }}
                                         </a>
+                                        {% else %}
+                                        <span class="text-muted">-</span>
+                                        {% endif %}
                                     </td>
-                                    <td class="text-muted small">{{ contact.last_contacted.strftime('%b %d') if contact.last_contacted else '-' }}</td>
+                                    <td class="text-muted small">{{ activity.activity_date.strftime('%b %d') }}</td>
                                 </tr>
                                 {% endfor %}
                             </tbody>
@@ -513,8 +522,8 @@
 <div id="summaryData" style="display: none;">
     <div id="weekRange">{{ start_date.strftime('%B %d') }} – {{ end_date.strftime('%B %d, %Y') }}</div>
 
-    <div id="outreachData">{% for contact in outreach_contacts %}
-- {{ contact.full_name }} ({{ contact.account.name }}) - {{ contact.last_contacted.strftime('%b %d') if contact.last_contacted else 'N/A' }}{% endfor %}</div>
+    <div id="outreachData">{% for activity in outreach_activities %}
+- {{ activity.contact.full_name if activity.contact else activity.subject }} ({{ activity.contact.account.name if activity.contact and activity.contact.account else 'N/A' }}) - {{ activity.activity_date.strftime('%b %d') }}{% endfor %}</div>
 
     <div id="pipelineData">{% for opp in pipeline_changes %}
 - {{ opp.name }} ({{ opp.account.name }}) - {{ opp.stage }}{% endfor %}</div>
@@ -536,14 +545,17 @@ Opportunities: {% for opp in new_opportunities %}{{ opp.name }}{% if not loop.la
 
 <script>
 // Clickable rows handler - navigates to edit page when row is clicked
-// Does not interfere with links inside the row
+// GUARDRAILS:
+// - Does not interfere with links, buttons, or form elements inside the row
+// - Only triggers on elements with data-href attribute
+// - Single handler for both table rows and activity-item divs
 document.addEventListener('click', function(e) {
     // Find the clickable element (row or activity-item)
     const clickable = e.target.closest('[data-href]');
     if (!clickable) return;
 
-    // If user clicked a link inside the row, let it work normally
-    if (e.target.closest('a')) return;
+    // Ignore clicks on interactive elements inside the row
+    if (e.target.closest('a, button, input, textarea, select, form')) return;
 
     // Navigate to the edit page
     window.location.href = clickable.dataset.href;

@@ -34,6 +34,7 @@ class Activity(Base):
         ("note", "Note"),
         ("site_visit", "Site Visit"),
         ("task_completed", "Task Completed"),
+        ("other", "Other"),
     ]
 
     TYPE_ICONS = {
@@ -43,6 +44,7 @@ class Activity(Base):
         "note": "📝",
         "site_visit": "🏗️",
         "task_completed": "✅",
+        "other": "📋",
     }
 
     @property
