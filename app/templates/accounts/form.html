@@ -48,7 +48,7 @@
                             <div class="col-12">
                                 <label for="name" class="form-label">Account Name <span class="text-danger">*</span></label>
                                 <input type="text" class="form-control" id="name" name="name"
-                                    value="{{ form_name if form_name is defined else (account.name if account else '') }}"
+                                    value="{{ form_name if form_name is defined else (account.name or '' if account else '') }}"
                                     required placeholder="e.g., Acme Corporation">
                             </div>
 
@@ -56,7 +56,7 @@
                                 <label for="industry" class="form-label">Industry</label>
                                 <select class="form-select" id="industry" name="industry">
                                     <option value="">Select Industry</option>
-                                    {% set selected_industry = form_industry if form_industry is defined else (account.industry if account else '') %}
+                                    {% set selected_industry = form_industry if form_industry is defined else (account.industry or '' if account else '') %}
                                     {% for ind in industries %}
                                     <option value="{{ ind }}" {% if selected_industry == ind %}selected{% endif %}>{{ ind }}</option>
                                     {% endfor %}
@@ -66,14 +66,14 @@
                             <div class="col-md-6">
                                 <label for="phone" class="form-label">Phone</label>
                                 <input type="tel" class="form-control" id="phone" name="phone"
-                                    value="{{ form_phone if form_phone is defined else (account.phone if account else '') }}"
+                                    value="{{ form_phone if form_phone is defined else (account.phone or '' if account else '') }}"
                                     placeholder="(512) 555-1234">
                             </div>
 
                             <div class="col-12">
                                 <label for="website" class="form-label">Website</label>
                                 <input type="url" class="form-control" id="website" name="website"
-                                    value="{{ form_website if form_website is defined else (display_website if display_website else (account.website if account else '')) }}"
+                                    value="{{ form_website if form_website is defined else (display_website or '' if display_website else (account.website or '' if account else '')) }}"
                                     placeholder="https://example.com">
                             </div>
 
@@ -85,34 +85,34 @@
                             <div class="col-12">
                                 <label for="address" class="form-label">Street Address</label>
                                 <input type="text" class="form-control" id="address" name="address"
-                                    value="{{ form_address if form_address is defined else (account.address if account else '') }}"
+                                    value="{{ form_address if form_address is defined else (account.address or '' if account else '') }}"
                                     placeholder="123 Main St">
                             </div>
 
                             <div class="col-md-5">
                                 <label for="city" class="form-label">City</label>
                                 <input type="text" class="form-control" id="city" name="city"
-                                    value="{{ form_city if form_city is defined else (account.city if account else '') }}"
+                                    value="{{ form_city if form_city is defined else (account.city or '' if account else '') }}"
                                     placeholder="e.g., Austin">
                             </div>
 
                             <div class="col-md-4">
                                 <label for="state" class="form-label">State</label>
                                 <input type="text" class="form-control" id="state" name="state"
-                                    value="{{ form_state if form_state is defined else (account.state if account else '') }}"
+                                    value="{{ form_state if form_state is defined else (account.state or '' if account else '') }}"
                                     placeholder="e.g., TX">
                             </div>
 
                             <div class="col-md-3">
                                 <label for="zip_code" class="form-label">ZIP Code</label>
                                 <input type="text" class="form-control" id="zip_code" name="zip_code"
-                                    value="{{ form_zip_code if form_zip_code is defined else (account.zip_code if account else '') }}"
+                                    value="{{ form_zip_code if form_zip_code is defined else (account.zip_code or '' if account else '') }}"
                                     placeholder="78701">
                             </div>
 
                             <div class="col-12">
                                 <label for="notes" class="form-label">Notes</label>
-                                <textarea class="form-control" id="notes" name="notes" rows="3">{{ form_notes if form_notes is defined else (account.notes if account else '') }}</textarea>
+                                <textarea class="form-control" id="notes" name="notes" rows="3">{{ form_notes if form_notes is defined else (account.notes or '' if account else '') }}</textarea>
                             </div>
                         </div>
 

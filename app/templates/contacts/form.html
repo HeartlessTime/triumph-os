@@ -58,21 +58,21 @@
                             <div class="col-md-6">
                                 <label for="first_name" class="form-label">First Name <span class="text-danger">*</span></label>
                                 <input type="text" class="form-control" id="first_name" name="first_name"
-                                    value="{{ form_first_name if form_first_name is defined else (contact.first_name if contact else '') }}"
+                                    value="{{ form_first_name if form_first_name is defined else (contact.first_name or '' if contact else '') }}"
                                     required placeholder="e.g., John">
                             </div>
 
                             <div class="col-md-6">
                                 <label for="last_name" class="form-label">Last Name <span class="text-danger">*</span></label>
                                 <input type="text" class="form-control" id="last_name" name="last_name"
-                                    value="{{ form_last_name if form_last_name is defined else (contact.last_name if contact else '') }}"
+                                    value="{{ form_last_name if form_last_name is defined else (contact.last_name or '' if contact else '') }}"
                                     required placeholder="e.g., Smith">
                             </div>
 
                             <div class="col-12">
                                 <label for="title" class="form-label">Title</label>
                                 <input type="text" class="form-control" id="title" name="title"
-                                    value="{{ form_title if form_title is defined else (contact.title if contact else '') }}"
+                                    value="{{ form_title if form_title is defined else (contact.title or '' if contact else '') }}"
                                     placeholder="e.g., Project Manager">
                             </div>
 
@@ -84,7 +84,7 @@
                             <div class="col-12">
                                 <label for="email" class="form-label">Email <span class="text-danger">*</span></label>
                                 <input type="email" class="form-control" id="email" name="email"
-                                    value="{{ form_email if form_email is defined else (contact.email if contact else '') }}"
+                                    value="{{ form_email if form_email is defined else (contact.email or '' if contact else '') }}"
                                     placeholder="e.g., john.smith@company.com">
                                 <small class="text-muted">Required if no phone number provided</small>
                             </div>
@@ -92,7 +92,7 @@
                             <div class="col-md-6">
                                 <label for="phone" class="form-label">Office Phone <span class="text-danger">*</span></label>
                                 <input type="tel" class="form-control" id="phone" name="phone"
-                                    value="{{ form_phone if form_phone is defined else (contact.phone if contact else '') }}"
+                                    value="{{ form_phone if form_phone is defined else (contact.phone or '' if contact else '') }}"
                                     placeholder="(512) 555-1234">
                                 <small class="text-muted">Required if no email provided</small>
                             </div>
@@ -100,7 +100,7 @@
                             <div class="col-md-6">
                                 <label for="mobile" class="form-label">Mobile</label>
                                 <input type="tel" class="form-control" id="mobile" name="mobile"
-                                    value="{{ form_mobile if form_mobile is defined else (contact.mobile if contact else '') }}"
+                                    value="{{ form_mobile if form_mobile is defined else (contact.mobile or '' if contact else '') }}"
                                     placeholder="(512) 555-5678">
                             </div>
 
@@ -122,7 +122,7 @@
 
                             <div class="col-12">
                                 <label for="notes" class="form-label">Notes</label>
-                                <textarea class="form-control" id="notes" name="notes" rows="3">{{ form_notes if form_notes is defined else (contact.notes if contact else '') }}</textarea>
+                                <textarea class="form-control" id="notes" name="notes" rows="3">{{ form_notes if form_notes is defined else (contact.notes or '' if contact else '') }}</textarea>
                             </div>
                         </div>
 
