@@ -17,7 +17,7 @@ CSV columns expected:
 
 Behavior:
     - Matches accounts by name (case-insensitive)
-    - Skips contacts if account doesn't exist
+    - Creates new accounts if they don't exist
     - Creates new contacts if email doesn't exist
     - Updates existing contacts if email exists
     - Appends "relevant projects" to Account.notes (no duplicates)
@@ -130,19 +130,24 @@ def import_contacts(csv_path: str):
 
     # Counters
     rows_processed = 0
-    created = 0
-    updated = 0
-    skipped_no_account = 0
+    contacts_created = 0
+    contacts_updated = 0
+    accounts_created = 0
+    skipped_no_account_name = 0
     skipped_no_email = 0
 
     # Track accounts that have already had relevant_projects appended this run
     # Prevents redundant updates when multiple contacts share the same account
     accounts_updated_this_run = set()
 
+    # Cache for accounts created/found this run (normalized name -> Account object)
+    # This prevents duplicate account creation within the same import run
+    account_cache = {}
+
     db = SessionLocal()
 
     try:
-        # Get first active user for created_by_id
+        # Get first active user for created_by_id (used for new accounts)
         default_user = db.query(User).filter(User.is_active == True).first()
         if not default_user:
             print("[ERROR] No active users found in database")
@@ -154,6 +159,7 @@ def import_contacts(csv_path: str):
         # Read CSV
         with open(csv_path, "r", encoding="utf-8-sig") as f:
             reader = csv.DictReader(f)
+            reader.fieldnames = [h.strip().lower() for h in reader.fieldnames]
 
             for row in reader:
                 rows_processed += 1
@@ -176,20 +182,42 @@ def import_contacts(csv_path: str):
                 # Normalize email for matching
                 email_normalized = normalize(email)
 
-                # Find account (case-insensitive)
+                # Skip if no account name provided
                 if not account_name:
-                    print(f"  [SKIP_NO_ACCOUNT] Row {rows_processed}: No account name for '{email}'")
-                    skipped_no_account += 1
+                    print(f"  [SKIP_NO_ACCOUNT_NAME] Row {rows_processed}: No account name for '{email}'")
+                    skipped_no_account_name += 1
                     continue
 
-                account = db.query(Account).filter(
-                    func.lower(Account.name) == normalize(account_name)
-                ).first()
+                # Normalize account name for matching/caching
+                account_name_normalized = normalize(account_name)
+
+                # Check cache first (for accounts created/found in this run)
+                account = account_cache.get(account_name_normalized)
 
                 if not account:
-                    print(f"  [SKIP_NO_ACCOUNT] Row {rows_processed}: Account '{account_name}' not found for '{email}'")
-                    skipped_no_account += 1
-                    continue
+                    # Try to find existing account (case-insensitive)
+                    account = db.query(Account).filter(
+                        func.lower(Account.name) == account_name_normalized
+                    ).first()
+
+                    if account:
+                        # Found existing account - add to cache
+                        account_cache[account_name_normalized] = account
+                    else:
+                        # Account does not exist - CREATE it
+                        account = Account(
+                            name=account_name.strip(),  # Use original case for display
+                            created_by_id=default_user.id,
+                        )
+                        db.add(account)
+                        # Flush to get the account.id (needed for contact creation)
+                        db.flush()
+
+                        # Add to cache to prevent duplicate creation
+                        account_cache[account_name_normalized] = account
+
+                        print(f"  [ACCOUNT_CREATED] Row {rows_processed}: Created account '{account.name}'")
+                        accounts_created += 1
 
                 # Split contact name into first/last
                 first_name, last_name = split_name(contact_name)
@@ -206,7 +234,7 @@ def import_contacts(csv_path: str):
                     existing_contact.phone = mobile  # CSV "mobile number" -> phone field
                     existing_contact.title = title
 
-                    # FIX: Append to existing notes instead of overwriting
+                    # Append to existing notes instead of overwriting
                     # Preserves historical notes while adding new information
                     if notes:
                         existing_contact.notes = append_to_notes(
@@ -218,7 +246,7 @@ def import_contacts(csv_path: str):
                     # Note: We don't update account_id - contact stays with original account
 
                     print(f"  [UPDATED] Row {rows_processed}: {first_name} {last_name} <{email}> (Account: {account.name})")
-                    updated += 1
+                    contacts_updated += 1
                 else:
                     # CREATE new contact
                     # Note: Contact model does not have created_by_id field
@@ -234,10 +262,10 @@ def import_contacts(csv_path: str):
                     db.add(new_contact)
 
                     print(f"  [CREATED] Row {rows_processed}: {first_name} {last_name} <{email}> (Account: {account.name})")
-                    created += 1
+                    contacts_created += 1
 
                 # Append relevant projects to Account.notes (if provided)
-                # FIX: Only update each account once per import run to prevent redundant updates
+                # Only update each account once per import run to prevent redundant updates
                 if relevant_projects and account.id not in accounts_updated_this_run:
                     account.notes = append_to_notes(
                         account.notes,
@@ -254,12 +282,13 @@ def import_contacts(csv_path: str):
         print("=" * 60)
         print("IMPORT COMPLETE")
         print("=" * 60)
-        print(f"Rows processed:       {rows_processed}")
-        print(f"Contacts created:     {created}")
-        print(f"Contacts updated:     {updated}")
-        print(f"Skipped (no account): {skipped_no_account}")
-        print(f"Skipped (no email):   {skipped_no_email}")
-        print(f"Accounts updated:     {len(accounts_updated_this_run)}")
+        print(f"Rows processed:           {rows_processed}")
+        print(f"Accounts created:         {accounts_created}")
+        print(f"Contacts created:         {contacts_created}")
+        print(f"Contacts updated:         {contacts_updated}")
+        print(f"Skipped (no account name): {skipped_no_account_name}")
+        print(f"Skipped (no email):        {skipped_no_email}")
+        print(f"Accounts notes updated:   {len(accounts_updated_this_run)}")
         print()
 
     except Exception as e:
