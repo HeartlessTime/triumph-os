@@ -2,6 +2,30 @@
 
 {% block title %}My Weekly Summary - Triumph OS{% endblock %}
 
+{% block extra_css %}
+<style>
+    /* Scrollable summary card body */
+    .summary-card-body {
+        max-height: 280px;
+        overflow-y: auto;
+    }
+    .summary-card-body::-webkit-scrollbar {
+        width: 6px;
+    }
+    .summary-card-body::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 3px;
+    }
+    .summary-card-body::-webkit-scrollbar-thumb {
+        background: #ccc;
+        border-radius: 3px;
+    }
+    .summary-card-body::-webkit-scrollbar-thumb:hover {
+        background: #aaa;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="content-area">
     <div class="page-header d-flex justify-content-between align-items-center">
@@ -89,11 +113,11 @@
                 <div class="card-header bg-success text-white">
                     <h5 class="mb-0"><i class="bi bi-telephone me-2"></i>Outreach & Follow-ups</h5>
                 </div>
-                <div class="card-body p-0">
+                <div class="card-body p-0 summary-card-body">
                     {% if outreach_contacts %}
                     <div class="table-responsive">
                         <table class="table table-hover mb-0">
-                            <thead class="table-light">
+                            <thead class="table-light" style="position: sticky; top: 0;">
                                 <tr>
                                     <th>Contact</th>
                                     <th>Account</th>
@@ -150,11 +174,11 @@
                 <div class="card-header bg-warning text-dark">
                     <h5 class="mb-0"><i class="bi bi-arrow-left-right me-2"></i>Pipeline Movement</h5>
                 </div>
-                <div class="card-body p-0">
+                <div class="card-body p-0 summary-card-body">
                     {% if pipeline_changes %}
                     <div class="table-responsive">
                         <table class="table table-hover mb-0">
-                            <thead class="table-light">
+                            <thead class="table-light" style="position: sticky; top: 0;">
                                 <tr>
                                     <th>Opportunity</th>
                                     <th>Stage</th>
@@ -203,17 +227,74 @@
             </div>
         </div>
 
+        <!-- Meetings This Week -->
+        <div class="col-lg-6">
+            <div class="card h-100">
+                <div class="card-header bg-purple text-white" style="background-color: #6f42c1 !important;">
+                    <h5 class="mb-0"><i class="bi bi-calendar-event me-2"></i>Meetings This Week ({{ meetings_count }})</h5>
+                </div>
+                <div class="card-body p-0 summary-card-body">
+                    {% if meetings %}
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light" style="position: sticky; top: 0;">
+                                <tr>
+                                    <th>Contact</th>
+                                    <th>Account</th>
+                                    <th>Date</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for meeting in meetings %}
+                                <tr>
+                                    <td>
+                                        {% if meeting.contact %}
+                                        <a href="/contacts/{{ meeting.contact.id }}" class="text-decoration-none">
+                                            {{ meeting.contact.full_name }}
+                                        </a>
+                                        {% if meeting.contact.title %}
+                                        <div class="text-muted small">{{ meeting.contact.title }}</div>
+                                        {% endif %}
+                                        {% else %}
+                                        <span class="text-muted">{{ meeting.subject }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if meeting.contact and meeting.contact.account %}
+                                        <a href="/accounts/{{ meeting.contact.account.id }}" class="text-decoration-none text-muted">
+                                            {{ meeting.contact.account.name }}
+                                        </a>
+                                        {% else %}
+                                        <span class="text-muted">-</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-muted small">{{ meeting.activity_date.strftime('%b %d') }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center text-muted py-4">
+                        <i class="bi bi-calendar-x h1"></i>
+                        <p class="mb-0">No meetings logged this period</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
         <!-- Tasks Completed -->
         <div class="col-lg-6">
             <div class="card h-100">
                 <div class="card-header bg-danger text-white">
                     <h5 class="mb-0"><i class="bi bi-check2-square me-2"></i>Tasks Completed</h5>
                 </div>
-                <div class="card-body p-0">
+                <div class="card-body p-0 summary-card-body">
                     {% if tasks_completed %}
                     <div class="table-responsive">
                         <table class="table table-hover mb-0">
-                            <thead class="table-light">
+                            <thead class="table-light" style="position: sticky; top: 0;">
                                 <tr>
                                     <th>Task</th>
                                     <th>Opportunity</th>
@@ -272,7 +353,7 @@
                 <div class="card-header bg-info text-white">
                     <h5 class="mb-0"><i class="bi bi-plus-circle me-2"></i>New Records Created</h5>
                 </div>
-                <div class="card-body">
+                <div class="card-body summary-card-body">
                     <!-- New Accounts -->
                     <h6 class="text-muted mb-2">
                         <i class="bi bi-building me-1"></i> Accounts ({{ new_accounts|length }})
@@ -348,7 +429,7 @@
                 <div class="card-header bg-secondary text-white">
                     <h5 class="mb-0"><i class="bi bi-clock-history me-2"></i>Recent Activity Timeline</h5>
                 </div>
-                <div class="card-body">
+                <div class="card-body summary-card-body" style="max-height: 320px;">
                     {% if activities_logged %}
                     <div class="activity-timeline">
                         {% for activity in activities_logged %}

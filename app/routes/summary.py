@@ -237,6 +237,12 @@ def get_executive_summary(
     else:
         pipeline_changes = []
 
+    # ----------------------------
+    # MEETINGS (from activities with type="meeting")
+    # ----------------------------
+    meetings = [a for a in activities_logged if a.activity_type == "meeting"]
+    meetings_count = len(meetings)
+
     return {
         # Counts
         "contacts_logged_count": contacts_logged_count,
@@ -246,6 +252,7 @@ def get_executive_summary(
         "new_opportunities_count": new_opportunities_count,
         "tasks_completed_count": tasks_completed_count,
         "activities_logged_count": activities_logged_count,
+        "meetings_count": meetings_count,
         # Lists
         "outreach_contacts": outreach_contacts,
         "pipeline_changes": pipeline_changes,
@@ -254,6 +261,7 @@ def get_executive_summary(
         "new_contacts": new_contacts,
         "new_opportunities": new_opportunities,
         "activities_logged": activities_logged,
+        "meetings": meetings,
     }
 
 

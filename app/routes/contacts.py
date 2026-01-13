@@ -386,6 +386,54 @@ async def delete_contact(
     return RedirectResponse(url=f"/accounts/{account_id}", status_code=303)
 
 
+@router.post("/{contact_id}/log-meeting")
+async def log_meeting(
+    request: Request,
+    contact_id: int,
+    meeting_date: str = Form(None),
+    notes: str = Form(None),
+    db: Session = Depends(get_db),
+):
+    """Log a meeting with a contact.
+
+    Creates an Activity with type="meeting" for the contact.
+    Updates last_contacted to the meeting date.
+    """
+    contact = db.query(Contact).filter(Contact.id == contact_id).first()
+    if not contact:
+        raise HTTPException(status_code=404, detail="Contact not found")
+
+    current_user = request.state.current_user
+
+    # Parse meeting date or default to today
+    if meeting_date:
+        meeting_dt = datetime.strptime(meeting_date, "%Y-%m-%d")
+    else:
+        meeting_dt = datetime.now()
+
+    # Create the meeting activity
+    meeting_activity = Activity(
+        opportunity_id=None,
+        activity_type="meeting",
+        subject=f"Meeting with {contact.full_name}",
+        description=notes.strip() if notes and notes.strip() else None,
+        activity_date=meeting_dt,
+        contact_id=contact_id,
+        created_by_id=current_user.id,
+    )
+    db.add(meeting_activity)
+
+    # Update last_contacted on the contact
+    contact.last_contacted = meeting_dt.date()
+    update_contact_followup(contact)
+
+    db.commit()
+
+    # Redirect to 'next' param if provided, otherwise to contact detail
+    redirect_url = request.query_params.get("next", f"/contacts/{contact_id}")
+    return RedirectResponse(url=redirect_url, status_code=303)
+
+
 @router.post("/{contact_id}/log-contact")
 async def log_contact(request: Request, contact_id: int, db: Session = Depends(get_db)):
     """Log contact - updates last_contacted to today and next_followup to 30 days from now.

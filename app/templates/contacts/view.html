@@ -27,6 +27,9 @@
                         <i class="bi bi-telephone me-1"></i> Log Contact
                     </button>
                 </form>
+                <button type="button" class="btn btn-outline-success" data-bs-toggle="modal" data-bs-target="#logMeetingModal">
+                    <i class="bi bi-calendar-event me-1"></i> Log Meeting
+                </button>
                 <form method="post" action="/contacts/{{ contact.id }}/delete" class="d-inline" onsubmit="return confirm('Delete this contact? This cannot be undone.');">
                     <button type="submit" class="btn btn-outline-danger">
                         <i class="bi bi-trash me-1"></i> Delete
@@ -107,6 +110,40 @@
                     {% endif %}
                 </div>
             </div>
+        </div>
+    </div>
+</div>
+
+<!-- Log Meeting Modal -->
+<div class="modal fade" id="logMeetingModal" tabindex="-1" aria-labelledby="logMeetingModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="post" action="/contacts/{{ contact.id }}/log-meeting">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="logMeetingModalLabel">
+                        <i class="bi bi-calendar-event me-2"></i>Log Meeting with {{ contact.full_name }}
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="meeting_date" class="form-label">Meeting Date</label>
+                        <input type="date" class="form-control" id="meeting_date" name="meeting_date"
+                            value="{{ today.strftime('%Y-%m-%d') }}">
+                    </div>
+                    <div class="mb-3">
+                        <label for="notes" class="form-label">Notes <span class="text-muted">(optional)</span></label>
+                        <textarea class="form-control" id="notes" name="notes" rows="3"
+                            placeholder="Meeting notes..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-success">
+                        <i class="bi bi-check-lg me-1"></i>Log Meeting
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 </div>
