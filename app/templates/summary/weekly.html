@@ -126,10 +126,11 @@
         <!-- Outreach & Follow-ups -->
         <div class="col-lg-6">
             <div class="card h-100">
-                <div class="card-header bg-success text-white">
+                <div class="card-header bg-success text-white d-flex justify-content-between align-items-center" data-expand-section="team-outreach">
                     <h5 class="mb-0"><i class="bi bi-telephone me-2"></i>Outreach & Follow-ups ({{ outreach_count }})</h5>
+                    <i class="bi bi-chevron-down expand-chevron"></i>
                 </div>
-                <div class="card-body p-0 summary-card-body">
+                <div class="card-body p-0 expandable-body">
                     {% if outreach_activities %}
                     <div class="table-responsive">
                         <table class="table table-hover mb-0">

@@ -1088,7 +1088,84 @@
         text-decoration: line-through;
         opacity: 0.6;
     }
+
+    /* Expandable section styling (show more / show less) */
+    .card-header[data-expand-section] {
+        cursor: pointer;
+        user-select: none;
+    }
+    .card-header[data-expand-section] .expand-chevron {
+        transition: transform 0.15s ease;
+        margin-left: 0.5rem;
+    }
+    .card-header[data-expand-section].expanded .expand-chevron {
+        transform: rotate(180deg);
+    }
+    /* Height-limited by default, full height when expanded */
+    .expandable-body {
+        max-height: 250px;
+        overflow-y: auto;
+        transition: max-height 0.2s ease-out;
+    }
+    .expandable-body.expanded {
+        max-height: none;
+    }
     </style>
+
+    <!-- Expandable Sections: show more/less with localStorage persistence -->
+    <script>
+    (function() {
+        const STORAGE_KEY = 'triumphOS_expandedSections';
+
+        function getExpandedSections() {
+            try {
+                return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {};
+            } catch (e) { return {}; }
+        }
+
+        function setExpandedSection(sectionId, isExpanded) {
+            const state = getExpandedSections();
+            if (isExpanded) {
+                state[sectionId] = true;
+            } else {
+                delete state[sectionId];
+            }
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+        }
+
+        function initExpandableSections() {
+            const expandedState = getExpandedSections();
+
+            document.querySelectorAll('[data-expand-section]').forEach(function(header) {
+                const sectionId = header.dataset.expandSection;
+                const body = header.closest('.card').querySelector('.expandable-body');
+                if (!body) return;
+
+                // Restore state from localStorage (default: collapsed/height-limited)
+                if (expandedState[sectionId]) {
+                    header.classList.add('expanded');
+                    body.classList.add('expanded');
+                }
+
+                // Click handler on header
+                header.addEventListener('click', function(e) {
+                    // Ignore clicks on buttons inside header (like the + button)
+                    if (e.target.closest('button, a, input, select')) return;
+
+                    const isExpanded = header.classList.toggle('expanded');
+                    body.classList.toggle('expanded', isExpanded);
+                    setExpandedSection(sectionId, isExpanded);
+                });
+            });
+        }
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initExpandableSections);
+        } else {
+            initExpandableSections();
+        }
+    })();
+    </script>
 
     {% block extra_js %}{% endblock %}
 </body>
