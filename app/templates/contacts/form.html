@@ -118,6 +118,11 @@
                                 <input type="date" class="form-control" id="last_contacted" name="last_contacted"
                                     value="{{ contact.last_contacted.strftime('%Y-%m-%d') if contact and contact.last_contacted else '' }}">
                             </div>
+                            <div class="col-md-6">
+                                <label for="next_followup" class="form-label">Next Follow-up</label>
+                                <input type="date" class="form-control" id="next_followup" name="next_followup"
+                                    value="{{ contact.next_followup.strftime('%Y-%m-%d') if contact and contact.next_followup else '' }}">
+                            </div>
                             {% endif %}
 
                             <div class="col-12">

@@ -252,6 +252,7 @@ async def update_contact(
     is_primary: bool = Form(False),
     notes: str = Form(None),
     last_contacted: str = Form(None),
+    next_followup: str = Form(None),
     confirm_warnings: bool = Form(False),
     db: Session = Depends(get_db),
 ):
@@ -346,7 +347,11 @@ async def update_contact(
         contact.last_contacted = datetime.strptime(last_contacted, "%Y-%m-%d").date()
     else:
         contact.last_contacted = None
-        # Also clear next_followup when last_contacted is cleared
+
+    # Handle next_followup - allow manual edit/clear independently
+    if next_followup and next_followup.strip():
+        contact.next_followup = datetime.strptime(next_followup, "%Y-%m-%d").date()
+    else:
         contact.next_followup = None
 
     db.commit()
