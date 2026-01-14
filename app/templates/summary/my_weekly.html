@@ -42,6 +42,27 @@
     .activity-item[data-href]:hover {
         background-color: rgba(0, 123, 255, 0.08);
     }
+    /* Quick note input - subtle styling */
+    .quick-note-input {
+        font-size: 0.75rem;
+        font-style: italic;
+        color: #6c757d;
+        border: 1px solid transparent;
+        background: transparent;
+        padding: 0.15rem 0.35rem;
+        width: 100%;
+        min-width: 180px;
+    }
+    .quick-note-input:focus {
+        border-color: #ced4da;
+        background: #fff;
+        font-style: normal;
+        color: #212529;
+    }
+    .quick-note-input::placeholder {
+        color: #adb5bd;
+        font-style: italic;
+    }
 </style>
 {% endblock %}
 
@@ -283,6 +304,13 @@
                                         {% else %}
                                         <span class="text-muted">{{ meeting.subject }}</span>
                                         {% endif %}
+                                        <input type="text"
+                                               class="quick-note-input form-control form-control-sm mt-1"
+                                               data-activity-id="{{ meeting.id }}"
+                                               value="{{ meeting.description or '' }}"
+                                               placeholder="+ Add note..."
+                                               onclick="event.stopPropagation();"
+                                               onmousedown="event.stopPropagation();">
                                     </td>
                                     <td>
                                         {% if meeting.contact and meeting.contact.account %}
@@ -650,6 +678,42 @@ document.getElementById('copyToClipboard')?.addEventListener('click', function()
     }).catch(function(err) {
         console.error('Failed to copy: ', err);
         alert('Failed to copy to clipboard');
+    });
+});
+
+// Quick note auto-save for meetings (idempotent)
+document.querySelectorAll('.quick-note-input').forEach(function(input) {
+    if (input.dataset.quickNoteBound) return;
+    input.dataset.quickNoteBound = 'true';
+
+    let originalValue = input.value;
+
+    function saveNote() {
+        const newValue = input.value.trim();
+        if (newValue === originalValue) return;
+
+        const activityId = input.dataset.activityId;
+        fetch('/activities/' + activityId + '/quick-note', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ notes: newValue })
+        }).then(function(res) {
+            if (res.ok) {
+                originalValue = newValue;
+                input.style.borderColor = '#28a745';
+                setTimeout(function() { input.style.borderColor = 'transparent'; }, 1000);
+            }
+        }).catch(function(err) {
+            console.error('Failed to save note:', err);
+        });
+    }
+
+    input.addEventListener('blur', saveNote);
+    input.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            input.blur();
+        }
     });
 });
 </script>

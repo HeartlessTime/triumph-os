@@ -171,6 +171,29 @@ async def update_activity(
     return RedirectResponse(url=redirect_url, status_code=303)
 
 
+@router.post("/{activity_id}/quick-note")
+async def quick_note(
+    activity_id: int,
+    request: Request,
+    db: Session = Depends(get_db),
+):
+    """Update activity notes via inline quick-note input (JSON API)."""
+    # Auth: request.state.current_user is set by middleware for all routes
+    current_user = request.state.current_user
+    if not current_user:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+
+    activity = db.query(Activity).filter(Activity.id == activity_id).first()
+    if not activity:
+        raise HTTPException(status_code=404, detail="Activity not found")
+
+    data = await request.json()
+    activity.description = data.get("notes", "").strip() or None
+    db.commit()
+
+    return {"ok": True}
+
+
 @router.post("/{activity_id}/delete")
 async def delete_activity(
     request: Request, activity_id: int, db: Session = Depends(get_db)
