@@ -340,8 +340,11 @@
         <!-- Tasks Completed -->
         <div class="col-lg-6">
             <div class="card h-100">
-                <div class="card-header bg-danger text-white">
+                <div class="card-header bg-danger text-white d-flex justify-content-between align-items-center">
                     <h5 class="mb-0"><i class="bi bi-check2-square me-2"></i>Tasks Completed</h5>
+                    <button type="button" class="btn btn-sm btn-light" data-bs-toggle="modal" data-bs-target="#quickAddTaskModal">
+                        <i class="bi bi-plus-lg"></i>
+                    </button>
                 </div>
                 <div class="card-body p-0 summary-card-body">
                     {% if tasks_completed %}
@@ -369,7 +372,7 @@
                                             {{ task.opportunity.name }}
                                         </a>
                                         {% else %}
-                                        <span class="text-muted">-</span>
+                                        <span class="text-muted fst-italic">Personal task</span>
                                         {% endif %}
                                     </td>
                                     <td class="text-muted small">{{ task.updated_at.strftime('%b %d') }}</td>
@@ -717,4 +720,46 @@ document.querySelectorAll('.quick-note-input').forEach(function(input) {
     });
 });
 </script>
+
+<!-- Quick Add Task Modal -->
+<div class="modal fade" id="quickAddTaskModal" tabindex="-1" aria-labelledby="quickAddTaskModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="post" action="/tasks/quick-add">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="quickAddTaskModalLabel"><i class="bi bi-plus-circle me-2"></i>Quick Add Task</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="taskTitle" class="form-label">Title <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="taskTitle" name="title" required placeholder="What needs to be done?">
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-6">
+                            <label for="taskDueDate" class="form-label">Due Date</label>
+                            <input type="date" class="form-control" id="taskDueDate" name="due_date">
+                        </div>
+                        <div class="col-6">
+                            <label for="taskPriority" class="form-label">Priority</label>
+                            <select class="form-select" id="taskPriority" name="priority">
+                                <option value="Low">Low</option>
+                                <option value="Medium" selected>Medium</option>
+                                <option value="High">High</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="taskNotes" class="form-label">Notes</label>
+                        <input type="text" class="form-control" id="taskNotes" name="description" placeholder="Optional notes...">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary"><i class="bi bi-plus-lg me-1"></i>Add Task</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
 {% endblock %}

@@ -11,6 +11,44 @@ router = APIRouter(prefix="/tasks", tags=["tasks"])
 templates = Jinja2Templates(directory="app/templates")
 
 
+@router.post("/quick-add")
+async def quick_add_task(
+    request: Request,
+    title: str = Form(...),
+    due_date: str = Form(None),
+    description: str = Form(None),
+    priority: str = Form("Medium"),
+    db: Session = Depends(get_db),
+):
+    """Quick add a standalone task (no opportunity)."""
+    current_user = request.state.current_user
+    if not current_user:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+
+    # Validate priority
+    if priority not in Task.PRIORITIES:
+        priority = "Medium"
+
+    task = Task(
+        opportunity_id=None,
+        title=title,
+        description=description or None,
+        due_date=datetime.strptime(due_date, "%Y-%m-%d").date() if due_date else None,
+        priority=priority,
+        assigned_to_id=current_user.id,
+        created_by_id=current_user.id,
+    )
+
+    db.add(task)
+    db.commit()
+
+    # Redirect back to referrer or dashboard
+    referer = request.headers.get("referer")
+    if referer:
+        return RedirectResponse(url=referer, status_code=303)
+    return RedirectResponse(url="/", status_code=303)
+
+
 @router.post("/opportunity/{opp_id}/add")
 async def add_task(
     request: Request,

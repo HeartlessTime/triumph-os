@@ -901,6 +901,38 @@
     })();
     </script>
 
+    <!-- Global Delete Shortcut (Delete/Backspace triggers delete confirmation on edit pages) -->
+    <script>
+    (function() {
+        document.addEventListener('keydown', function(e) {
+            // Only trigger on Delete or Backspace
+            if (e.key !== 'Delete' && e.key !== 'Backspace') return;
+
+            // Ignore if user is typing in an input, textarea, or contenteditable
+            const active = document.activeElement;
+            if (active && (
+                active.tagName === 'INPUT' ||
+                active.tagName === 'TEXTAREA' ||
+                active.tagName === 'SELECT' ||
+                active.isContentEditable
+            )) return;
+
+            // Find delete button (btn-outline-danger with trash icon or in a delete form)
+            const deleteBtn = document.querySelector('form[action*="/delete"] button.btn-outline-danger') ||
+                              document.querySelector('button.btn-outline-danger[data-bs-target*="delete" i]') ||
+                              document.querySelector('[data-delete-trigger]');
+
+            if (!deleteBtn) return;
+
+            // Prevent default browser behavior (e.g., back navigation on Backspace)
+            e.preventDefault();
+
+            // Click the delete button to trigger confirm() or open modal
+            deleteBtn.click();
+        });
+    })();
+    </script>
+
     {% block extra_js %}{% endblock %}
 </body>
 </html>

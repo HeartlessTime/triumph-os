@@ -214,16 +214,21 @@
             <div class="card h-100">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <span><i class="bi bi-check2-square me-2"></i>My Tasks</span>
-                    <span class="badge bg-secondary">{{ my_tasks|length }}</span>
+                    <div class="d-flex align-items-center gap-2">
+                        <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#quickAddTaskModal">
+                            <i class="bi bi-plus-lg"></i>
+                        </button>
+                        <span class="badge bg-secondary">{{ my_tasks|length }}</span>
+                    </div>
                 </div>
                 <div class="card-body p-0">
                     {% if my_tasks %}
                     <div class="list-group list-group-flush">
                         {% for task in my_tasks %}
-                        <div class="list-group-item d-flex justify-content-between align-items-center">
+                        <div class="list-group-item d-flex justify-content-between align-items-center task-row" data-href="/tasks/{{ task.id }}/edit" style="cursor: pointer;">
                             <div class="d-flex align-items-start gap-2">
                                 {% if task.status != 'Completed' %}
-                                <form method="post" action="/tasks/{{ task.id }}/complete" class="d-inline">
+                                <form method="post" action="/tasks/{{ task.id }}/complete" class="d-inline" onclick="event.stopPropagation();">
                                     <button type="submit" class="btn btn-sm btn-outline-success p-1" title="Complete Task" style="line-height: 1;">
                                         <i class="bi bi-check-lg"></i>
                                     </button>
@@ -236,9 +241,11 @@
                                 <div>
                                     <div class="fw-medium">{{ task.title }}</div>
                                     {% if task.opportunity %}
-                                    <a href="/opportunities/{{ task.opportunity.id }}" class="text-muted small text-decoration-none">
+                                    <a href="/opportunities/{{ task.opportunity.id }}" class="text-muted small text-decoration-none" onclick="event.stopPropagation();">
                                         {{ task.opportunity.name }}
                                     </a>
+                                    {% else %}
+                                    <span class="text-muted small fst-italic">Personal task</span>
                                     {% endif %}
                                 </div>
                             </div>
@@ -401,5 +408,61 @@ document.addEventListener('DOMContentLoaded', function() {
 #dashboard-calendar .fc .fc-event:hover {
     background-color: #1d4ed8;
 }
+
+.task-row:hover {
+    background-color: rgba(0, 123, 255, 0.08);
+}
 </style>
+
+<!-- Quick Add Task Modal -->
+<div class="modal fade" id="quickAddTaskModal" tabindex="-1" aria-labelledby="quickAddTaskModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="post" action="/tasks/quick-add">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="quickAddTaskModalLabel"><i class="bi bi-plus-circle me-2"></i>Quick Add Task</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="taskTitle" class="form-label">Title <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="taskTitle" name="title" required placeholder="What needs to be done?">
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-6">
+                            <label for="taskDueDate" class="form-label">Due Date</label>
+                            <input type="date" class="form-control" id="taskDueDate" name="due_date">
+                        </div>
+                        <div class="col-6">
+                            <label for="taskPriority" class="form-label">Priority</label>
+                            <select class="form-select" id="taskPriority" name="priority">
+                                <option value="Low">Low</option>
+                                <option value="Medium" selected>Medium</option>
+                                <option value="High">High</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="taskNotes" class="form-label">Notes</label>
+                        <input type="text" class="form-control" id="taskNotes" name="description" placeholder="Optional notes...">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary"><i class="bi bi-plus-lg me-1"></i>Add Task</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+// Task row click handler
+document.querySelectorAll('.task-row[data-href]').forEach(function(row) {
+    row.addEventListener('click', function(e) {
+        if (e.target.closest('a, button, form')) return;
+        window.location.href = row.dataset.href;
+    });
+});
+</script>
 {% endblock %}
