@@ -201,16 +201,12 @@
                     {% endif %}
                 </div>
                 <div class="card-footer bg-light">
-                    <form action="/summary/weekly/notes" method="post" class="note-form">
-                        <input type="hidden" name="week_start" value="{{ week_start }}">
-                        <input type="hidden" name="section" value="outreach">
-                        <input type="hidden" name="note_type" value="personal">
-                        <div class="mb-2">
-                            <label class="form-label small text-muted mb-1"><i class="bi bi-pencil me-1"></i>Notes</label>
-                            <textarea name="notes" class="form-control form-control-sm" rows="2" placeholder="Add notes about outreach...">{{ section_notes.get('outreach', '') }}</textarea>
-                        </div>
-                        <button type="submit" class="btn btn-sm btn-outline-success">Save Notes</button>
-                    </form>
+                    <div class="mb-0">
+                        <label class="form-label small text-muted mb-1"><i class="bi bi-pencil me-1"></i>Notes</label>
+                        <textarea class="form-control form-control-sm auto-save-note" rows="2"
+                            data-section="outreach" data-note-type="personal"
+                            placeholder="Add notes about outreach...">{{ section_notes.get('outreach', '') }}</textarea>
+                    </div>
                 </div>
             </div>
         </div>
@@ -269,16 +265,12 @@
                     {% endif %}
                 </div>
                 <div class="card-footer bg-light">
-                    <form action="/summary/weekly/notes" method="post" class="note-form">
-                        <input type="hidden" name="week_start" value="{{ week_start }}">
-                        <input type="hidden" name="section" value="pipeline">
-                        <input type="hidden" name="note_type" value="personal">
-                        <div class="mb-2">
-                            <label class="form-label small text-muted mb-1"><i class="bi bi-pencil me-1"></i>Notes</label>
-                            <textarea name="notes" class="form-control form-control-sm" rows="2" placeholder="Add notes about pipeline...">{{ section_notes.get('pipeline', '') }}</textarea>
-                        </div>
-                        <button type="submit" class="btn btn-sm btn-outline-warning">Save Notes</button>
-                    </form>
+                    <div class="mb-0">
+                        <label class="form-label small text-muted mb-1"><i class="bi bi-pencil me-1"></i>Notes</label>
+                        <textarea class="form-control form-control-sm auto-save-note" rows="2"
+                            data-section="pipeline" data-note-type="personal"
+                            placeholder="Add notes about pipeline...">{{ section_notes.get('pipeline', '') }}</textarea>
+                    </div>
                 </div>
             </div>
         </div>
@@ -399,16 +391,12 @@
                     {% endif %}
                 </div>
                 <div class="card-footer bg-light">
-                    <form action="/summary/weekly/notes" method="post" class="note-form">
-                        <input type="hidden" name="week_start" value="{{ week_start }}">
-                        <input type="hidden" name="section" value="tasks">
-                        <input type="hidden" name="note_type" value="personal">
-                        <div class="mb-2">
-                            <label class="form-label small text-muted mb-1"><i class="bi bi-pencil me-1"></i>Notes</label>
-                            <textarea name="notes" class="form-control form-control-sm" rows="2" placeholder="Add notes about tasks...">{{ section_notes.get('tasks', '') }}</textarea>
-                        </div>
-                        <button type="submit" class="btn btn-sm btn-outline-danger">Save Notes</button>
-                    </form>
+                    <div class="mb-0">
+                        <label class="form-label small text-muted mb-1"><i class="bi bi-pencil me-1"></i>Notes</label>
+                        <textarea class="form-control form-control-sm auto-save-note" rows="2"
+                            data-section="tasks" data-note-type="personal"
+                            placeholder="Add notes about tasks...">{{ section_notes.get('tasks', '') }}</textarea>
+                    </div>
                 </div>
             </div>
         </div>
@@ -475,16 +463,12 @@
                     {% endif %}
                 </div>
                 <div class="card-footer bg-light">
-                    <form action="/summary/weekly/notes" method="post" class="note-form">
-                        <input type="hidden" name="week_start" value="{{ week_start }}">
-                        <input type="hidden" name="section" value="new_records">
-                        <input type="hidden" name="note_type" value="personal">
-                        <div class="mb-2">
-                            <label class="form-label small text-muted mb-1"><i class="bi bi-pencil me-1"></i>Notes</label>
-                            <textarea name="notes" class="form-control form-control-sm" rows="2" placeholder="Add notes about new records...">{{ section_notes.get('new_records', '') }}</textarea>
-                        </div>
-                        <button type="submit" class="btn btn-sm btn-outline-info">Save Notes</button>
-                    </form>
+                    <div class="mb-0">
+                        <label class="form-label small text-muted mb-1"><i class="bi bi-pencil me-1"></i>Notes</label>
+                        <textarea class="form-control form-control-sm auto-save-note" rows="2"
+                            data-section="new_records" data-note-type="personal"
+                            placeholder="Add notes about new records...">{{ section_notes.get('new_records', '') }}</textarea>
+                    </div>
                 </div>
             </div>
         </div>
@@ -544,15 +528,9 @@
                     <h5 class="mb-0"><i class="bi bi-journal-text me-2"></i>Other Notes</h5>
                 </div>
                 <div class="card-body">
-                    <form action="/summary/weekly/notes" method="post" class="note-form">
-                        <input type="hidden" name="week_start" value="{{ week_start }}">
-                        <input type="hidden" name="section" value="other">
-                        <input type="hidden" name="note_type" value="personal">
-                        <div class="mb-3">
-                            <textarea name="notes" class="form-control" rows="4" placeholder="Add any other notes, observations, or highlights for this week...">{{ section_notes.get('other', '') }}</textarea>
-                        </div>
-                        <button type="submit" class="btn btn-outline-dark">Save Notes</button>
-                    </form>
+                    <textarea class="form-control auto-save-note" rows="4"
+                        data-section="other" data-note-type="personal"
+                        placeholder="Add any other notes, observations, or highlights for this week...">{{ section_notes.get('other', '') }}</textarea>
                 </div>
             </div>
         </div>
@@ -772,4 +750,90 @@ document.querySelectorAll('.quick-note-input').forEach(function(input) {
         </div>
     </div>
 </div>
+
+<!-- Auto-save notes script -->
+<script>
+(function() {
+    const weekStart = '{{ week_start }}';
+    let saveTimers = {};
+
+    function flashBorder(el, success) {
+        const color = success ? '#28a745' : '#dc3545';
+        el.style.transition = 'border-color 0.15s ease';
+        el.style.borderColor = color;
+        setTimeout(function() {
+            el.style.borderColor = '';
+            setTimeout(function() { el.style.transition = ''; }, 150);
+        }, 800);
+    }
+
+    function saveNote(textarea) {
+        const section = textarea.dataset.section;
+        const noteType = textarea.dataset.noteType;
+        const notes = textarea.value;
+
+        fetch('/summary/notes/auto-save', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                week_start: weekStart,
+                section: section,
+                notes: notes,
+                note_type: noteType
+            })
+        })
+        .then(function(res) {
+            if (res.ok) {
+                flashBorder(textarea, true);
+            } else {
+                console.error('Auto-save failed:', res.status);
+                flashBorder(textarea, false);
+            }
+        })
+        .catch(function(err) {
+            console.error('Auto-save error:', err);
+            flashBorder(textarea, false);
+        });
+    }
+
+    function debounce(textarea) {
+        const key = textarea.dataset.section;
+        if (saveTimers[key]) {
+            clearTimeout(saveTimers[key]);
+        }
+        saveTimers[key] = setTimeout(function() {
+            saveNote(textarea);
+        }, 400);
+    }
+
+    document.querySelectorAll('.auto-save-note').forEach(function(textarea) {
+        // Stop row click propagation
+        textarea.addEventListener('click', function(e) { e.stopPropagation(); });
+        textarea.addEventListener('mousedown', function(e) { e.stopPropagation(); });
+
+        // Save on blur
+        textarea.addEventListener('blur', function() {
+            const key = textarea.dataset.section;
+            if (saveTimers[key]) {
+                clearTimeout(saveTimers[key]);
+                delete saveTimers[key];
+            }
+            saveNote(textarea);
+        });
+
+        // Debounced save on input
+        textarea.addEventListener('input', function() {
+            debounce(textarea);
+        });
+
+        // Save on Enter (prevent newline, save immediately)
+        textarea.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                textarea.blur();
+            }
+        });
+    });
+})();
+</script>
 {% endblock %}

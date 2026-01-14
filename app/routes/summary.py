@@ -9,8 +9,8 @@ Provides weekly summary pages:
 from datetime import date, datetime, timedelta
 from typing import Optional, Dict
 
-from fastapi import APIRouter, Request, Depends, Form
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi import APIRouter, Request, Depends, Form, Body
+from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session, selectinload
 
@@ -407,6 +407,69 @@ async def save_weekly_note(
     db.commit()
 
     return RedirectResponse(url=redirect_url, status_code=303)
+
+
+@router.post("/notes/auto-save")
+async def auto_save_note(
+    request: Request,
+    week_start: str = Body(...),
+    section: str = Body(...),
+    notes: str = Body(""),
+    note_type: str = Body("team"),
+    db: Session = Depends(get_db),
+):
+    """
+    Auto-save a note for a specific section and week (JSON endpoint).
+
+    Returns JSON response for AJAX calls.
+    """
+    current_user = request.state.current_user
+
+    # Parse week_start date
+    try:
+        week_start_date = datetime.strptime(week_start, "%Y-%m-%d").date()
+    except ValueError:
+        return JSONResponse({"success": False, "error": "Invalid date format"}, status_code=400)
+
+    # Determine user_id based on note type
+    if note_type == "personal":
+        user_id = current_user.id
+    else:
+        user_id = None
+
+    # Validate section
+    if section not in WeeklySummaryNote.SECTIONS:
+        return JSONResponse({"success": False, "error": "Invalid section"}, status_code=400)
+
+    # Find existing note or create new one
+    query = db.query(WeeklySummaryNote).filter(
+        WeeklySummaryNote.week_start == week_start_date,
+        WeeklySummaryNote.section == section
+    )
+    if user_id is None:
+        query = query.filter(WeeklySummaryNote.user_id.is_(None))
+    else:
+        query = query.filter(WeeklySummaryNote.user_id == user_id)
+
+    existing = query.first()
+
+    if existing:
+        existing.notes = notes
+        existing.updated_at = datetime.utcnow()
+    else:
+        new_note = WeeklySummaryNote(
+            week_start=week_start_date,
+            section=section,
+            user_id=user_id,
+            notes=notes,
+            created_at=datetime.utcnow(),
+            updated_at=datetime.utcnow(),
+        )
+        db.add(new_note)
+
+    db.commit()
+
+    return JSONResponse({"success": True})
 
 
 @router.get("/my-weekly", response_class=HTMLResponse)
