@@ -72,16 +72,18 @@
                     {% if upcoming_tasks %}
                     <div class="list-group list-group-flush">
                         {% for task in upcoming_tasks %}
-                        <div class="list-group-item">
+                        <div class="list-group-item task-row" data-href="/tasks/{{ task.id }}/edit?from=/today" style="cursor: pointer;">
                             <div class="d-flex justify-content-between align-items-start mb-2">
                                 <div>
                                     <span class="fw-medium">{{ task.title }}</span>
                                     {% if task.opportunity %}
                                     <div class="text-muted small">
-                                        <a href="/opportunities/{{ task.opportunity.id }}" class="text-decoration-none text-muted">
+                                        <a href="/opportunities/{{ task.opportunity.id }}" class="text-decoration-none text-muted" onclick="event.stopPropagation();">
                                             {{ task.opportunity.name }}
                                         </a>
                                     </div>
+                                    {% else %}
+                                    <span class="text-muted small fst-italic">Personal task</span>
                                     {% endif %}
                                 </div>
                                 <div class="text-end">
@@ -103,11 +105,11 @@
                             </div>
                             <div class="d-flex gap-1">
                                 {% if task.opportunity %}
-                                <a href="/opportunities/{{ task.opportunity.id }}" class="btn btn-sm btn-outline-primary">
+                                <a href="/opportunities/{{ task.opportunity.id }}" class="btn btn-sm btn-outline-primary" onclick="event.stopPropagation();">
                                     <i class="bi bi-eye"></i> View
                                 </a>
                                 {% endif %}
-                                <form method="post" action="/tasks/{{ task.id }}/complete" class="d-inline">
+                                <form method="post" action="/tasks/{{ task.id }}/complete" class="d-inline" onclick="event.stopPropagation();">
                                     <input type="hidden" name="next" value="/today">
                                     <button type="submit" class="btn btn-sm btn-outline-success">
                                         <i class="bi bi-check"></i> Complete
@@ -182,4 +184,20 @@
         </div>
     </div>
 </div>
+
+<style>
+.task-row:hover {
+    background-color: rgba(0, 123, 255, 0.08);
+}
+</style>
+
+<script>
+// Task row click handler
+document.querySelectorAll('.task-row[data-href]').forEach(function(row) {
+    row.addEventListener('click', function(e) {
+        if (e.target.closest('a, button, form')) return;
+        window.location.href = row.dataset.href;
+    });
+});
+</script>
 {% endblock %}
