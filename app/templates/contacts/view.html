@@ -127,7 +127,7 @@
 <div class="modal fade" id="logContactModal" tabindex="-1" aria-labelledby="logContactModalLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
-            <form method="post" action="/contacts/{{ contact.id }}/log-contact">
+            <form method="post" action="/contacts/{{ contact.id }}/log-contact{% if return_to %}?from={{ return_to }}{% endif %}">
                 <div class="modal-header">
                     <h5 class="modal-title" id="logContactModalLabel">
                         <i class="bi bi-telephone me-2"></i>Log Contact with {{ contact.full_name }}
@@ -165,7 +165,7 @@
 <div class="modal fade" id="logMeetingModal" tabindex="-1" aria-labelledby="logMeetingModalLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
-            <form method="post" action="/contacts/{{ contact.id }}/log-meeting">
+            <form method="post" action="/contacts/{{ contact.id }}/log-meeting{% if return_to %}?from={{ return_to }}{% endif %}">
                 <div class="modal-header">
                     <h5 class="modal-title" id="logMeetingModalLabel">
                         <i class="bi bi-calendar-event me-2"></i>Log Meeting with {{ contact.full_name }}

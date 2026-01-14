@@ -429,8 +429,8 @@ async def log_meeting(
 
     db.commit()
 
-    # Redirect to 'next' param if provided, otherwise to contact detail
-    redirect_url = request.query_params.get("next", f"/contacts/{contact_id}")
+    # Redirect to 'from' param if provided, otherwise to contact detail
+    redirect_url = request.query_params.get("from") or request.query_params.get("next") or f"/contacts/{contact_id}"
     return RedirectResponse(url=redirect_url, status_code=303)
 
 
@@ -502,6 +502,6 @@ async def log_contact(
 
     db.commit()
 
-    # Redirect to 'next' param if provided, otherwise to contact detail
-    redirect_url = request.query_params.get("next", f"/contacts/{contact_id}")
+    # Redirect to 'from' param if provided, otherwise to contact detail
+    redirect_url = request.query_params.get("from") or request.query_params.get("next") or f"/contacts/{contact_id}"
     return RedirectResponse(url=redirect_url, status_code=303)

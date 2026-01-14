@@ -1167,6 +1167,55 @@
     })();
     </script>
 
+    <!-- Global Scroll Position Preservation -->
+    <script>
+    (function() {
+        const SCROLL_PREFIX = 'scroll:';
+
+        function getScrollKey() {
+            return SCROLL_PREFIX + window.location.pathname;
+        }
+
+        function saveScrollPosition() {
+            sessionStorage.setItem(getScrollKey(), window.scrollY.toString());
+        }
+
+        function restoreScrollPosition() {
+            const saved = sessionStorage.getItem(getScrollKey());
+            if (saved) {
+                const scrollY = parseInt(saved, 10);
+                if (!isNaN(scrollY) && scrollY > 0) {
+                    window.scrollTo(0, scrollY);
+                }
+            }
+        }
+
+        // Restore scroll position on page load
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', restoreScrollPosition);
+        } else {
+            restoreScrollPosition();
+        }
+
+        // Save scroll position before navigating away
+        // Capture link clicks
+        document.addEventListener('click', function(e) {
+            const link = e.target.closest('a[href]');
+            if (link && !link.getAttribute('href').startsWith('#')) {
+                saveScrollPosition();
+            }
+        });
+
+        // Capture form submissions
+        document.addEventListener('submit', function(e) {
+            saveScrollPosition();
+        });
+
+        // Capture beforeunload as fallback
+        window.addEventListener('beforeunload', saveScrollPosition);
+    })();
+    </script>
+
     {% block extra_js %}{% endblock %}
 </body>
 </html>
