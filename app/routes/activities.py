@@ -138,22 +138,21 @@ async def update_activity(
 ):
     """Update an activity.
 
-    REDIRECT RULE ORDER (evaluated before any field changes):
-    1. If activity.opportunity exists → /opportunities/{id}
-    2. Else if activity.contact exists → /contacts/{id}
-    3. Else → /summary/my-weekly
-
-    Note: We capture the original contact_id before updating, because
-    the user might clear the contact dropdown but we still want to
-    redirect to the original context.
+    REDIRECT RULE ORDER:
+    1. If ?from= query param exists → use that URL (back navigation)
+    2. Else if activity.opportunity exists → /opportunities/{id}
+    3. Else if activity.contact exists → /contacts/{id}
+    4. Else → /summary/my-weekly
     """
     activity = db.query(Activity).filter(Activity.id == activity_id).first()
     if not activity:
         raise HTTPException(status_code=404, detail="Activity not found")
 
-    # Capture redirect destination BEFORE making changes
-    # This ensures redirect goes to the original context, not the new contact
-    if activity.opportunity_id:
+    # Check for explicit return URL from query params (back navigation)
+    from_url = request.query_params.get("from")
+    if from_url:
+        redirect_url = from_url
+    elif activity.opportunity_id:
         redirect_url = f"/opportunities/{activity.opportunity_id}"
     elif activity.contact_id:
         redirect_url = f"/contacts/{activity.contact_id}"
@@ -178,17 +177,21 @@ async def delete_activity(
 ):
     """Delete an activity.
 
-    REDIRECT RULE ORDER (captured before deletion):
-    1. If activity.opportunity_id exists → /opportunities/{id}
-    2. Else if activity.contact_id exists → /contacts/{id}
-    3. Else → /summary/my-weekly
+    REDIRECT RULE ORDER:
+    1. If ?from= query param exists → use that URL (back navigation)
+    2. Else if activity.opportunity_id exists → /opportunities/{id}
+    3. Else if activity.contact_id exists → /contacts/{id}
+    4. Else → /summary/my-weekly
     """
     activity = db.query(Activity).filter(Activity.id == activity_id).first()
     if not activity:
         raise HTTPException(status_code=404, detail="Activity not found")
 
-    # Capture redirect destination BEFORE deleting
-    if activity.opportunity_id:
+    # Check for explicit return URL from query params (back navigation)
+    from_url = request.query_params.get("from")
+    if from_url:
+        redirect_url = from_url
+    elif activity.opportunity_id:
         redirect_url = f"/opportunities/{activity.opportunity_id}"
     elif activity.contact_id:
         redirect_url = f"/contacts/{activity.contact_id}"

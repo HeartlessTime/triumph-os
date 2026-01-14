@@ -1,10 +1,21 @@
 {% extends "base.html" %}
 
+{% set return_to = request.query_params.get('from') %}
+
 {% block title %}{{ contact.full_name }} - Triumph OS{% endblock %}
 
 {% block content %}
 <div class="content-area">
     <div class="page-header">
+        <!-- Back button when navigating from another page -->
+        {% if return_to %}
+        <div class="mb-2">
+            <a href="{{ return_to }}" class="btn btn-sm btn-outline-secondary">
+                <i class="bi bi-arrow-left me-1"></i> Back
+            </a>
+        </div>
+        {% endif %}
+
         <nav aria-label="breadcrumb">
             <ol class="breadcrumb">
                 <li class="breadcrumb-item"><a href="/contacts">Contacts</a></li>
@@ -183,4 +194,22 @@
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Auto-open modal if URL hash matches a modal ID
+(function() {
+    const hash = window.location.hash;
+    if (hash === '#logContactModal' || hash === '#logMeetingModal') {
+        const modalEl = document.querySelector(hash);
+        if (modalEl && typeof bootstrap !== 'undefined') {
+            const modal = new bootstrap.Modal(modalEl);
+            modal.show();
+            // Clear hash after opening so refresh doesn't re-trigger
+            history.replaceState(null, '', window.location.pathname + window.location.search);
+        }
+    }
+})();
+</script>
 {% endblock %}

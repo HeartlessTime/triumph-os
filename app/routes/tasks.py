@@ -153,7 +153,13 @@ async def update_task(
     assigned_to_id: int = Form(None),
     db: Session = Depends(get_db),
 ):
-    """Update a task."""
+    """Update a task.
+
+    REDIRECT RULE ORDER:
+    1. If ?from= query param exists → use that URL (back navigation)
+    2. Else if task.opportunity_id exists → /opportunities/{id}
+    3. Else → /summary/my-weekly
+    """
     task = db.query(Task).filter(Task.id == task_id).first()
     if not task:
         raise HTTPException(status_code=404, detail="Task not found")
@@ -166,24 +172,37 @@ async def update_task(
 
     db.commit()
 
-    if task.opportunity_id:
-        return RedirectResponse(
-            url=f"/opportunities/{task.opportunity_id}", status_code=303
-        )
-    return RedirectResponse(url="/", status_code=303)
+    # Check for explicit return URL from query params (back navigation)
+    from_url = request.query_params.get("from")
+    if from_url:
+        return RedirectResponse(url=from_url, status_code=303)
+    elif task.opportunity_id:
+        return RedirectResponse(url=f"/opportunities/{task.opportunity_id}", status_code=303)
+    return RedirectResponse(url="/summary/my-weekly", status_code=303)
 
 
 @router.post("/{task_id}/delete")
 async def delete_task(request: Request, task_id: int, db: Session = Depends(get_db)):
-    """Delete a task."""
+    """Delete a task.
+
+    REDIRECT RULE ORDER:
+    1. If ?from= query param exists → use that URL (back navigation)
+    2. Else if task.opportunity_id exists → /opportunities/{id}
+    3. Else → /summary/my-weekly
+    """
     task = db.query(Task).filter(Task.id == task_id).first()
     if not task:
         raise HTTPException(status_code=404, detail="Task not found")
 
     opp_id = task.opportunity_id
+    from_url = request.query_params.get("from")
+
     db.delete(task)
     db.commit()
 
-    if opp_id:
+    # Check for explicit return URL from query params (back navigation)
+    if from_url:
+        return RedirectResponse(url=from_url, status_code=303)
+    elif opp_id:
         return RedirectResponse(url=f"/opportunities/{opp_id}", status_code=303)
-    return RedirectResponse(url="/", status_code=303)
+    return RedirectResponse(url="/summary/my-weekly", status_code=303)

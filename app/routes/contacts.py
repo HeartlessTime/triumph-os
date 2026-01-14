@@ -438,7 +438,7 @@ async def log_meeting(
 async def log_contact(
     request: Request,
     contact_id: int,
-    activity_type: str = Form("call"),
+    activity_type: str = Form(...),  # Required - no default, must come from modal form
     notes: str = Form(None),
     db: Session = Depends(get_db),
 ):

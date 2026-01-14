@@ -673,6 +673,16 @@
 
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+    // Bootstrap load verification - logs to console on every page load
+    if (typeof bootstrap === 'undefined') {
+        console.error('BOOTSTRAP NOT LOADED - Check network/CDN');
+    } else if (!bootstrap.Modal) {
+        console.error('BOOTSTRAP MODAL NOT AVAILABLE - Wrong bundle loaded');
+    } else {
+        console.log('Bootstrap', bootstrap.Modal.VERSION, 'loaded successfully');
+    }
+    </script>
 
     <script>
         // Format currency values
@@ -752,6 +762,10 @@
         /* Mobile overlay for sidebar */
         .mobile-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 1110; display: none; }
         .mobile-overlay.show { display: block; }
+
+        /* Bootstrap modal z-index fix: must render ABOVE sidebar (1120) and mobile-overlay (1110) */
+        .modal-backdrop { z-index: 1130 !important; }
+        .modal { z-index: 1135 !important; }
     </style>
 
     <!-- Phone number auto-formatting (XXX-XXX-XXXX) -->

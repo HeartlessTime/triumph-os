@@ -544,21 +544,38 @@ Opportunities: {% for opp in new_opportunities %}{{ opp.name }}{% if not loop.la
 </div>
 
 <script>
+// Build the current page URL for "back" navigation
+const currentPageUrl = window.location.pathname + window.location.search;
+const fromParam = '?from=' + encodeURIComponent(currentPageUrl);
+
 // Clickable rows handler - navigates to edit page when row is clicked
 // GUARDRAILS:
 // - Does not interfere with links, buttons, or form elements inside the row
 // - Only triggers on elements with data-href attribute
 // - Single handler for both table rows and activity-item divs
+// - Appends ?from= param for back navigation
 document.addEventListener('click', function(e) {
     // Find the clickable element (row or activity-item)
     const clickable = e.target.closest('[data-href]');
     if (!clickable) return;
 
     // Ignore clicks on interactive elements inside the row
-    if (e.target.closest('a, button, input, textarea, select, form')) return;
+    // Also ignore modal triggers to let Bootstrap handle them
+    if (e.target.closest('a, button, input, textarea, select, form, [data-bs-toggle]')) return;
 
-    // Navigate to the edit page
-    window.location.href = clickable.dataset.href;
+    // Navigate to the edit page with from param for back navigation
+    const href = clickable.dataset.href;
+    const separator = href.includes('?') ? '&' : '?';
+    window.location.href = href + separator + 'from=' + encodeURIComponent(currentPageUrl);
+});
+
+// Add from param to all internal links on this page
+document.querySelectorAll('a[href^="/"]').forEach(function(link) {
+    // Skip links that already have a from param or are navigation links
+    if (link.href.includes('from=') || link.href.includes('/summary/')) return;
+    const href = link.getAttribute('href');
+    const separator = href.includes('?') ? '&' : '?';
+    link.setAttribute('href', href + separator + 'from=' + encodeURIComponent(currentPageUrl));
 });
 
 document.getElementById('copyToClipboard')?.addEventListener('click', function() {

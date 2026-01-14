@@ -76,11 +76,12 @@
                             <td>{{ contact.best_phone or '—' }}</td>
                             <td>{{ contact.last_contacted.strftime('%b %d, %Y') if contact.last_contacted else '—' }}</td>
                             <td class="text-end">
-                                <form method="post" action="/contacts/{{ contact.id }}/log-contact?next=/contacts" class="d-inline">
-                                    <button type="submit" class="btn btn-sm btn-outline-primary" title="Log Contact">
-                                        <i class="bi bi-telephone"></i>
-                                    </button>
-                                </form>
+                                <a href="/contacts/{{ contact.id }}#logContactModal" class="btn btn-sm btn-outline-primary" title="Log Contact">
+                                    <i class="bi bi-telephone"></i>
+                                </a>
+                                <a href="/contacts/{{ contact.id }}" class="btn btn-sm btn-outline-secondary" title="View Contact">
+                                    <i class="bi bi-eye"></i>
+                                </a>
                                 <a href="/contacts/{{ contact.id }}/edit" class="btn btn-sm btn-outline-secondary">
                                     <i class="bi bi-pencil"></i>
                                 </a>

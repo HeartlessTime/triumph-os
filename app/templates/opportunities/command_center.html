@@ -121,11 +121,9 @@
         <div class="card-header d-flex justify-content-between align-items-center">
             <span><i class="bi bi-person me-2"></i>Primary Contact</span>
             {% if opportunity.primary_contact %}
-            <form method="post" action="/contacts/{{ opportunity.primary_contact.id }}/log-contact" class="d-inline">
-                <button type="submit" class="btn btn-sm btn-outline-success">
-                    <i class="bi bi-telephone me-1"></i> Log Contact
-                </button>
-            </form>
+            <a href="/contacts/{{ opportunity.primary_contact.id }}#logContactModal" class="btn btn-sm btn-outline-success">
+                <i class="bi bi-telephone me-1"></i> Log Contact
+            </a>
             {% endif %}
         </div>
         <div class="card-body">
