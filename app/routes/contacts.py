@@ -177,7 +177,7 @@ async def create_contact(
     contact = Contact(
         account_id=account_id,
         first_name=first_name,
-        last_name=last_name,
+        last_name=last_name.strip() if last_name and last_name.strip() else None,
         title=title or None,
         email=email or None,
         phone=phone or None,
@@ -333,7 +333,7 @@ async def update_contact(
 
     contact.account_id = account_id
     contact.first_name = first_name
-    contact.last_name = last_name
+    contact.last_name = last_name.strip() if last_name and last_name.strip() else None
     contact.title = title or None
     contact.email = email or None
     contact.phone = phone or None
@@ -346,6 +346,8 @@ async def update_contact(
         contact.last_contacted = datetime.strptime(last_contacted, "%Y-%m-%d").date()
     else:
         contact.last_contacted = None
+        # Also clear next_followup when last_contacted is cleared
+        contact.next_followup = None
 
     db.commit()
 

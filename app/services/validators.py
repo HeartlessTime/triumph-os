@@ -125,8 +125,7 @@ def validate_contact(
     if _is_empty(data.get("first_name")):
         result.add_error("First name is required")
 
-    if _is_empty(data.get("last_name")):
-        result.add_error("Last name is required")
+    # last_name is optional
 
     if _is_empty(data.get("account_id")):
         result.add_error("Account is required")
