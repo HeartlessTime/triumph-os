@@ -2,6 +2,46 @@
 
 {% block title %}Accounts - Triumph OS{% endblock %}
 
+{% block extra_css %}
+<style>
+    .sort-btn {
+        background: none;
+        border: 1px solid #dee2e6;
+        padding: 0.375rem 0.75rem;
+        border-radius: 0.25rem;
+        font-size: 0.875rem;
+        color: #6c757d;
+        cursor: pointer;
+        transition: all 0.15s ease;
+    }
+    .sort-btn:hover {
+        border-color: #adb5bd;
+        color: #495057;
+    }
+    .sort-btn.active {
+        border-color: #0d6efd;
+        color: #0d6efd;
+        background-color: rgba(13, 110, 253, 0.05);
+    }
+    .sort-btn .sort-icon {
+        margin-left: 0.25rem;
+        opacity: 0.5;
+    }
+    .sort-btn.active .sort-icon {
+        opacity: 1;
+    }
+    .accounts-search {
+        max-width: 350px;
+    }
+    .no-results-row {
+        display: none;
+    }
+    .no-results-row.show {
+        display: table-row;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="content-area">
     <div class="page-header d-flex justify-content-between align-items-center">
@@ -13,37 +53,31 @@
             <i class="bi bi-plus-lg me-1"></i> New Account
         </a>
     </div>
-    
-    <!-- Filters -->
+
+    <!-- Search & Sort Controls -->
     <div class="card mb-4">
         <div class="card-body">
-            <form method="get" class="row g-3 live-search">
-                <div class="col-md-5">
-                    <div class="input-group">
-                        <span class="input-group-text"><i class="bi bi-search"></i></span>
-                        <input type="text" class="form-control" name="search" value="{{ search or '' }}" placeholder="Search accounts...">
-                    </div>
+            <div class="d-flex flex-wrap gap-3 align-items-center">
+                <!-- Search Input -->
+                <div class="input-group accounts-search">
+                    <span class="input-group-text"><i class="bi bi-search"></i></span>
+                    <input type="text" class="form-control" id="accountsSearch" placeholder="Search by account name...">
                 </div>
-                <div class="col-md-3">
-                    <select class="form-select" name="industry">
-                        <option value="">All Industries</option>
-                        {% for ind in industries %}
-                        <option value="{{ ind }}" {% if industry == ind %}selected{% endif %}>{{ ind }}</option>
-                        {% endfor %}
-                    </select>
+
+                <!-- Sort Controls -->
+                <div class="d-flex gap-2 align-items-center ms-auto">
+                    <span class="text-muted small me-1">Sort:</span>
+                    <button type="button" class="sort-btn active" data-sort="name" data-dir="asc">
+                        Name <i class="bi bi-sort-alpha-down sort-icon"></i>
+                    </button>
+                    <button type="button" class="sort-btn" data-sort="last_activity" data-dir="desc">
+                        Last Activity <i class="bi bi-sort-down sort-icon"></i>
+                    </button>
                 </div>
-                <div class="col-md-3">
-                    <select class="form-select" name="sort" onchange="this.form.submit()">
-                        <option value="">Sort by...</option>
-                        <option value="name" {% if sort == 'name' %}selected{% endif %}>Name (A–Z)</option>
-                        <option value="last_contacted" {% if sort == 'last_contacted' %}selected{% endif %}>Last Contacted (Oldest)</option>
-                        <option value="value" {% if sort == 'value' %}selected{% endif %}>Pipeline Value (High to Low)</option>
-                    </select>
-                </div>
-            </form>
+            </div>
         </div>
     </div>
-    
+
     <!-- Accounts Table -->
     <div class="card">
         <div class="card-body p-0">
@@ -62,9 +96,11 @@
                             <th></th>
                         </tr>
                     </thead>
-                    <tbody>
+                    <tbody id="accountsTableBody">
                         {% for account in accounts %}
-                        <tr data-industry="{{ account.industry or '' }}">
+                        <tr class="account-row"
+                            data-name="{{ account.name|lower }}"
+                            data-last-activity="{{ account.last_contacted.strftime('%Y-%m-%d') if account.last_contacted else '0000-00-00' }}">
                             <td>
                                 <a href="/accounts/{{ account.id }}" class="text-decoration-none fw-medium">
                                     {{ account.name }}
@@ -103,6 +139,11 @@
                             </td>
                         </tr>
                         {% endfor %}
+                        <tr class="no-results-row">
+                            <td colspan="8" class="text-center text-muted py-4">
+                                <i class="bi bi-search me-2"></i>No accounts match your search
+                            </td>
+                        </tr>
                     </tbody>
                 </table>
             </div>
@@ -110,15 +151,144 @@
             <div class="empty-state py-5">
                 <i class="bi bi-building"></i>
                 <h5>No accounts found</h5>
-                <p>{% if search or industry %}Try adjusting your filters{% else %}Create your first account to get started{% endif %}</p>
-                {% if not search and not industry %}
+                <p>Create your first account to get started</p>
                 <a href="/accounts/new" class="btn btn-primary">
                     <i class="bi bi-plus-lg me-1"></i> New Account
                 </a>
-                {% endif %}
             </div>
             {% endif %}
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function() {
+    const searchInput = document.getElementById('accountsSearch');
+    const tbody = document.getElementById('accountsTableBody');
+    const sortBtns = document.querySelectorAll('.sort-btn');
+    const noResultsRow = document.querySelector('.no-results-row');
+
+    if (!tbody || !searchInput) return;
+
+    const rows = Array.from(tbody.querySelectorAll('.account-row'));
+
+    // Current sort state
+    let currentSort = { field: 'name', dir: 'asc' };
+
+    // Filter rows based on search term
+    function filterRows(term) {
+        term = term.toLowerCase().trim();
+        let visibleCount = 0;
+
+        rows.forEach(function(row) {
+            const name = row.dataset.name || '';
+            const matches = !term || name.includes(term);
+
+            row.style.display = matches ? '' : 'none';
+            if (matches) visibleCount++;
+        });
+
+        // Show/hide no results message
+        if (noResultsRow) {
+            noResultsRow.classList.toggle('show', visibleCount === 0 && rows.length > 0);
+        }
+    }
+
+    // Sort rows by field and direction
+    function sortRows(field, dir) {
+        rows.sort(function(a, b) {
+            let aVal = a.dataset[field] || '';
+            let bVal = b.dataset[field] || '';
+
+            // For last_activity, compare as dates
+            if (field === 'lastActivity') {
+                aVal = a.dataset.lastActivity || '0000-00-00';
+                bVal = b.dataset.lastActivity || '0000-00-00';
+            }
+
+            let cmp = aVal.localeCompare(bVal);
+            return dir === 'desc' ? -cmp : cmp;
+        });
+
+        // Re-append rows in sorted order
+        rows.forEach(function(row) {
+            tbody.appendChild(row);
+        });
+
+        // Keep no-results row at end
+        if (noResultsRow) {
+            tbody.appendChild(noResultsRow);
+        }
+    }
+
+    // Update sort button UI
+    function updateSortUI(activeBtn, dir) {
+        sortBtns.forEach(function(btn) {
+            btn.classList.remove('active');
+            // Reset icons to default
+            const icon = btn.querySelector('.sort-icon');
+            if (icon) {
+                const field = btn.dataset.sort;
+                if (field === 'last_activity') {
+                    icon.className = 'bi bi-sort-down sort-icon';
+                } else {
+                    icon.className = 'bi bi-sort-alpha-down sort-icon';
+                }
+            }
+        });
+
+        activeBtn.classList.add('active');
+        const icon = activeBtn.querySelector('.sort-icon');
+        if (icon) {
+            const field = activeBtn.dataset.sort;
+            if (field === 'last_activity') {
+                icon.className = dir === 'asc' ? 'bi bi-sort-up sort-icon' : 'bi bi-sort-down sort-icon';
+            } else {
+                icon.className = dir === 'asc' ? 'bi bi-sort-alpha-down sort-icon' : 'bi bi-sort-alpha-up sort-icon';
+            }
+        }
+    }
+
+    // Search input handler
+    searchInput.addEventListener('input', function() {
+        filterRows(this.value);
+    });
+
+    // Escape key clears search
+    searchInput.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            this.value = '';
+            filterRows('');
+        }
+    });
+
+    // Sort button click handlers
+    sortBtns.forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            const field = btn.dataset.sort;
+            let dir = btn.dataset.dir;
+
+            // If already active, toggle direction
+            if (btn.classList.contains('active')) {
+                dir = dir === 'asc' ? 'desc' : 'asc';
+                btn.dataset.dir = dir;
+            }
+
+            // Map field names to data attributes
+            const fieldMap = {
+                'name': 'name',
+                'last_activity': 'lastActivity'
+            };
+
+            currentSort = { field: fieldMap[field], dir: dir };
+            sortRows(fieldMap[field], dir);
+            updateSortUI(btn, dir);
+        });
+    });
+
+    // Initial sort (name A-Z is default, already sorted by server)
+})();
+</script>
 {% endblock %}
