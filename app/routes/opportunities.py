@@ -383,17 +383,6 @@ async def create_opportunity(
     db.add(opportunity)
     db.flush()  # Get the opportunity.id
 
-    # Log opportunity creation as pipeline activity (so it appears in Weekly Summary)
-    creation_activity = Activity(
-        opportunity_id=opportunity.id,
-        activity_type="note",
-        subject=f"Stage changed: New → {stage}",
-        description=f"Opportunity created with stage {stage}",
-        activity_date=datetime.now(),
-        created_by_id=current_user.id,
-    )
-    db.add(creation_activity)
-
     # Add scope packages
     for scope_name in scope_names:
         if scope_name == "Other" and scope_other_text:

@@ -15,7 +15,7 @@ from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session, selectinload
 
 from app.database import get_db
-from app.models import Account, Contact, Opportunity, Activity, Task, WeeklySummaryNote
+from app.models import Account, Contact, Opportunity, Activity, Task, WeeklySummaryNote, UserSummarySuppression
 
 router = APIRouter(prefix="/summary", tags=["summary"])
 templates = Jinja2Templates(directory="app/templates")
@@ -476,6 +476,16 @@ async def my_weekly_summary(
     # Personal notes for this user
     section_notes = load_notes_for_week(db, week_start, user_id=user_id)
 
+    # Get suppressed opportunity IDs for this user
+    suppressed_ids = get_suppressed_opportunity_ids(db, user_id)
+
+    # Filter pipeline_changes to exclude suppressed opportunities
+    # (unless they have new activity after suppression - handled in get_suppressed_opportunity_ids)
+    filtered_pipeline = [
+        opp for opp in summary["pipeline_changes"]
+        if opp.id not in suppressed_ids
+    ]
+
     return templates.TemplateResponse(
         "summary/my_weekly.html",
         {
@@ -489,7 +499,82 @@ async def my_weekly_summary(
             "summary_sentence": summary_sentence,
             # Notes
             "section_notes": section_notes,
-            # Spread all summary data
-            **summary,
+            # Spread all summary data (with filtered pipeline)
+            **{**summary, "pipeline_changes": filtered_pipeline},
         },
     )
+
+
+def get_suppressed_opportunity_ids(db: Session, user_id: int) -> set:
+    """
+    Get set of opportunity IDs currently suppressed for a user.
+
+    An opportunity is suppressed UNLESS it has new pipeline activity (Activity with
+    "Stage changed" in subject) after the suppression timestamp.
+    """
+    suppressions = (
+        db.query(UserSummarySuppression)
+        .filter(UserSummarySuppression.user_id == user_id)
+        .all()
+    )
+
+    suppressed_ids = set()
+    for supp in suppressions:
+        # Check if there's any new pipeline activity after suppression
+        new_activity = (
+            db.query(Activity)
+            .filter(
+                Activity.opportunity_id == supp.opportunity_id,
+                Activity.subject.ilike("%Stage changed%"),
+                Activity.activity_date > supp.suppressed_at,
+            )
+            .first()
+        )
+        if new_activity:
+            # New pipeline activity detected - remove the suppression
+            db.delete(supp)
+            db.commit()
+        else:
+            suppressed_ids.add(supp.opportunity_id)
+
+    return suppressed_ids
+
+
+@router.post("/suppress-opportunity/{opportunity_id}")
+async def suppress_opportunity(
+    request: Request,
+    opportunity_id: int,
+    week_start: date = Form(None),
+    db: Session = Depends(get_db),
+):
+    """
+    Suppress an opportunity from the current user's personal summary.
+
+    The opportunity will be hidden until new pipeline activity occurs.
+    """
+    current_user = request.state.current_user
+
+    # Check if already suppressed
+    existing = (
+        db.query(UserSummarySuppression)
+        .filter(
+            UserSummarySuppression.user_id == current_user.id,
+            UserSummarySuppression.opportunity_id == opportunity_id,
+        )
+        .first()
+    )
+
+    if not existing:
+        suppression = UserSummarySuppression(
+            user_id=current_user.id,
+            opportunity_id=opportunity_id,
+            suppressed_at=datetime.utcnow(),
+        )
+        db.add(suppression)
+        db.commit()
+
+    # Redirect back to my weekly summary
+    redirect_url = "/summary/my-weekly"
+    if week_start:
+        redirect_url += f"?week_start={week_start}"
+    return RedirectResponse(url=redirect_url, status_code=303)

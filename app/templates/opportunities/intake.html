@@ -57,8 +57,8 @@
                     <div class="card-body">
                         <div class="row g-3">
                             <div class="col-md-6">
-                                <label for="stage" class="form-label">Stage <span class="text-danger">*</span></label>
-                                <select class="form-select" id="stage" name="stage" required>
+                                <label for="stage" class="form-label">Stage</label>
+                                <select class="form-select" id="stage" name="stage">
                                     {% for stg, prob in stages %}
                                     <option value="{{ stg }}" {% if form_stage is defined and form_stage == stg %}selected{% elif stg == 'Prospecting' %}selected{% endif %}>{{ stg }}</option>
                                     {% endfor %}
@@ -301,7 +301,6 @@
                         </p>
                         <ul class="small text-muted mt-2 mb-0">
                             <li>Opportunity Name</li>
-                            <li>Stage</li>
                             <li>End-User / Client</li>
                             <li>Bid Date (or check "TBD")</li>
                             <li>Sales Owner (defaults to you)</li>

@@ -9,6 +9,7 @@ from app.models.task import Task
 from app.models.document import Document
 from app.models.vendor import Vendor, VendorQuoteRequest
 from app.models.weekly_summary_note import WeeklySummaryNote
+from app.models.user_summary_suppression import UserSummarySuppression
 
 __all__ = [
     "User",
@@ -25,4 +26,5 @@ __all__ = [
     "Vendor",
     "VendorQuoteRequest",
     "WeeklySummaryNote",
+    "UserSummarySuppression",
 ]

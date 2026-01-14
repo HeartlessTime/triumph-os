@@ -48,8 +48,8 @@
                     <div class="card-body">
                         <div class="row g-3">
                             <div class="col-md-6">
-                                <label for="stage" class="form-label">Stage <span class="text-danger">*</span></label>
-                                <select class="form-select" id="stage" name="stage" required>
+                                <label for="stage" class="form-label">Stage</label>
+                                <select class="form-select" id="stage" name="stage">
                                     {% for stg, prob in stages %}
                                     <option value="{{ stg }}" {% if opportunity.stage == stg %}selected{% endif %}>{{ stg }}</option>
                                     {% endfor %}

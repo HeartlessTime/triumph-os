@@ -230,11 +230,12 @@
                                     <th>Opportunity</th>
                                     <th>Stage</th>
                                     <th>Updated</th>
+                                    <th style="width: 40px;"></th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {% for opp in pipeline_changes %}
-                                <tr>
+                                <tr data-href="/opportunities/{{ opp.id }}" style="cursor: pointer;">
                                     <td>
                                         <a href="/opportunities/{{ opp.id }}" class="text-decoration-none">
                                             {{ opp.name }}
@@ -247,6 +248,14 @@
                                         </span>
                                     </td>
                                     <td class="text-muted small">{{ opp.updated_at.strftime('%b %d') }}</td>
+                                    <td data-no-row-click>
+                                        <form action="/summary/suppress-opportunity/{{ opp.id }}" method="post" style="display: inline;">
+                                            <input type="hidden" name="week_start" value="{{ week_start }}">
+                                            <button type="submit" class="btn btn-sm btn-link text-muted p-0" title="Remove from My Summary" onclick="event.stopPropagation();">
+                                                <i class="bi bi-x-lg"></i>
+                                            </button>
+                                        </form>
+                                    </td>
                                 </tr>
                                 {% endfor %}
                             </tbody>
