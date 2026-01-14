@@ -166,8 +166,40 @@
 
     const rows = Array.from(tbody.querySelectorAll('.contact-row'));
 
+    // State persistence
+    const STATE_KEY = 'contacts:state:/contacts';
+
+    function saveState() {
+        const state = {
+            search: searchInput.value,
+            sortField: currentSort.field,
+            sortDir: currentSort.dir
+        };
+        sessionStorage.setItem(STATE_KEY, JSON.stringify(state));
+    }
+
+    function loadState() {
+        try {
+            return JSON.parse(sessionStorage.getItem(STATE_KEY)) || null;
+        } catch (e) { return null; }
+    }
+
     // Current sort state
     let currentSort = { field: 'name', dir: 'asc' };
+
+    // Map between button data-sort values and dataset field names
+    const fieldMap = {
+        'name': 'name',
+        'account': 'account',
+        'last_contacted': 'lastContacted'
+    };
+
+    // Reverse map to find button from field name
+    const reverseFieldMap = {
+        'name': 'name',
+        'account': 'account',
+        'lastContacted': 'last_contacted'
+    };
 
     // Filter rows based on search term
     function filterRows(term) {
@@ -233,6 +265,7 @@
         });
 
         activeBtn.classList.add('active');
+        activeBtn.dataset.dir = dir;
         const icon = activeBtn.querySelector('.sort-icon');
         if (icon) {
             const field = activeBtn.dataset.sort;
@@ -247,6 +280,7 @@
     // Search input handler
     searchInput.addEventListener('input', function() {
         filterRows(this.value);
+        saveState();
     });
 
     // Escape key clears search
@@ -254,6 +288,7 @@
         if (e.key === 'Escape') {
             this.value = '';
             filterRows('');
+            saveState();
         }
     });
 
@@ -269,20 +304,33 @@
                 btn.dataset.dir = dir;
             }
 
-            // Map field names to data attributes
-            const fieldMap = {
-                'name': 'name',
-                'account': 'account',
-                'last_contacted': 'lastContacted'
-            };
-
             currentSort = { field: fieldMap[field], dir: dir };
             sortRows(fieldMap[field], dir);
             updateSortUI(btn, dir);
+            saveState();
         });
     });
 
-    // Initial sort (name A-Z is default, already sorted by server)
+    // Restore state on page load
+    var savedState = loadState();
+    if (savedState) {
+        // Restore search
+        if (savedState.search) {
+            searchInput.value = savedState.search;
+            filterRows(savedState.search);
+        }
+
+        // Restore sort
+        if (savedState.sortField && savedState.sortDir) {
+            currentSort = { field: savedState.sortField, dir: savedState.sortDir };
+            var btnSortKey = reverseFieldMap[savedState.sortField] || savedState.sortField;
+            var targetBtn = document.querySelector('.sort-btn[data-sort="' + btnSortKey + '"]');
+            if (targetBtn) {
+                sortRows(savedState.sortField, savedState.sortDir);
+                updateSortUI(targetBtn, savedState.sortDir);
+            }
+        }
+    }
 })();
 </script>
 {% endblock %}
