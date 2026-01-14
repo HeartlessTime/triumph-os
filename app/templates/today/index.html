@@ -109,12 +109,15 @@
                                     <i class="bi bi-eye"></i> View
                                 </a>
                                 {% endif %}
-                                <form method="post" action="/tasks/{{ task.id }}/complete" class="d-inline" onclick="event.stopPropagation();">
-                                    <input type="hidden" name="next" value="/today">
-                                    <button type="submit" class="btn btn-sm btn-outline-success">
-                                        <i class="bi bi-check"></i> Complete
-                                    </button>
-                                </form>
+                                <button type="button"
+                                    class="btn btn-sm {% if task.status == 'Completed' %}btn-success{% else %}btn-outline-success{% endif %}"
+                                    data-task-complete
+                                    data-task-id="{{ task.id }}"
+                                    data-completed="{{ 'true' if task.status == 'Completed' else 'false' }}"
+                                    onclick="event.stopPropagation();">
+                                    <i class="bi {% if task.status == 'Completed' %}bi-check-circle-fill{% else %}bi-check{% endif %}"></i>
+                                    {{ 'Done' if task.status == 'Completed' else 'Complete' }}
+                                </button>
                             </div>
                         </div>
                         {% endfor %}

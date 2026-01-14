@@ -82,6 +82,63 @@ async def add_task(
     return RedirectResponse(url=f"/opportunities/{opp_id}", status_code=303)
 
 
+@router.post("/{task_id}/quick-update")
+async def quick_update_task(
+    task_id: int,
+    request: Request,
+    db: Session = Depends(get_db),
+):
+    """JSON API for optimistic UI updates (completion, priority, etc.)."""
+    current_user = request.state.current_user
+    if not current_user:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+
+    task = db.query(Task).filter(Task.id == task_id).first()
+    if not task:
+        raise HTTPException(status_code=404, detail="Task not found")
+
+    data = await request.json()
+    updated_fields = {}
+
+    # Handle completion toggle
+    if "completed" in data:
+        if data["completed"]:
+            task.complete(completed_by_user_id=current_user.id)
+            # Create audit Activity
+            activity = Activity(
+                opportunity_id=task.opportunity_id,
+                activity_type="task_completed",
+                subject=f"Completed task: {task.title}",
+                description=f"Task completed by {current_user.full_name}",
+                activity_date=datetime.utcnow(),
+                created_by_id=current_user.id,
+            )
+            db.add(activity)
+            updated_fields["status"] = "Completed"
+        else:
+            task.reopen()
+            updated_fields["status"] = "Open"
+
+    # Handle priority change
+    if "priority" in data and data["priority"] in Task.PRIORITIES:
+        task.priority = data["priority"]
+        updated_fields["priority"] = task.priority
+
+    # Handle title change
+    if "title" in data and data["title"].strip():
+        task.title = data["title"].strip()
+        updated_fields["title"] = task.title
+
+    # Handle description/notes change
+    if "description" in data:
+        task.description = data["description"].strip() or None
+        updated_fields["description"] = task.description
+
+    db.commit()
+
+    return {"ok": True, "updated": updated_fields}
+
+
 @router.post("/{task_id}/complete")
 async def complete_task(request: Request, task_id: int, db: Session = Depends(get_db)):
     """Mark a task as complete and create audit Activity."""

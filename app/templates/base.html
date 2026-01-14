@@ -933,6 +933,163 @@
     })();
     </script>
 
+    <!-- Optimistic UI: Quick updates without page reload -->
+    <script>
+    window.OptimisticUI = (function() {
+        // Flash element green on success, red on failure
+        function flash(el, success) {
+            const color = success ? '#28a745' : '#dc3545';
+            const orig = el.style.transition;
+            el.style.transition = 'box-shadow 0.15s ease';
+            el.style.boxShadow = '0 0 0 2px ' + color;
+            setTimeout(function() {
+                el.style.boxShadow = '';
+                setTimeout(function() { el.style.transition = orig; }, 150);
+            }, 800);
+        }
+
+        // POST JSON to endpoint, return promise
+        function post(url, data) {
+            return fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            }).then(function(res) {
+                if (!res.ok) throw new Error('Save failed');
+                return res.json();
+            });
+        }
+
+        // Task completion toggle (checkbox or button)
+        function bindTaskComplete(el) {
+            if (el.dataset.optimisticBound) return;
+            el.dataset.optimisticBound = 'true';
+
+            el.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+
+                const taskId = el.dataset.taskId;
+                const row = el.closest('[data-task-row]') || el.closest('.list-group-item') || el.closest('tr');
+                const isCompleted = el.dataset.completed === 'true';
+                const newState = !isCompleted;
+
+                // Optimistic UI update
+                el.dataset.completed = newState.toString();
+                if (newState) {
+                    el.innerHTML = '<i class="bi bi-check-circle-fill"></i>';
+                    el.classList.remove('btn-outline-success');
+                    el.classList.add('btn-success');
+                    if (row) row.classList.add('task-completed');
+                } else {
+                    el.innerHTML = '<i class="bi bi-check-lg"></i>';
+                    el.classList.remove('btn-success');
+                    el.classList.add('btn-outline-success');
+                    if (row) row.classList.remove('task-completed');
+                }
+
+                post('/tasks/' + taskId + '/quick-update', { completed: newState })
+                    .then(function() { flash(el, true); })
+                    .catch(function() {
+                        // Revert on failure
+                        el.dataset.completed = isCompleted.toString();
+                        if (isCompleted) {
+                            el.innerHTML = '<i class="bi bi-check-circle-fill"></i>';
+                            el.classList.remove('btn-outline-success');
+                            el.classList.add('btn-success');
+                            if (row) row.classList.add('task-completed');
+                        } else {
+                            el.innerHTML = '<i class="bi bi-check-lg"></i>';
+                            el.classList.remove('btn-success');
+                            el.classList.add('btn-outline-success');
+                            if (row) row.classList.remove('task-completed');
+                        }
+                        flash(el, false);
+                    });
+            });
+        }
+
+        // Priority dropdown change
+        function bindPrioritySelect(el) {
+            if (el.dataset.optimisticBound) return;
+            el.dataset.optimisticBound = 'true';
+
+            const originalValue = el.value;
+            el.addEventListener('change', function(e) {
+                e.stopPropagation();
+                const taskId = el.dataset.taskId;
+                const newPriority = el.value;
+
+                post('/tasks/' + taskId + '/quick-update', { priority: newPriority })
+                    .then(function() { flash(el, true); })
+                    .catch(function() {
+                        el.value = originalValue;
+                        flash(el, false);
+                    });
+            });
+        }
+
+        // Inline text field (blur to save)
+        function bindInlineText(el) {
+            if (el.dataset.optimisticBound) return;
+            el.dataset.optimisticBound = 'true';
+
+            let originalValue = el.value;
+            const taskId = el.dataset.taskId;
+            const field = el.dataset.field || 'description';
+
+            function save() {
+                const newValue = el.value.trim();
+                if (newValue === originalValue) return;
+
+                const payload = {};
+                payload[field] = newValue;
+
+                post('/tasks/' + taskId + '/quick-update', payload)
+                    .then(function() {
+                        originalValue = newValue;
+                        flash(el, true);
+                    })
+                    .catch(function() {
+                        el.value = originalValue;
+                        flash(el, false);
+                    });
+            }
+
+            el.addEventListener('blur', save);
+            el.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') { e.preventDefault(); el.blur(); }
+            });
+            el.addEventListener('click', function(e) { e.stopPropagation(); });
+            el.addEventListener('mousedown', function(e) { e.stopPropagation(); });
+        }
+
+        // Auto-bind all elements with data attributes
+        function init() {
+            document.querySelectorAll('[data-task-complete]').forEach(bindTaskComplete);
+            document.querySelectorAll('[data-task-priority]').forEach(bindPrioritySelect);
+            document.querySelectorAll('[data-task-inline]').forEach(bindInlineText);
+        }
+
+        // Run on DOMContentLoaded and expose for dynamic content
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', init);
+        } else {
+            init();
+        }
+
+        return { init: init, flash: flash, post: post };
+    })();
+    </script>
+
+    <style>
+    .task-completed .fw-medium,
+    .task-completed td:first-child {
+        text-decoration: line-through;
+        opacity: 0.6;
+    }
+    </style>
+
     {% block extra_js %}{% endblock %}
 </body>
 </html>
