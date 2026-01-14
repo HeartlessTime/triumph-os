@@ -1089,6 +1089,17 @@
         opacity: 0.6;
     }
 
+    /* Clickable rows */
+    [data-href] {
+        cursor: pointer;
+    }
+    tr[data-href]:hover {
+        background-color: rgba(0, 0, 0, 0.02);
+    }
+    .list-group-item[data-href]:hover {
+        background-color: rgba(0, 0, 0, 0.02);
+    }
+
     /* Expandable section styling (show more / show less) */
     .card-header[data-expand-section] {
         cursor: pointer;
@@ -1164,6 +1175,23 @@
         } else {
             initExpandableSections();
         }
+    })();
+    </script>
+
+    <!-- Global Clickable Rows -->
+    <script>
+    (function() {
+        document.addEventListener('click', function(e) {
+            // Find closest element with data-href
+            var row = e.target.closest('[data-href]');
+            if (!row) return;
+
+            // Ignore clicks on interactive elements
+            if (e.target.closest('a, button, input, textarea, select, [data-no-row-click], .btn, [data-bs-toggle]')) return;
+
+            // Navigate to the href
+            window.location.href = row.dataset.href;
+        });
     })();
     </script>
 

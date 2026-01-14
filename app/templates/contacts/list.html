@@ -100,13 +100,12 @@
                     <tbody id="contactsTableBody">
                         {% for contact in contacts %}
                         <tr class="contact-row"
+                            data-href="/contacts/{{ contact.id }}"
                             data-name="{{ contact.full_name|lower }}"
                             data-account="{{ contact.account.name|lower }}"
                             data-last-contacted="{{ contact.last_contacted.strftime('%Y-%m-%d') if contact.last_contacted else '0000-00-00' }}">
                             <td>
-                                <a href="/contacts/{{ contact.id }}" class="text-decoration-none fw-medium">
-                                    {{ contact.full_name }}
-                                </a>
+                                <span class="fw-medium">{{ contact.full_name }}</span>
                                 {% if contact.is_primary %}
                                 <span class="badge bg-primary ms-1">Primary</span>
                                 {% endif %}

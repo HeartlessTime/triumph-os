@@ -99,12 +99,11 @@
                     <tbody id="accountsTableBody">
                         {% for account in accounts %}
                         <tr class="account-row"
+                            data-href="/accounts/{{ account.id }}"
                             data-name="{{ account.name|lower }}"
                             data-last-activity="{{ account.last_contacted.strftime('%Y-%m-%d') if account.last_contacted else '0000-00-00' }}">
                             <td>
-                                <a href="/accounts/{{ account.id }}" class="text-decoration-none fw-medium">
-                                    {{ account.name }}
-                                </a>
+                                <span class="fw-medium">{{ account.name }}</span>
                             </td>
                             <td>
                                 {% if account.industry %}

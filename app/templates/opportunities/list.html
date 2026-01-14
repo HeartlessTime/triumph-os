@@ -70,16 +70,13 @@
                             <th>Bid Date</th>
                             <th>Last Contacted</th>
                             <th>Next Follow-up</th>
-                            <th></th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for opp in opportunities %}
-                        <tr data-stage="{{ opp.stage }}" data-estimator_id="{{ opp.assigned_estimator_id or '' }}">
+                        <tr data-href="/opportunities/{{ opp.id }}" data-stage="{{ opp.stage }}" data-estimator_id="{{ opp.assigned_estimator_id or '' }}">
                             <td>
-                                <a href="/opportunities/{{ opp.id }}" class="text-decoration-none fw-medium">
-                                    {{ opp.name }}
-                                </a>
+                                <span class="fw-medium">{{ opp.name }}</span>
                                 <span class="badge bg-{{ opp.health_score_color }} ms-1" title="Health Score">{{ opp.health_score }}</span>
                                 <div class="text-muted small">{{ opp.account.name }}</div>
                             </td>
@@ -106,11 +103,6 @@
                                     {{ opp.next_followup.strftime('%b %d') }}
                                 </span>
                                 {% else %}—{% endif %}
-                            </td>
-                            <td class="text-end">
-                                <a href="/opportunities/{{ opp.id }}" class="btn btn-sm btn-outline-primary">
-                                    View
-                                </a>
                             </td>
                         </tr>
                         {% endfor %}
