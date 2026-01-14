@@ -89,7 +89,7 @@ async def create_contact(
     request: Request,
     account_id: int = Form(...),
     first_name: str = Form(...),
-    last_name: str = Form(...),
+    last_name: str = Form(None),
     title: str = Form(None),
     email: str = Form(None),
     phone: str = Form(None),
@@ -244,7 +244,7 @@ async def update_contact(
     contact_id: int,
     account_id: int = Form(...),
     first_name: str = Form(...),
-    last_name: str = Form(...),
+    last_name: str = Form(None),
     title: str = Form(None),
     email: str = Form(None),
     phone: str = Form(None),
@@ -341,8 +341,11 @@ async def update_contact(
     contact.is_primary = is_primary
     contact.notes = notes or None
 
-    if last_contacted:
+    # Handle last_contacted - allow clearing by setting to None when empty
+    if last_contacted and last_contacted.strip():
         contact.last_contacted = datetime.strptime(last_contacted, "%Y-%m-%d").date()
+    else:
+        contact.last_contacted = None
 
     db.commit()
 

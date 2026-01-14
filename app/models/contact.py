@@ -24,7 +24,7 @@ class Contact(Base):
         index=True,
     )
     first_name = Column(String(100), nullable=False)
-    last_name = Column(String(100), nullable=False)
+    last_name = Column(String(100), nullable=True)
     title = Column(String(100), nullable=True)
     email = Column(String(255), nullable=True, index=True)
     phone = Column(String(50), nullable=True)
@@ -45,7 +45,9 @@ class Contact(Base):
 
     @property
     def full_name(self):
-        return f"{self.first_name} {self.last_name}"
+        if self.last_name:
+            return f"{self.first_name} {self.last_name}"
+        return self.first_name
 
     @property
     def display_name(self):

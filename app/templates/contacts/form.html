@@ -63,10 +63,10 @@
                             </div>
 
                             <div class="col-md-6">
-                                <label for="last_name" class="form-label">Last Name <span class="text-danger">*</span></label>
+                                <label for="last_name" class="form-label">Last Name</label>
                                 <input type="text" class="form-control" id="last_name" name="last_name"
                                     value="{{ form_last_name if form_last_name is defined else (contact.last_name or '' if contact else '') }}"
-                                    required placeholder="e.g., Smith">
+                                    placeholder="e.g., Smith">
                             </div>
 
                             <div class="col-12">
@@ -149,7 +149,6 @@
                     <ul class="small text-muted mt-2 mb-0">
                         <li>Account</li>
                         <li>First Name</li>
-                        <li>Last Name</li>
                         <li>Email <strong>or</strong> Phone (at least one)</li>
                     </ul>
                 </div>
