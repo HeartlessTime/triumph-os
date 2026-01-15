@@ -417,31 +417,52 @@
                 </div>
             </div>
 
-            <!-- Scope Packages -->
-            {% if opportunity.scopes %}
+            <!-- Project Details Card -->
             <div class="card mb-4">
-                <div class="card-header">Scope Packages</div>
+                <div class="card-header">Project Details</div>
                 <div class="card-body">
-                    {% for scope in opportunity.scopes %}
-                    <span class="badge bg-secondary me-1 mb-1">{{ scope.name }}</span>
-                    {% endfor %}
+                    <div class="mb-3">
+                        <label class="text-muted small d-block">Project Type</label>
+                        {{ opportunity.project_type or '—' }}
+                    </div>
+                    <div class="mb-3">
+                        <label class="text-muted small d-block">Description</label>
+                        {% if opportunity.description %}
+                        <div class="small" style="white-space: pre-wrap;">{{ opportunity.description }}</div>
+                        {% else %}
+                        <span class="text-muted">—</span>
+                        {% endif %}
+                    </div>
+                    <div class="mb-3">
+                        <label class="text-muted small d-block">Known Risks / Constraints</label>
+                        {% if opportunity.known_risks %}
+                        <div class="small text-warning-emphasis" style="white-space: pre-wrap;">{{ opportunity.known_risks }}</div>
+                        {% else %}
+                        <span class="text-muted">—</span>
+                        {% endif %}
+                    </div>
+                    <div>
+                        <label class="text-muted small d-block">Internal Notes</label>
+                        {% if opportunity.notes %}
+                        <div class="small" style="white-space: pre-wrap;">{{ opportunity.notes }}</div>
+                        {% else %}
+                        <span class="text-muted">—</span>
+                        {% endif %}
+                    </div>
                 </div>
             </div>
-            {% endif %}
 
-            <!-- Additional Details (Collapsible) -->
+            <!-- Bid Details (Collapsible) -->
             <div class="card">
                 <div class="card-header">
-                    <a class="text-decoration-none d-flex justify-content-between align-items-center" data-bs-toggle="collapse" href="#additionalDetails" role="button" aria-expanded="false" aria-controls="additionalDetails">
-                        <span><i class="bi bi-info-circle me-2"></i>Additional Details</span>
+                    <a class="text-decoration-none d-flex justify-content-between align-items-center" data-bs-toggle="collapse" href="#bidDetails" role="button" aria-expanded="false" aria-controls="bidDetails">
+                        <span><i class="bi bi-info-circle me-2"></i>Bid Details</span>
                         <i class="bi bi-chevron-down"></i>
                     </a>
                 </div>
-                <div class="collapse" id="additionalDetails">
+                <div class="collapse" id="bidDetails">
                     <div class="card-body">
-                        <!-- Bid Details -->
-                        <h6 class="text-muted mb-2">Bid Details</h6>
-                        <div class="row g-2 mb-3">
+                        <div class="row g-2">
                             <div class="col-6">
                                 <label class="text-muted small d-block">Bid Type</label>
                                 {{ opportunity.bid_type or '—' }}
@@ -467,28 +488,9 @@
                                 {{ 'Yes' if opportunity.rebid else 'No' }}
                             </div>
                             <div class="col-6">
-                                <label class="text-muted small d-block">Source</label>
+                                <label class="text-muted small d-block">Lead Source</label>
                                 {{ opportunity.source or '—' }}
                             </div>
-                        </div>
-
-                        <!-- Project Info -->
-                        <h6 class="text-muted mb-2">Project Info</h6>
-                        <div class="mb-2">
-                            <label class="text-muted small d-block">Project Type</label>
-                            {{ opportunity.project_type or '—' }}
-                        </div>
-                        <div class="mb-2">
-                            <label class="text-muted small d-block">Description</label>
-                            <div class="small">{{ opportunity.description or '—' }}</div>
-                        </div>
-                        <div class="mb-2">
-                            <label class="text-muted small d-block">Known Risks / Constraints</label>
-                            <div class="small">{{ opportunity.known_risks or '—' }}</div>
-                        </div>
-                        <div>
-                            <label class="text-muted small d-block">Notes</label>
-                            <div class="small">{{ opportunity.notes or '—' }}</div>
                         </div>
                     </div>
                 </div>

@@ -143,40 +143,6 @@
                     </div>
                 </div>
 
-                <div class="card mb-4">
-                    <div class="card-header">Low-Voltage Scope Packages</div>
-                    <div class="card-body">
-                        <p class="text-muted small mb-3">Select all that apply (Low-Voltage specific):</p>
-                        <div class="row g-2">
-                            {% set LV_SCOPES = [
-                                'Horizontal Cabling (Copper)',
-                                'Backbone Cabling (Fiber/Copper)',
-                                'Site / Campus Fiber',
-                                'IDF / MDF Closet Buildout',
-                                'Security / Access Control',
-                                'Cameras / Surveillance',
-                                'Wireless / Access Points',
-                                'AV / Paging / Intercom',
-                                'Other'
-                            ] %}
-                            {% for s in LV_SCOPES %}
-                            <div class="col-md-6">
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" name="scope_names" value="{{ s }}" id="scope_{{ loop.index }}"
-                                    {% if s in selected_scope_names %}checked{% endif %}>
-                                    <label class="form-check-label" for="scope_{{ loop.index }}">{{ s }}</label>
-                                </div>
-                                {% if s == 'Other' %}
-                                <div class="mt-2">
-                                    <input type="text" class="form-control" name="scope_other_text" placeholder="Other (describe)" value="{{ selected_scope_other_text }}">
-                                </div>
-                                {% endif %}
-                            </div>
-                            {% endfor %}
-                        </div>
-                    </div>
-                </div>
-
                 <div class="card">
                     <div class="card-header">Additional Details</div>
                     <div class="card-body">
