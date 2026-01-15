@@ -40,7 +40,7 @@
         </div>
     </div>
 
-    <form method="post" action="/activities/{{ activity.id }}/edit{% if return_to %}?from={{ return_to | urlencode }}{% endif %}">
+    <form method="post" action="/activities/{{ activity.id }}/edit{% if return_to %}?from={{ return_to | urlencode }}{% endif %}" id="activityForm" data-auto-save="/activities/{{ activity.id }}/auto-save">
         <div class="card">
             <div class="card-body">
                 <div class="row g-3">
@@ -93,20 +93,41 @@
                 </div>
             </div>
             <div class="card-footer d-flex gap-2">
-                <button type="submit" class="btn btn-primary">
-                    <i class="bi bi-check-lg me-1"></i> Save Changes
-                </button>
+                <!-- Auto-save mode: no Save button, just Done -->
                 {% if return_to %}
-                <a href="{{ return_to }}" class="btn btn-outline-secondary">Cancel</a>
+                <a href="{{ return_to }}" class="btn btn-primary">
+                    <i class="bi bi-check-lg me-1"></i> Done
+                </a>
                 {% elif activity.opportunity %}
-                <a href="/opportunities/{{ activity.opportunity_id }}" class="btn btn-outline-secondary">Cancel</a>
+                <a href="/opportunities/{{ activity.opportunity_id }}" class="btn btn-primary">
+                    <i class="bi bi-check-lg me-1"></i> Done
+                </a>
                 {% elif activity.contact %}
-                <a href="/contacts/{{ activity.contact_id }}" class="btn btn-outline-secondary">Cancel</a>
+                <a href="/contacts/{{ activity.contact_id }}" class="btn btn-primary">
+                    <i class="bi bi-check-lg me-1"></i> Done
+                </a>
                 {% else %}
-                <a href="/summary/my-weekly" class="btn btn-outline-secondary">Cancel</a>
+                <a href="/summary/my-weekly" class="btn btn-primary">
+                    <i class="bi bi-check-lg me-1"></i> Done
+                </a>
                 {% endif %}
+                <span class="text-muted small align-self-center ms-2">
+                    <i class="bi bi-cloud-check me-1"></i>Changes save automatically
+                </span>
             </div>
         </div>
     </form>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function() {
+    const form = document.getElementById('activityForm');
+    const endpoint = form.dataset.autoSave;
+    if (form && endpoint) {
+        AutoSave.init(form, endpoint);
+    }
+})();
+</script>
 {% endblock %}

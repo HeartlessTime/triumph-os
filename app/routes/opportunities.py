@@ -920,3 +920,186 @@ async def calendar_events(db: Session = Depends(get_db)):
         )
 
     return JSONResponse(content=events)
+
+
+# -----------------------------
+# Auto-Save API
+# -----------------------------
+from pydantic import BaseModel
+
+
+class OpportunityAutoSaveRequest(BaseModel):
+    # Core fields
+    name: Optional[str] = None
+    account_id: Optional[int] = None
+    stage: Optional[str] = None
+    description: Optional[str] = None
+    lv_value: Optional[str] = None
+    hdd_value: Optional[str] = None
+    primary_contact_id: Optional[int] = None
+    end_user_account_id: Optional[int] = None
+    # Dates
+    bid_date: Optional[str] = None
+    bid_date_tbd: Optional[bool] = None
+    bid_time: Optional[str] = None
+    last_contacted: Optional[str] = None
+    # Assignment
+    owner_id: Optional[int] = None
+    assigned_estimator_id: Optional[int] = None
+    # Bid details
+    source: Optional[str] = None
+    notes: Optional[str] = None
+    bid_type: Optional[str] = None
+    submission_method: Optional[str] = None
+    bid_form_required: Optional[bool] = None
+    bond_required: Optional[bool] = None
+    prevailing_wage: Optional[str] = None
+    project_type: Optional[str] = None
+    rebid: Optional[bool] = None
+    known_risks: Optional[str] = None
+    stalled_reason: Optional[str] = None
+    quick_links_text: Optional[str] = None
+    # Related entities
+    gc_ids: Optional[List[int]] = None
+    scope_names: Optional[List[str]] = None
+    scope_other_text: Optional[str] = None
+    related_contact_ids: Optional[List[int]] = None
+
+
+@router.post("/{opp_id}/auto-save")
+async def auto_save_opportunity(
+    opp_id: int,
+    request: Request,
+    data: OpportunityAutoSaveRequest,
+    db: Session = Depends(get_db),
+):
+    """Auto-save opportunity fields (JSON API for real-time updates)."""
+    opportunity = db.query(Opportunity).filter(Opportunity.id == opp_id).first()
+    if not opportunity:
+        raise HTTPException(status_code=404, detail="Opportunity not found")
+
+    current_user = request.state.current_user
+    old_stage = opportunity.stage
+
+    def clean_num(val):
+        if not val:
+            return None
+        return Decimal(str(val).replace(",", ""))
+
+    # Core fields
+    if data.name is not None:
+        opportunity.name = data.name
+    if data.account_id is not None:
+        opportunity.account_id = data.account_id
+    if data.stage is not None:
+        opportunity.stage = data.stage
+    if data.description is not None:
+        opportunity.description = data.description or None
+    if data.lv_value is not None:
+        opportunity.lv_value = clean_num(data.lv_value)
+    if data.hdd_value is not None:
+        opportunity.hdd_value = clean_num(data.hdd_value)
+    if data.primary_contact_id is not None:
+        opportunity.primary_contact_id = data.primary_contact_id if data.primary_contact_id else None
+    if data.end_user_account_id is not None:
+        opportunity.end_user_account_id = data.end_user_account_id if data.end_user_account_id else None
+
+    # Dates
+    if data.bid_date is not None:
+        if data.bid_date.strip():
+            opportunity.bid_date = datetime.strptime(data.bid_date, "%Y-%m-%d").date()
+        else:
+            opportunity.bid_date = None
+    if data.bid_date_tbd is not None:
+        opportunity.bid_date_tbd = data.bid_date_tbd
+    if data.bid_time is not None:
+        if data.bid_time.strip():
+            opportunity.bid_time = datetime.strptime(data.bid_time, "%H:%M").time()
+        else:
+            opportunity.bid_time = None
+    if data.last_contacted is not None:
+        if data.last_contacted.strip():
+            opportunity.last_contacted = datetime.strptime(data.last_contacted, "%Y-%m-%d").date()
+        else:
+            opportunity.last_contacted = None
+
+    # Assignment
+    if data.owner_id is not None:
+        opportunity.owner_id = data.owner_id if data.owner_id else None
+    if data.assigned_estimator_id is not None:
+        opportunity.assigned_estimator_id = data.assigned_estimator_id if data.assigned_estimator_id else None
+
+    # Bid details
+    if data.source is not None:
+        opportunity.source = data.source or None
+    if data.notes is not None:
+        opportunity.notes = data.notes or None
+    if data.bid_type is not None:
+        opportunity.bid_type = data.bid_type or None
+    if data.submission_method is not None:
+        opportunity.submission_method = data.submission_method or None
+    if data.bid_form_required is not None:
+        opportunity.bid_form_required = data.bid_form_required
+    if data.bond_required is not None:
+        opportunity.bond_required = data.bond_required
+    if data.prevailing_wage is not None:
+        opportunity.prevailing_wage = data.prevailing_wage or None
+    if data.project_type is not None:
+        opportunity.project_type = data.project_type or None
+    if data.rebid is not None:
+        opportunity.rebid = data.rebid
+    if data.known_risks is not None:
+        opportunity.known_risks = data.known_risks or None
+    if data.stalled_reason is not None:
+        opportunity.stalled_reason = data.stalled_reason or None
+
+    # Quick links
+    if data.quick_links_text is not None:
+        if data.quick_links_text.strip():
+            opportunity.quick_links = [
+                ln.strip() for ln in data.quick_links_text.strip().splitlines() if ln.strip()
+            ]
+        else:
+            opportunity.quick_links = None
+
+    # GC accounts (JSON array)
+    if data.gc_ids is not None:
+        opportunity.gcs = data.gc_ids if data.gc_ids else None
+
+    # Related contacts
+    if data.related_contact_ids is not None:
+        opportunity.related_contact_ids = data.related_contact_ids if data.related_contact_ids else None
+
+    # Scopes
+    if data.scope_names is not None:
+        # Clear existing scopes and rebuild
+        db.query(OpportunityScope).filter(OpportunityScope.opportunity_id == opp_id).delete()
+        for scope_name in data.scope_names:
+            scope_pkg = db.query(ScopePackage).filter(ScopePackage.name == scope_name).first()
+            if scope_pkg:
+                opp_scope = OpportunityScope(
+                    opportunity_id=opp_id,
+                    scope_package_id=scope_pkg.id,
+                    name=scope_name,
+                    description=data.scope_other_text if scope_name == "Other" else None,
+                )
+                db.add(opp_scope)
+
+    # Update follow-up based on new state
+    update_opportunity_followup(opportunity)
+
+    # Log stage change if applicable
+    if old_stage != opportunity.stage:
+        activity = Activity(
+            opportunity_id=opp_id,
+            activity_type="note",
+            subject=f"Stage changed: {old_stage} → {opportunity.stage}",
+            description=f"Pipeline stage updated from {old_stage} to {opportunity.stage}",
+            activity_date=datetime.now(),
+            created_by_id=current_user.id,
+        )
+        db.add(activity)
+
+    db.commit()
+
+    return {"ok": True, "id": opportunity.id}

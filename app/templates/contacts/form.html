@@ -38,7 +38,7 @@
                     </div>
                     {% endif %}
 
-                    <form method="post" action="{% if is_new %}/contacts/new{% else %}/contacts/{{ contact.id }}/edit{% endif %}">
+                    <form method="post" action="{% if is_new %}/contacts/new{% else %}/contacts/{{ contact.id }}/edit{% endif %}" id="contactForm" {% if not is_new %}data-auto-save="/contacts/{{ contact.id }}/auto-save"{% endif %}>
                         <!-- Hidden field for warning override -->
                         {% if warnings %}
                         <input type="hidden" name="confirm_warnings" value="true">
@@ -132,11 +132,21 @@
                         </div>
 
                         <div class="mt-4 d-flex gap-2">
+                            {% if is_new or warnings %}
                             <button type="submit" class="btn btn-primary">
                                 <i class="bi bi-check-lg me-1"></i>
-                                {% if warnings %}Save Anyway{% elif is_new %}Create Contact{% else %}Save Changes{% endif %}
+                                {% if warnings %}Save Anyway{% else %}Create Contact{% endif %}
                             </button>
-                            <a href="{% if is_new %}/contacts{% else %}/contacts/{{ contact.id }}{% endif %}" class="btn btn-outline-secondary">Cancel</a>
+                            <a href="/contacts" class="btn btn-outline-secondary">Cancel</a>
+                            {% else %}
+                            <!-- Auto-save mode: no Save button, just Done -->
+                            <a href="/contacts/{{ contact.id }}" class="btn btn-primary">
+                                <i class="bi bi-check-lg me-1"></i> Done
+                            </a>
+                            <span class="text-muted small align-self-center ms-2">
+                                <i class="bi bi-cloud-check me-1"></i>Changes save automatically
+                            </span>
+                            {% endif %}
                         </div>
                     </form>
                 </div>
@@ -161,4 +171,18 @@
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+{% if not is_new %}
+<script>
+(function() {
+    const form = document.getElementById('contactForm');
+    const endpoint = form.dataset.autoSave;
+    if (form && endpoint) {
+        AutoSave.init(form, endpoint);
+    }
+})();
+</script>
+{% endif %}
 {% endblock %}

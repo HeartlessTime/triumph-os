@@ -452,3 +452,54 @@ async def api_quick_create_account(
     db.refresh(account)
 
     return {"id": account.id, "name": account.name}
+
+
+class AccountAutoSaveRequest(BaseModel):
+    name: Optional[str] = None
+    account_type: Optional[str] = None
+    industry: Optional[str] = None
+    website: Optional[str] = None
+    phone: Optional[str] = None
+    address: Optional[str] = None
+    city: Optional[str] = None
+    state: Optional[str] = None
+    zip_code: Optional[str] = None
+    notes: Optional[str] = None
+
+
+@router.post("/{account_id}/auto-save")
+async def auto_save_account(
+    account_id: int,
+    data: AccountAutoSaveRequest,
+    db: Session = Depends(get_db),
+):
+    """Auto-save account fields (JSON API for real-time updates)."""
+    account = db.query(Account).filter(Account.id == account_id).first()
+    if not account:
+        raise HTTPException(status_code=404, detail="Account not found")
+
+    # Update only the fields that were provided
+    if data.name is not None:
+        account.name = data.name
+    if data.account_type is not None:
+        account.account_type = data.account_type or "end_user"
+    if data.industry is not None:
+        account.industry = data.industry or None
+    if data.website is not None:
+        account.website = normalize_url(data.website)
+    if data.phone is not None:
+        account.phone = data.phone or None
+    if data.address is not None:
+        account.address = data.address or None
+    if data.city is not None:
+        account.city = data.city or None
+    if data.state is not None:
+        account.state = data.state or None
+    if data.zip_code is not None:
+        account.zip_code = data.zip_code or None
+    if data.notes is not None:
+        account.notes = data.notes or None
+
+    db.commit()
+
+    return {"ok": True, "id": account.id}

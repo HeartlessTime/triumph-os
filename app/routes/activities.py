@@ -283,3 +283,70 @@ async def delete_activity(
     db.commit()
 
     return RedirectResponse(url=redirect_url, status_code=303)
+
+
+# -----------------------------
+# API Endpoints (JSON)
+# -----------------------------
+from pydantic import BaseModel
+from typing import Optional
+
+
+class ActivityAutoSaveRequest(BaseModel):
+    activity_type: Optional[str] = None
+    subject: Optional[str] = None
+    description: Optional[str] = None
+    activity_date: Optional[str] = None
+    contact_id: Optional[int] = None
+    next_followup: Optional[str] = None
+
+
+@router.post("/{activity_id}/auto-save")
+async def auto_save_activity(
+    activity_id: int,
+    data: ActivityAutoSaveRequest,
+    db: Session = Depends(get_db),
+):
+    """Auto-save activity fields (JSON API for real-time updates)."""
+    activity = db.query(Activity).filter(Activity.id == activity_id).first()
+    if not activity:
+        raise HTTPException(status_code=404, detail="Activity not found")
+
+    # Track if activity_type is changing (for follow-up logic)
+    old_type = activity.activity_type
+
+    # Update only the fields that were provided
+    if data.activity_type is not None:
+        activity.activity_type = data.activity_type
+    if data.subject is not None:
+        activity.subject = data.subject
+    if data.description is not None:
+        activity.description = data.description or None
+    if data.activity_date is not None and data.activity_date.strip():
+        activity.activity_date = datetime.strptime(data.activity_date, "%Y-%m-%dT%H:%M")
+    if data.contact_id is not None:
+        activity.contact_id = data.contact_id if data.contact_id else None
+
+    # Update contact follow-up date if provided or activity_type changed
+    type_changed = data.activity_type is not None and old_type != data.activity_type
+    if activity.contact_id:
+        contact = db.query(Contact).filter(Contact.id == activity.contact_id).first()
+        if contact:
+            if data.next_followup is not None:
+                if data.next_followup.strip():
+                    # Manual override: user explicitly set a follow-up date
+                    manual_date = datetime.strptime(data.next_followup, "%Y-%m-%d").date()
+                    contact.next_followup = _normalize_to_business_day(manual_date)
+                else:
+                    contact.next_followup = None
+            elif type_changed:
+                # Auto-follow-up: only when activity_type changes and no manual date
+                if activity.activity_type == "meeting":
+                    contact.last_contacted = date.today()
+                    contact.next_followup = _normalize_to_business_day(date.today() + timedelta(days=30))
+                elif activity.activity_type == "meeting_requested":
+                    contact.next_followup = _add_business_days(date.today(), 2)
+
+    db.commit()
+
+    return {"ok": True, "id": activity.id}

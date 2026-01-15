@@ -35,7 +35,7 @@
     </div>
     {% endif %}
 
-    <form method="post" action="/opportunities/{{ opportunity.id }}/edit">
+    <form method="post" action="/opportunities/{{ opportunity.id }}/edit" id="opportunityForm" {% if not warnings %}data-auto-save="/opportunities/{{ opportunity.id }}/auto-save"{% endif %}>
         <!-- Hidden field for warning override -->
         {% if warnings %}
         <input type="hidden" name="confirm_warnings" value="true">
@@ -358,14 +358,38 @@
                 </div>
 
                 <div class="d-grid gap-2">
+                    {% if warnings %}
                     <button type="submit" class="btn btn-primary btn-lg">
                         <i class="bi bi-check-lg me-1"></i>
-                        {% if warnings %}Save Anyway{% else %}Save Changes{% endif %}
+                        Save Anyway
                     </button>
                     <a href="/opportunities/{{ opportunity.id }}" class="btn btn-outline-secondary">Cancel</a>
+                    {% else %}
+                    <!-- Auto-save mode: no Save button, just Done -->
+                    <a href="/opportunities/{{ opportunity.id }}" class="btn btn-primary btn-lg">
+                        <i class="bi bi-check-lg me-1"></i> Done
+                    </a>
+                    <span class="text-muted small text-center">
+                        <i class="bi bi-cloud-check me-1"></i>Changes save automatically
+                    </span>
+                    {% endif %}
                 </div>
             </div>
         </div>
     </form>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+{% if not warnings %}
+<script>
+(function() {
+    const form = document.getElementById('opportunityForm');
+    const endpoint = form.dataset.autoSave;
+    if (form && endpoint) {
+        AutoSave.init(form, endpoint);
+    }
+})();
+</script>
+{% endif %}
 {% endblock %}

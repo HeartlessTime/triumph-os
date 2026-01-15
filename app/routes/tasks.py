@@ -134,6 +134,22 @@ async def quick_update_task(
         task.description = data["description"].strip() or None
         updated_fields["description"] = task.description
 
+    # Handle due_date change (for auto-save)
+    if "due_date" in data:
+        if data["due_date"] and data["due_date"].strip():
+            task.due_date = datetime.strptime(data["due_date"], "%Y-%m-%d").date()
+        else:
+            task.due_date = None
+        updated_fields["due_date"] = str(task.due_date) if task.due_date else None
+
+    # Handle assigned_to_id change (for auto-save)
+    if "assigned_to_id" in data:
+        if data["assigned_to_id"]:
+            task.assigned_to_id = int(data["assigned_to_id"])
+        else:
+            task.assigned_to_id = None
+        updated_fields["assigned_to_id"] = task.assigned_to_id
+
     db.commit()
 
     return {"ok": True, "updated": updated_fields}

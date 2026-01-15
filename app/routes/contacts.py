@@ -562,3 +562,77 @@ async def log_contact(
     # Redirect to 'from' param if provided, otherwise to contact detail
     redirect_url = request.query_params.get("from") or request.query_params.get("next") or f"/contacts/{contact_id}"
     return RedirectResponse(url=redirect_url, status_code=303)
+
+
+# -----------------------------
+# API Endpoints (JSON)
+# -----------------------------
+from pydantic import BaseModel
+from typing import Optional
+
+
+class ContactAutoSaveRequest(BaseModel):
+    account_id: Optional[int] = None
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    title: Optional[str] = None
+    email: Optional[str] = None
+    phone: Optional[str] = None
+    mobile: Optional[str] = None
+    is_primary: Optional[bool] = None
+    notes: Optional[str] = None
+    last_contacted: Optional[str] = None
+    next_followup: Optional[str] = None
+
+
+@router.post("/{contact_id}/auto-save")
+async def auto_save_contact(
+    contact_id: int,
+    data: ContactAutoSaveRequest,
+    db: Session = Depends(get_db),
+):
+    """Auto-save contact fields (JSON API for real-time updates)."""
+    contact = db.query(Contact).filter(Contact.id == contact_id).first()
+    if not contact:
+        raise HTTPException(status_code=404, detail="Contact not found")
+
+    # Update only the fields that were provided
+    if data.account_id is not None:
+        contact.account_id = data.account_id
+    if data.first_name is not None:
+        contact.first_name = data.first_name
+    if data.last_name is not None:
+        contact.last_name = data.last_name.strip() if data.last_name and data.last_name.strip() else None
+    if data.title is not None:
+        contact.title = data.title or None
+    if data.email is not None:
+        contact.email = data.email or None
+    if data.phone is not None:
+        contact.phone = data.phone or None
+    if data.mobile is not None:
+        contact.mobile = data.mobile or None
+    if data.is_primary is not None:
+        # If making primary, unset other primaries
+        if data.is_primary and not contact.is_primary:
+            db.query(Contact).filter(
+                Contact.account_id == contact.account_id,
+                Contact.is_primary == True,
+                Contact.id != contact_id,
+            ).update({"is_primary": False})
+        contact.is_primary = data.is_primary
+    if data.notes is not None:
+        contact.notes = data.notes or None
+    if data.last_contacted is not None:
+        if data.last_contacted.strip():
+            contact.last_contacted = datetime.strptime(data.last_contacted, "%Y-%m-%d").date()
+        else:
+            contact.last_contacted = None
+    if data.next_followup is not None:
+        if data.next_followup.strip():
+            contact.next_followup = datetime.strptime(data.next_followup, "%Y-%m-%d").date()
+        else:
+            contact.next_followup = None
+
+    db.commit()
+
+    return {"ok": True, "id": contact.id}
