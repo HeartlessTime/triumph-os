@@ -7,14 +7,13 @@ Useful for compliance, tracking, and oversight purposes.
 
 from fastapi import APIRouter, Request, Depends
 from fastapi.responses import HTMLResponse
-from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session, selectinload
 
 from app.database import get_db
 from app.models import Activity, Contact, Opportunity
+from app.template_config import templates
 
 router = APIRouter(tags=["audit"])
-templates = Jinja2Templates(directory="app/templates")
 
 # Default page size
 PAGE_SIZE = 50

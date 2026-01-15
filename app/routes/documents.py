@@ -3,14 +3,13 @@ import uuid
 import shutil
 from fastapi import APIRouter, Request, Depends, Form, HTTPException, UploadFile, File
 from fastapi.responses import RedirectResponse, FileResponse
-from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.models import Opportunity, Document
+from app.template_config import templates
 
 router = APIRouter(prefix="/documents", tags=["documents"])
-templates = Jinja2Templates(directory="app/templates")
 
 UPLOAD_DIR = os.getenv("UPLOAD_DIR", "./uploads")
 MAX_UPLOAD_SIZE = int(os.getenv("MAX_UPLOAD_SIZE_MB", "50")) * 1024 * 1024

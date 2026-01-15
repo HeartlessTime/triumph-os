@@ -11,15 +11,14 @@ Shows actionable items for today and the upcoming week:
 from datetime import date, datetime, timedelta
 from fastapi import APIRouter, Request, Depends, HTTPException
 from fastapi.responses import HTMLResponse, JSONResponse
-from fastapi.templating import Jinja2Templates
 from sqlalchemy import select
 from sqlalchemy.orm import Session, selectinload
 
 from app.database import get_db
 from app.models import Opportunity, Task, Contact, Activity
+from app.template_config import templates, utc_now
 
 router = APIRouter(tags=["today"])
-templates = Jinja2Templates(directory="app/templates")
 
 
 def add_business_days(start_date: date, num_days: int) -> date:
@@ -92,7 +91,7 @@ async def mark_meeting_occurred(
 
     # Update the activity: meeting_requested -> meeting
     activity.activity_type = "meeting"
-    activity.activity_date = datetime.now()  # Meeting occurred today
+    activity.activity_date = utc_now()  # Meeting occurred today
     activity.subject = f"Meeting with {contact.full_name}"
 
     # Update the contact: standard post-meeting follow-up (30 days, normalized to business day)

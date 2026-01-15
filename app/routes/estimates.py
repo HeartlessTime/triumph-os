@@ -3,7 +3,6 @@ import uuid
 from decimal import Decimal
 from fastapi import APIRouter, Request, Depends, Form, HTTPException
 from fastapi.responses import HTMLResponse, RedirectResponse
-from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 
 from app.database import get_db
@@ -14,9 +13,9 @@ from app.services.estimate import (
     copy_estimate_to_new_version,
 )
 from app.services.proposal import generate_proposal_pdf
+from app.template_config import templates
 
 router = APIRouter(prefix="/estimates", tags=["estimates"])
-templates = Jinja2Templates(directory="app/templates")
 
 UPLOAD_DIR = os.getenv("UPLOAD_DIR", "./uploads")
 

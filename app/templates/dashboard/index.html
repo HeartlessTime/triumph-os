@@ -288,7 +288,7 @@
                                     <strong>{{ activity.subject }}</strong>
                                 </div>
                                 <small class="text-muted">
-                                    {{ activity.activity_date.strftime('%b %d, %H:%M') }}
+                                    {{ activity.activity_date | localtime('%b %d, %H:%M') }}
                                 </small>
                             </div>
                             <a href="/opportunities/{{ activity.opportunity_id }}" class="text-muted small text-decoration-none">

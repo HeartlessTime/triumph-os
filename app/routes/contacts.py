@@ -1,6 +1,5 @@
 from fastapi import APIRouter, Request, Depends, Form, HTTPException
 from fastapi.responses import HTMLResponse, RedirectResponse
-from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session, selectinload
 from datetime import datetime, date, timedelta
 
@@ -8,6 +7,7 @@ from app.database import get_db
 from app.models import Contact, Account, Opportunity, Activity
 from app.services.followup import calculate_next_followup
 from app.services.validators import validate_contact
+from app.template_config import templates, utc_now
 
 
 def add_business_days(start_date: date, num_days: int) -> date:
@@ -53,7 +53,6 @@ def update_contact_followup(contact: Contact, activity_type: str = None):
 
 
 router = APIRouter(prefix="/contacts", tags=["contacts"])
-templates = Jinja2Templates(directory="app/templates")
 
 
 @router.get("", response_class=HTMLResponse)
@@ -456,7 +455,7 @@ async def log_meeting(
     if meeting_date:
         meeting_dt = datetime.strptime(meeting_date, "%Y-%m-%d")
     else:
-        meeting_dt = datetime.now()
+        meeting_dt = utc_now()
 
     # Create the meeting activity
     meeting_activity = Activity(
@@ -523,7 +522,7 @@ async def log_contact(
         activity_type=activity_type,
         subject=f"Follow-up with {contact.full_name}",
         description=description,
-        activity_date=datetime.now(),
+        activity_date=utc_now(),
         contact_id=contact_id,
         created_by_id=current_user.id,
     )
@@ -546,7 +545,7 @@ async def log_contact(
             activity_type=activity_type,
             subject=f"Contacted {contact.full_name}",
             description=f"Contacted {contact.full_name} regarding {opp.name}",
-            activity_date=datetime.now(),
+            activity_date=utc_now(),
             contact_id=contact_id,
             created_by_id=current_user.id,
         )

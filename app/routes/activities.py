@@ -2,12 +2,12 @@ import logging
 from datetime import datetime, date, timedelta
 from fastapi import APIRouter, Request, Depends, Form, HTTPException
 from fastapi.responses import HTMLResponse, RedirectResponse
-from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.models import Opportunity, Activity, Contact
 from app.services.followup import calculate_next_followup
+from app.template_config import templates, utc_now
 
 logger = logging.getLogger(__name__)
 
@@ -38,7 +38,6 @@ def _normalize_to_business_day(d: date) -> date:
     return d
 
 
-templates = Jinja2Templates(directory="app/templates")
 
 
 @router.post("/opportunity/{opp_id}/add")
@@ -62,7 +61,7 @@ async def add_activity(
     if activity_date:
         activity_dt = datetime.strptime(activity_date, "%Y-%m-%dT%H:%M")
     else:
-        activity_dt = datetime.now()
+        activity_dt = utc_now()
 
     current_user = request.state.current_user
     activity = Activity(

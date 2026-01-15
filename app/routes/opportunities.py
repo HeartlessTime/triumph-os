@@ -2,7 +2,6 @@ from datetime import date, datetime
 from decimal import Decimal
 from fastapi import APIRouter, Request, Depends, Form, HTTPException
 from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
-from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session, selectinload
 from sqlalchemy import or_
 from typing import List, Optional, Union
@@ -24,9 +23,9 @@ from app.services.validators import (
     validate_opportunity_create,
     validate_opportunity_update,
 )
+from app.template_config import templates, utc_now
 
 router = APIRouter(prefix="/opportunities", tags=["opportunities"])
-templates = Jinja2Templates(directory="app/templates")
 
 
 # -----------------------------
@@ -556,7 +555,7 @@ async def update_stage(
             activity_type="note",
             subject=f"Stage changed: {old_stage} → {stage}",
             description=f"Pipeline stage updated from {old_stage} to {stage}",
-            activity_date=datetime.now(),
+            activity_date=utc_now(),
             created_by_id=current_user.id,
         )
         db.add(activity)
@@ -877,7 +876,7 @@ async def update_opportunity(
             activity_type="note",
             subject=f"Stage changed: {old_stage} → {stage}",
             description=f"Pipeline stage updated from {old_stage} to {stage}",
-            activity_date=datetime.now(),
+            activity_date=utc_now(),
             created_by_id=current_user.id,
         )
         db.add(activity)
@@ -1144,7 +1143,7 @@ async def auto_save_opportunity(
             activity_type="note",
             subject=f"Stage changed: {old_stage} → {opportunity.stage}",
             description=f"Pipeline stage updated from {old_stage} to {opportunity.stage}",
-            activity_date=datetime.now(),
+            activity_date=utc_now(),
             created_by_id=current_user.id,
         )
         db.add(activity)

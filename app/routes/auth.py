@@ -4,14 +4,13 @@ Authentication routes for login/logout.
 
 from fastapi import APIRouter, Request, Depends, Form
 from fastapi.responses import HTMLResponse, RedirectResponse
-from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.auth.utils import authenticate_user
+from app.template_config import templates
 
 router = APIRouter(tags=["auth"])
-templates = Jinja2Templates(directory="app/templates")
 
 
 @router.get("/login", response_class=HTMLResponse)

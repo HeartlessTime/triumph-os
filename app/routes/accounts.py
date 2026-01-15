@@ -2,7 +2,6 @@ from typing import Optional
 
 from fastapi import APIRouter, Request, Depends, Form, HTTPException
 from fastapi.responses import HTMLResponse, RedirectResponse
-from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session, selectinload
 from sqlalchemy import or_, func
 from datetime import date
@@ -10,9 +9,9 @@ from datetime import date
 from app.database import get_db
 from app.models import Account, Opportunity, Contact
 from app.services.validators import validate_account
+from app.template_config import templates
 
 router = APIRouter(prefix="/accounts", tags=["accounts"])
-templates = Jinja2Templates(directory="app/templates")
 
 
 def normalize_url(url: Optional[str]) -> Optional[str]:

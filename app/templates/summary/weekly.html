@@ -398,7 +398,7 @@
                                     {% endif %}
                                 </div>
                                 <div class="text-end">
-                                    <small class="text-muted">{{ activity.activity_date.strftime('%b %d, %I:%M %p') }}</small>
+                                    <small class="text-muted">{{ activity.activity_date | localtime('%b %d, %I:%M %p') }}</small>
                                 </div>
                             </div>
                             {% if activity.opportunity %}

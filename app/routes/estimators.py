@@ -1,6 +1,5 @@
 from fastapi import APIRouter, Request, Depends
 from fastapi.responses import HTMLResponse, JSONResponse
-from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 from sqlalchemy import and_
 from datetime import datetime, timedelta
@@ -8,9 +7,9 @@ from collections import defaultdict
 
 from app.database import get_db
 from app.models import User, Opportunity
+from app.template_config import templates
 
 router = APIRouter(prefix="/estimators", tags=["estimators"])
-templates = Jinja2Templates(directory="app/templates")
 
 
 def calculate_estimator_workload(db: Session, estimator_id: int) -> dict:

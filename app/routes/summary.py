@@ -11,14 +11,13 @@ from typing import Optional, Dict
 
 from fastapi import APIRouter, Request, Depends, Form, Body
 from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
-from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session, selectinload
 
 from app.database import get_db
 from app.models import Account, Contact, Opportunity, Activity, Task, WeeklySummaryNote, UserSummarySuppression
+from app.template_config import templates
 
 router = APIRouter(prefix="/summary", tags=["summary"])
-templates = Jinja2Templates(directory="app/templates")
 
 
 def get_week_start_monday(for_date: Optional[date] = None) -> date:

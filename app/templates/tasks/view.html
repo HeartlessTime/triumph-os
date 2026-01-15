@@ -84,11 +84,11 @@
                         </dd>
 
                         <dt class="col-sm-4">Created</dt>
-                        <dd class="col-sm-8">{{ task.created_at.strftime('%b %d, %Y %H:%M') }}</dd>
+                        <dd class="col-sm-8">{{ task.created_at | localtime('%b %d, %Y %H:%M') }}</dd>
 
                         {% if task.status == 'Completed' and task.completed_at %}
                         <dt class="col-sm-4">Completed</dt>
-                        <dd class="col-sm-8">{{ task.completed_at.strftime('%b %d, %Y %H:%M') }}</dd>
+                        <dd class="col-sm-8">{{ task.completed_at | localtime('%b %d, %Y %H:%M') }}</dd>
                         {% endif %}
                     </dl>
 
@@ -120,7 +120,7 @@
                                     <span class="text-muted small">with {{ activity.contact.full_name }}</span>
                                     {% endif %}
                                 </div>
-                                <small class="text-muted">{{ activity.activity_date.strftime('%b %d, %H:%M') }}</small>
+                                <small class="text-muted">{{ activity.activity_date | localtime('%b %d, %H:%M') }}</small>
                             </div>
                             {% if activity.description %}
                             <p class="mb-0 mt-1 text-muted small">{{ activity.description[:150] }}{% if activity.description|length > 150 %}...{% endif %}</p>
