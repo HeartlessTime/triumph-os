@@ -925,45 +925,94 @@ async def calendar_events(db: Session = Depends(get_db)):
 # -----------------------------
 # Auto-Save API
 # -----------------------------
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
+from typing import Any, Union
+
+
+def parse_bool_field(v: Any) -> Optional[bool]:
+    """Parse boolean from string/bool/None."""
+    if v is None or v == "":
+        return None
+    if isinstance(v, bool):
+        return v
+    if isinstance(v, str):
+        return v.lower() in ("true", "1", "yes")
+    return bool(v)
+
+
+def parse_int_list(v: Any) -> Optional[List[int]]:
+    """Parse list of integers from strings or ints."""
+    if v is None:
+        return None
+    if not isinstance(v, list):
+        return None
+    result = []
+    for item in v:
+        if isinstance(item, int):
+            result.append(item)
+        elif isinstance(item, str) and item.strip():
+            try:
+                result.append(int(item))
+            except ValueError:
+                pass
+    return result if result else None
+
+
+def parse_int_field(v: Any) -> Optional[int]:
+    """Parse integer from string/int/None."""
+    if v is None or v == "":
+        return None
+    if isinstance(v, int):
+        return v
+    if isinstance(v, str):
+        try:
+            return int(v)
+        except ValueError:
+            return None
+    return None
 
 
 class OpportunityAutoSaveRequest(BaseModel):
     # Core fields
     name: Optional[str] = None
-    account_id: Optional[int] = None
+    account_id: Optional[Union[int, str]] = None
     stage: Optional[str] = None
     description: Optional[str] = None
     lv_value: Optional[str] = None
     hdd_value: Optional[str] = None
-    primary_contact_id: Optional[int] = None
-    end_user_account_id: Optional[int] = None
+    primary_contact_id: Optional[Union[int, str]] = None
+    end_user_account_id: Optional[Union[int, str]] = None
     # Dates
     bid_date: Optional[str] = None
-    bid_date_tbd: Optional[bool] = None
+    bid_date_tbd: Optional[Union[bool, str]] = None
     bid_time: Optional[str] = None
     last_contacted: Optional[str] = None
     # Assignment
-    owner_id: Optional[int] = None
-    assigned_estimator_id: Optional[int] = None
+    owner_id: Optional[Union[int, str]] = None
+    assigned_estimator_id: Optional[Union[int, str]] = None
     # Bid details
     source: Optional[str] = None
     notes: Optional[str] = None
     bid_type: Optional[str] = None
     submission_method: Optional[str] = None
-    bid_form_required: Optional[bool] = None
-    bond_required: Optional[bool] = None
+    bid_form_required: Optional[Union[bool, str]] = None
+    bond_required: Optional[Union[bool, str]] = None
     prevailing_wage: Optional[str] = None
     project_type: Optional[str] = None
-    rebid: Optional[bool] = None
+    rebid: Optional[Union[bool, str]] = None
     known_risks: Optional[str] = None
     stalled_reason: Optional[str] = None
     quick_links_text: Optional[str] = None
-    # Related entities
-    gc_ids: Optional[List[int]] = None
+    # Related entities - accept strings or ints
+    gc_ids: Optional[List[Union[int, str]]] = None
     scope_names: Optional[List[str]] = None
     scope_other_text: Optional[str] = None
-    related_contact_ids: Optional[List[int]] = None
+    related_contact_ids: Optional[List[Union[int, str]]] = None
+    # Hidden field from form (ignored)
+    confirm_warnings: Optional[Union[bool, str]] = None
+
+    class Config:
+        extra = "ignore"  # Ignore unknown fields
 
 
 @router.post("/{opp_id}/auto-save")
@@ -990,7 +1039,7 @@ async def auto_save_opportunity(
     if data.name is not None:
         opportunity.name = data.name
     if data.account_id is not None:
-        opportunity.account_id = data.account_id
+        opportunity.account_id = parse_int_field(data.account_id)
     if data.stage is not None:
         opportunity.stage = data.stage
     if data.description is not None:
@@ -1000,9 +1049,9 @@ async def auto_save_opportunity(
     if data.hdd_value is not None:
         opportunity.hdd_value = clean_num(data.hdd_value)
     if data.primary_contact_id is not None:
-        opportunity.primary_contact_id = data.primary_contact_id if data.primary_contact_id else None
+        opportunity.primary_contact_id = parse_int_field(data.primary_contact_id)
     if data.end_user_account_id is not None:
-        opportunity.end_user_account_id = data.end_user_account_id if data.end_user_account_id else None
+        opportunity.end_user_account_id = parse_int_field(data.end_user_account_id)
 
     # Dates
     if data.bid_date is not None:
@@ -1011,7 +1060,7 @@ async def auto_save_opportunity(
         else:
             opportunity.bid_date = None
     if data.bid_date_tbd is not None:
-        opportunity.bid_date_tbd = data.bid_date_tbd
+        opportunity.bid_date_tbd = parse_bool_field(data.bid_date_tbd)
     if data.bid_time is not None:
         if data.bid_time.strip():
             opportunity.bid_time = datetime.strptime(data.bid_time, "%H:%M").time()
@@ -1025,9 +1074,9 @@ async def auto_save_opportunity(
 
     # Assignment
     if data.owner_id is not None:
-        opportunity.owner_id = data.owner_id if data.owner_id else None
+        opportunity.owner_id = parse_int_field(data.owner_id)
     if data.assigned_estimator_id is not None:
-        opportunity.assigned_estimator_id = data.assigned_estimator_id if data.assigned_estimator_id else None
+        opportunity.assigned_estimator_id = parse_int_field(data.assigned_estimator_id)
 
     # Bid details
     if data.source is not None:
@@ -1039,15 +1088,15 @@ async def auto_save_opportunity(
     if data.submission_method is not None:
         opportunity.submission_method = data.submission_method or None
     if data.bid_form_required is not None:
-        opportunity.bid_form_required = data.bid_form_required
+        opportunity.bid_form_required = parse_bool_field(data.bid_form_required)
     if data.bond_required is not None:
-        opportunity.bond_required = data.bond_required
+        opportunity.bond_required = parse_bool_field(data.bond_required)
     if data.prevailing_wage is not None:
         opportunity.prevailing_wage = data.prevailing_wage or None
     if data.project_type is not None:
         opportunity.project_type = data.project_type or None
     if data.rebid is not None:
-        opportunity.rebid = data.rebid
+        opportunity.rebid = parse_bool_field(data.rebid)
     if data.known_risks is not None:
         opportunity.known_risks = data.known_risks or None
     if data.stalled_reason is not None:
@@ -1064,11 +1113,11 @@ async def auto_save_opportunity(
 
     # GC accounts (JSON array)
     if data.gc_ids is not None:
-        opportunity.gcs = data.gc_ids if data.gc_ids else None
+        opportunity.gcs = parse_int_list(data.gc_ids)
 
     # Related contacts
     if data.related_contact_ids is not None:
-        opportunity.related_contact_ids = data.related_contact_ids if data.related_contact_ids else None
+        opportunity.related_contact_ids = parse_int_list(data.related_contact_ids)
 
     # Scopes
     if data.scope_names is not None:
