@@ -10,16 +10,17 @@
     </div>
 
     <div class="row g-4">
-        <!-- Follow-ups Due -->
+        <!-- Follow-ups Due (Opportunities + Contacts) -->
         <div class="col-lg-4">
             <div class="card h-100">
                 <div class="card-header bg-warning text-dark d-flex justify-content-between align-items-center">
                     <span><i class="bi bi-telephone-forward me-2"></i>Follow-ups Due</span>
-                    <span class="badge bg-dark">{{ followup_opps|length }}</span>
+                    <span class="badge bg-dark">{{ followup_opps|length + followup_contacts|length }}</span>
                 </div>
                 <div class="card-body p-0">
-                    {% if followup_opps %}
+                    {% if followup_opps or followup_contacts %}
                     <div class="list-group list-group-flush">
+                        {# Opportunity follow-ups #}
                         {% for opp in followup_opps %}
                         <div class="list-group-item">
                             <div class="d-flex justify-content-between align-items-start mb-2">
@@ -47,6 +48,55 @@
                                         <i class="bi bi-telephone"></i> Log Contact
                                     </button>
                                 </form>
+                            </div>
+                        </div>
+                        {% endfor %}
+                        {# Contact follow-ups (includes "Meeting Requested" reminders) #}
+                        {% for contact in followup_contacts %}
+                        {% set meeting_activity = contact_meeting_activities.get(contact.id) %}
+                        <div class="list-group-item">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <div>
+                                    <a href="/contacts/{{ contact.id }}" class="text-decoration-none fw-medium">
+                                        <i class="bi bi-person me-1"></i>{{ contact.full_name }}
+                                    </a>
+                                    <div class="text-muted small">
+                                        {{ contact.account.name }}
+                                        {# Show indicator if this is a meeting request follow-up #}
+                                        {% if meeting_activity %}
+                                        <span class="ms-1 badge bg-info bg-opacity-25 text-info">
+                                            <i class="bi bi-calendar-event me-1"></i>Meeting requested
+                                        </span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <span class="badge {% if contact.next_followup < today %}bg-danger{% else %}bg-warning text-dark{% endif %}">
+                                    {% if contact.next_followup < today %}
+                                    {{ (today - contact.next_followup).days }}d overdue
+                                    {% else %}
+                                    Today
+                                    {% endif %}
+                                </span>
+                            </div>
+                            <div class="d-flex gap-1">
+                                <a href="/contacts/{{ contact.id }}" class="btn btn-sm btn-outline-primary">
+                                    <i class="bi bi-eye"></i> View
+                                </a>
+                                <button type="button" class="btn btn-sm btn-outline-secondary"
+                                    data-bs-toggle="modal" data-bs-target="#logContactModal"
+                                    data-contact-id="{{ contact.id }}"
+                                    data-contact-name="{{ contact.full_name }}">
+                                    <i class="bi bi-telephone"></i> Log Contact
+                                </button>
+                                {# Show "Mark as Meeting" button if this contact has a pending meeting request #}
+                                {% if meeting_activity %}
+                                <button type="button"
+                                        class="btn btn-sm btn-outline-success mark-meeting-btn"
+                                        data-activity-id="{{ meeting_activity.id }}"
+                                        title="Mark meeting as occurred">
+                                    <i class="bi bi-check-lg me-1"></i>Mark as Meeting
+                                </button>
+                                {% endif %}
                             </div>
                         </div>
                         {% endfor %}
@@ -186,6 +236,193 @@
             </div>
         </div>
     </div>
+
+    <!-- Meetings Pending Section -->
+    <!-- PURPOSE: Show meetings that are pending scheduling BEFORE their follow-up date arrives.
+         This is for visibility and confidence, not immediate action.
+         Displays "Meeting Requested" activities where the contact's next_followup > today.
+         ALWAYS RENDERED: Shows empty state when no pending meetings for stable layout. -->
+    <div class="row g-4 mt-2">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
+                    <span><i class="bi bi-clock me-2"></i>Meetings Pending</span>
+                    <span class="badge bg-light text-dark">{{ meetings_pending|length }}</span>
+                </div>
+                <div class="card-body p-0">
+                    {% if meetings_pending %}
+                    <div class="list-group list-group-flush">
+                        {% for activity in meetings_pending %}
+                        {# ROW CLICK: Opens activity edit view. Button click is separate (stopPropagation). #}
+                        <div class="list-group-item list-group-item-action meeting-pending-row"
+                             data-href="/activities/{{ activity.id }}/edit?from=/today"
+                             style="cursor: pointer;">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <span class="fw-medium">
+                                        <i class="bi bi-person me-1"></i>{{ activity.contact.full_name }}
+                                    </span>
+                                    <span class="text-muted mx-2">·</span>
+                                    <span class="text-muted">{{ activity.contact.account.name }}</span>
+                                    <div class="small text-muted">
+                                        <i class="bi bi-calendar-event me-1"></i>Meeting requested
+                                        {% if activity.description %}
+                                        <span class="mx-1">·</span>
+                                        <span class="fst-italic">{{ activity.description[:50] }}{% if activity.description|length > 50 %}...{% endif %}</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="d-flex align-items-center gap-2">
+                                    <span class="badge bg-light text-dark">
+                                        <i class="bi bi-clock me-1"></i>
+                                        follow-up in {{ (activity.contact.next_followup - today).days }}d
+                                    </span>
+                                    {# QUICK ACTION: Mark meeting as occurred. stopPropagation prevents row navigation. #}
+                                    <button type="button"
+                                            class="btn btn-sm btn-outline-success mark-meeting-btn"
+                                            data-activity-id="{{ activity.id }}"
+                                            title="Mark meeting as occurred">
+                                        <i class="bi bi-check-lg me-1"></i>Mark as Meeting
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="text-center text-muted py-4">
+                        <i class="bi bi-check-circle h1 text-success"></i>
+                        <p class="mb-0">No pending meetings</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
+
+<!-- Log Contact Modal for Contact follow-ups -->
+<div class="modal fade" id="logContactModal" tabindex="-1" aria-labelledby="logContactModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="logContactModalLabel">
+                    <i class="bi bi-telephone me-2"></i>Log Contact
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="logContactForm" method="post" action="">
+                <input type="hidden" name="next" value="/today">
+                <div class="modal-body">
+                    <p class="text-muted" id="contactNameDisplay"></p>
+                    <div class="mb-3">
+                        <label for="activityType" class="form-label">Activity Type</label>
+                        <select class="form-select" id="activityType" name="activity_type" required>
+                            <option value="call">Phone Call</option>
+                            <option value="email">Email</option>
+                            <option value="other">Other</option>
+                        </select>
+                        <p class="form-text text-muted mb-0">
+                            <i class="bi bi-info-circle me-1"></i>For meetings, use the "Log Meeting" button on the contact page.
+                        </p>
+                    </div>
+                    <div class="mb-3">
+                        <label for="notes" class="form-label">Notes</label>
+                        <textarea class="form-control" id="notes" name="notes" rows="3" placeholder="Optional notes..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-success">
+                        <i class="bi bi-check-lg me-1"></i>Log Contact
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+// Handle Log Contact modal for Contact follow-ups
+document.getElementById('logContactModal').addEventListener('show.bs.modal', function(event) {
+    const button = event.relatedTarget;
+    const contactId = button.getAttribute('data-contact-id');
+    const contactName = button.getAttribute('data-contact-name');
+
+    document.getElementById('logContactForm').action = '/contacts/' + contactId + '/log-contact';
+    document.getElementById('contactNameDisplay').textContent = 'Contact: ' + contactName;
+});
+
+// ROW CLICK: Navigate to activity edit when clicking on meeting-pending rows
+// Note: Button clicks use stopPropagation to prevent this navigation
+document.querySelectorAll('.meeting-pending-row').forEach(function(row) {
+    row.addEventListener('click', function(e) {
+        // Only navigate if click was not on a button/link inside the row
+        if (!e.target.closest('button') && !e.target.closest('a')) {
+            window.location.href = this.dataset.href;
+        }
+    });
+});
+
+// QUICK ACTION: Mark meeting as occurred (one-click closure)
+// - Updates activity_type to "meeting"
+// - Sets contact.last_contacted to today
+// - Sets contact.next_followup to 30 days from today
+// - Removes item from page without reload
+document.querySelectorAll('.mark-meeting-btn').forEach(function(btn) {
+    btn.addEventListener('click', function(e) {
+        e.stopPropagation(); // Prevent row click navigation
+
+        const activityId = this.dataset.activityId;
+        const row = this.closest('.list-group-item');
+        const originalText = this.innerHTML;
+
+        // Show loading state
+        this.disabled = true;
+        this.innerHTML = '<i class="bi bi-hourglass-split me-1"></i>Saving...';
+
+        fetch('/today/mark-meeting-occurred/' + activityId, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Success: Remove row with fade animation
+                row.style.transition = 'opacity 0.3s ease-out';
+                row.style.opacity = '0';
+                setTimeout(function() {
+                    row.remove();
+                    // Update badge count in section header
+                    const section = document.querySelector('.card-header.bg-info .badge');
+                    if (section) {
+                        const count = parseInt(section.textContent) - 1;
+                        section.textContent = count;
+                        // Hide entire section if no more items
+                        if (count === 0) {
+                            const sectionCard = section.closest('.row');
+                            if (sectionCard) sectionCard.remove();
+                        }
+                    }
+                }, 300);
+            } else {
+                // Error: Reset button and show alert
+                this.disabled = false;
+                this.innerHTML = originalText;
+                alert('Error: ' + (data.error || 'Failed to update'));
+            }
+        })
+        .catch(error => {
+            // Network error: Reset button and show alert
+            this.disabled = false;
+            this.innerHTML = originalText;
+            alert('Network error. Please try again.');
+            console.error('Error:', error);
+        });
+    });
+});
+</script>
 
 {% endblock %}

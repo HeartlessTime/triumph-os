@@ -124,6 +124,8 @@
 </div>
 
 <!-- Log Contact Modal -->
+<!-- For non-meeting interactions: calls, emails, other -->
+<!-- Use "Log Meeting" for meeting-related activities -->
 <div class="modal fade" id="logContactModal" tabindex="-1" aria-labelledby="logContactModalLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
@@ -139,7 +141,6 @@
                         <label for="activity_type" class="form-label">Activity Type</label>
                         <select class="form-select" id="activity_type" name="activity_type">
                             <option value="call" selected>Phone Call</option>
-                            <option value="meeting">Meeting</option>
                             <option value="email">Email</option>
                             <option value="other">Other</option>
                         </select>
@@ -162,10 +163,14 @@
 </div>
 
 <!-- Log Meeting Modal -->
+<!-- Two options:
+     - "Meeting Requested": Meeting discussed but not yet scheduled (2 business day follow-up)
+     - "Meeting": Meeting that already happened (standard 30-day follow-up)
+     Note: Outlook is the source of truth for scheduled meetings. This app only tracks reminders. -->
 <div class="modal fade" id="logMeetingModal" tabindex="-1" aria-labelledby="logMeetingModalLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
-            <form method="post" action="/contacts/{{ contact.id }}/log-meeting{% if return_to %}?from={{ return_to }}{% endif %}">
+            <form method="post" action="/contacts/{{ contact.id }}/log-contact{% if return_to %}?from={{ return_to }}{% endif %}" id="logMeetingForm">
                 <div class="modal-header">
                     <h5 class="modal-title" id="logMeetingModalLabel">
                         <i class="bi bi-calendar-event me-2"></i>Log Meeting with {{ contact.full_name }}
@@ -174,13 +179,25 @@
                 </div>
                 <div class="modal-body">
                     <div class="mb-3">
-                        <label for="meeting_date" class="form-label">Meeting Date</label>
-                        <input type="date" class="form-control" id="meeting_date" name="meeting_date"
-                            value="{{ today.strftime('%Y-%m-%d') }}">
+                        <label for="meeting_type" class="form-label">Meeting Status</label>
+                        <select class="form-select" id="meeting_type" name="activity_type">
+                            <option value="meeting_requested">Meeting Requested (not yet scheduled)</option>
+                            <option value="meeting">Meeting Occurred</option>
+                        </select>
+                        <div class="form-text" id="meetingTypeHelp">
+                            <span id="meetingRequestedInfo">
+                                <i class="bi bi-info-circle me-1"></i>
+                                Creates a 2 business day follow-up to check if meeting was scheduled.
+                            </span>
+                            <span id="meetingOccurredInfo" style="display: none;">
+                                <i class="bi bi-info-circle me-1"></i>
+                                Logs that a meeting happened. Standard 30-day follow-up.
+                            </span>
+                        </div>
                     </div>
                     <div class="mb-3">
-                        <label for="notes" class="form-label">Notes <span class="text-muted">(optional)</span></label>
-                        <textarea class="form-control" id="notes" name="notes" rows="3"
+                        <label for="meeting_notes" class="form-label">Notes <span class="text-muted">(optional)</span></label>
+                        <textarea class="form-control" id="meeting_notes" name="notes" rows="3"
                             placeholder="Meeting notes..."></textarea>
                     </div>
                 </div>
@@ -211,5 +228,11 @@
         }
     }
 })();
+
+// Toggle help text for meeting type selection
+document.getElementById('meeting_type').addEventListener('change', function() {
+    document.getElementById('meetingRequestedInfo').style.display = this.value === 'meeting_requested' ? 'inline' : 'none';
+    document.getElementById('meetingOccurredInfo').style.display = this.value === 'meeting' ? 'inline' : 'none';
+});
 </script>
 {% endblock %}

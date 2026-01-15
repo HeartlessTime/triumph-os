@@ -79,6 +79,17 @@
                         </select>
                     </div>
                     {% endif %}
+                    {# Follow-up date field - visible when activity has a contact #}
+                    {% if activity.contact %}
+                    <div class="col-md-6">
+                        <label for="next_followup" class="form-label">Contact Follow-up Date</label>
+                        <input type="date" class="form-control" id="next_followup" name="next_followup"
+                            value="{{ activity.contact.next_followup.strftime('%Y-%m-%d') if activity.contact.next_followup else '' }}">
+                        <div class="form-text text-muted">
+                            <i class="bi bi-info-circle me-1"></i>When to follow up with this contact
+                        </div>
+                    </div>
+                    {% endif %}
                 </div>
             </div>
             <div class="card-footer d-flex gap-2">
