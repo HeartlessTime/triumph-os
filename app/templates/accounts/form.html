@@ -52,6 +52,21 @@
                                     required placeholder="e.g., Acme Corporation">
                             </div>
 
+                            <div class="col-12">
+                                <label class="form-label">Account Type</label>
+                                {% set selected_type = form_account_type if form_account_type is defined else (account.account_type if account else 'end_user') %}
+                                <div class="d-flex gap-4">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="account_type" id="type_end_user" value="end_user" {% if selected_type == 'end_user' %}checked{% endif %}>
+                                        <label class="form-check-label" for="type_end_user">End User</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="account_type" id="type_gc" value="gc" {% if selected_type == 'gc' %}checked{% endif %}>
+                                        <label class="form-check-label" for="type_gc">General Contractor</label>
+                                    </div>
+                                </div>
+                            </div>
+
                             <div class="col-md-6">
                                 <label for="industry" class="form-label">Industry</label>
                                 <select class="form-select" id="industry" name="industry">

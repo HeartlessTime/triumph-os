@@ -9,6 +9,7 @@ class Account(Base):
 
     id = Column(Integer, primary_key=True)
     name = Column(String(255), nullable=False, index=True)
+    account_type = Column(String(20), nullable=False, default="end_user", index=True)
     industry = Column(String(100), nullable=True)
     website = Column(String(255), nullable=True)
     phone = Column(String(50), nullable=True)
@@ -40,6 +41,11 @@ class Account(Base):
         foreign_keys="Opportunity.end_user_account_id",
     )
 
+    ACCOUNT_TYPES = [
+        ("end_user", "End User"),
+        ("gc", "General Contractor"),
+    ]
+
     INDUSTRIES = [
         "Construction",
         "Manufacturing",
@@ -53,6 +59,12 @@ class Account(Base):
         "Hospitality",
         "Other",
     ]
+
+    @property
+    def account_type_display(self):
+        """Get display name for account type."""
+        type_map = dict(self.ACCOUNT_TYPES)
+        return type_map.get(self.account_type, self.account_type)
 
     @property
     def full_address(self):

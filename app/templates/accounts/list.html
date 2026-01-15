@@ -54,7 +54,7 @@
         </a>
     </div>
 
-    <!-- Search & Sort Controls -->
+    <!-- Search, Filter & Sort Controls -->
     <div class="card mb-4">
         <div class="card-body">
             <div class="d-flex flex-wrap gap-3 align-items-center">
@@ -62,6 +62,23 @@
                 <div class="input-group accounts-search">
                     <span class="input-group-text"><i class="bi bi-search"></i></span>
                     <input type="text" class="form-control" id="accountsSearch" placeholder="Search by account name...">
+                </div>
+
+                <!-- Account Type Filter -->
+                <div class="d-flex gap-2 align-items-center">
+                    <span class="text-muted small me-1">Type:</span>
+                    <a href="/accounts{% if search %}?search={{ search }}{% endif %}"
+                       class="btn btn-sm {% if not account_type %}btn-primary{% else %}btn-outline-secondary{% endif %}">
+                        All
+                    </a>
+                    <a href="/accounts?account_type=end_user{% if search %}&search={{ search }}{% endif %}"
+                       class="btn btn-sm {% if account_type == 'end_user' %}btn-primary{% else %}btn-outline-secondary{% endif %}">
+                        End Users
+                    </a>
+                    <a href="/accounts?account_type=gc{% if search %}&search={{ search }}{% endif %}"
+                       class="btn btn-sm {% if account_type == 'gc' %}btn-primary{% else %}btn-outline-secondary{% endif %}">
+                        General Contractors
+                    </a>
                 </div>
 
                 <!-- Sort Controls -->
@@ -87,6 +104,7 @@
                     <thead>
                         <tr>
                             <th>Account Name</th>
+                            <th>Type</th>
                             <th>Industry</th>
                             <th>Location</th>
                             <th>Contacts</th>
@@ -104,6 +122,13 @@
                             data-last-activity="{{ account.last_contacted.strftime('%Y-%m-%d') if account.last_contacted else '0000-00-00' }}">
                             <td>
                                 <span class="fw-medium">{{ account.name }}</span>
+                            </td>
+                            <td>
+                                {% if account.account_type == 'gc' %}
+                                <span class="badge bg-info bg-opacity-10 text-info">GC</span>
+                                {% else %}
+                                <span class="badge bg-secondary bg-opacity-10 text-secondary">End User</span>
+                                {% endif %}
                             </td>
                             <td>
                                 {% if account.industry %}
@@ -139,7 +164,7 @@
                         </tr>
                         {% endfor %}
                         <tr class="no-results-row">
-                            <td colspan="8" class="text-center text-muted py-4">
+                            <td colspan="9" class="text-center text-muted py-4">
                                 <i class="bi bi-search me-2"></i>No accounts match your search
                             </td>
                         </tr>

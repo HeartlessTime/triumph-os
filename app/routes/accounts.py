@@ -30,6 +30,7 @@ async def list_accounts(
     request: Request,
     search: str = None,
     industry: str = None,
+    account_type: str = None,
     sort: str = None,
     db: Session = Depends(get_db),
 ):
@@ -53,6 +54,9 @@ async def list_accounts(
 
     if industry:
         query = query.filter(Account.industry == industry)
+
+    if account_type:
+        query = query.filter(Account.account_type == account_type)
 
     # SQL-safe sorting (only real DB columns)
     if sort == "name":
@@ -94,6 +98,8 @@ async def list_accounts(
             "search": search,
             "industry": industry,
             "industries": Account.INDUSTRIES,
+            "account_type": account_type,
+            "account_types": Account.ACCOUNT_TYPES,
             "sort": sort,
         },
     )
@@ -119,6 +125,7 @@ async def new_account_form(request: Request, db: Session = Depends(get_db)):
 async def create_account(
     request: Request,
     name: str = Form(...),
+    account_type: str = Form("end_user"),
     industry: str = Form(None),
     website: str = Form(None),
     phone: str = Form(None),
@@ -157,6 +164,7 @@ async def create_account(
                 "warnings": [],
                 # Preserve form values
                 "form_name": name,
+                "form_account_type": account_type,
                 "form_industry": industry,
                 "form_website": website,
                 "form_phone": phone,
@@ -181,6 +189,7 @@ async def create_account(
                 "warnings": result.warnings,
                 # Preserve form values
                 "form_name": name,
+                "form_account_type": account_type,
                 "form_industry": industry,
                 "form_website": website,
                 "form_phone": phone,
@@ -195,6 +204,7 @@ async def create_account(
     # Create account with ownership
     account = Account(
         name=name,
+        account_type=account_type or "end_user",
         industry=industry or None,
         website=normalize_url(website),
         phone=phone or None,
@@ -268,6 +278,7 @@ async def update_account(
     request: Request,
     account_id: int,
     name: str = Form(...),
+    account_type: str = Form("end_user"),
     industry: str = Form(None),
     website: str = Form(None),
     phone: str = Form(None),
@@ -309,6 +320,7 @@ async def update_account(
                 "warnings": [],
                 # Override with submitted values
                 "form_name": name,
+                "form_account_type": account_type,
                 "form_industry": industry,
                 "form_website": website,
                 "form_phone": phone,
@@ -334,6 +346,7 @@ async def update_account(
                 "warnings": result.warnings,
                 # Override with submitted values
                 "form_name": name,
+                "form_account_type": account_type,
                 "form_industry": industry,
                 "form_website": website,
                 "form_phone": phone,
@@ -346,6 +359,7 @@ async def update_account(
         )
 
     account.name = name
+    account.account_type = account_type or "end_user"
     account.industry = industry or None
     account.website = normalize_url(website)
     account.phone = phone or None
