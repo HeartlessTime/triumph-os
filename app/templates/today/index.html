@@ -273,10 +273,13 @@
                                     </div>
                                 </div>
                                 <div class="d-flex align-items-center gap-2">
-                                    <span class="badge bg-light text-dark">
+                                    {% if activity.contact.next_followup %}
+                                    {% set days_until = (activity.contact.next_followup - today).days %}
+                                    <span class="badge {% if days_until < 0 %}bg-danger{% elif days_until == 0 %}bg-warning text-dark{% else %}bg-light text-dark{% endif %}">
                                         <i class="bi bi-clock me-1"></i>
-                                        follow-up in {{ (activity.contact.next_followup - today).days }}d
+                                        {% if days_until < 0 %}{{ -days_until }}d overdue{% elif days_until == 0 %}due today{% else %}follow-up in {{ days_until }}d{% endif %}
                                     </span>
+                                    {% endif %}
                                     {# QUICK ACTION: Mark meeting as occurred. stopPropagation prevents row navigation. #}
                                     <button type="button"
                                             class="btn btn-sm btn-outline-success mark-meeting-btn"

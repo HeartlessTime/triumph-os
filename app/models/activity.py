@@ -27,9 +27,14 @@ class Activity(Base):
     contact = relationship("Contact", back_populates="activities")
     created_by = relationship("User", back_populates="created_activities")
 
+    # Activity types for logging interactions.
+    # "meeting_requested" is used when a meeting has been discussed/proposed but not yet
+    # scheduled. The actual calendar invite lives in Outlook (source of truth for scheduled
+    # meetings). This app only tracks reminders and follow-ups - not the calendar itself.
     ACTIVITY_TYPES = [
         ("call", "Phone Call"),
         ("meeting", "Meeting"),
+        ("meeting_requested", "Meeting Requested"),  # Meeting discussed but not yet scheduled
         ("email", "Email"),
         ("note", "Note"),
         ("site_visit", "Site Visit"),
@@ -40,6 +45,7 @@ class Activity(Base):
     TYPE_ICONS = {
         "call": "📞",
         "meeting": "🤝",
+        "meeting_requested": "📅",  # Calendar icon - pending meeting to schedule
         "email": "✉️",
         "note": "📝",
         "site_visit": "🏗️",

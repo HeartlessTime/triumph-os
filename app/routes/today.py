@@ -178,39 +178,21 @@ async def today_page(request: Request, db: Session = Depends(get_db)):
         .all()
     )
 
-    # Meetings Pending: "Meeting Requested" activities where follow-up is NOT yet due
-    # PURPOSE: Show open loops BEFORE they become actionable - for visibility and confidence.
-    # These are meetings that were discussed but not yet scheduled.
+    # Meetings Pending: ALL "meeting_requested" activities with a contact
+    # PURPOSE: Show open loops for visibility and confidence.
+    # VISIBILITY RULE: An item stays in Meetings Pending until activity_type changes to "meeting".
+    #                  Visibility is NOT based on follow-up date comparisons.
     # IMPORTANT: Query by Activity.id to avoid duplicates. Each row = one Activity.
-    #
-    # TWO-STEP APPROACH to prevent duplicates:
-    # Step 1: Get unique Activity IDs using a clean subquery (no eager loading interference)
-    # Step 2: Load those activities with eager loading for template rendering
-
-    # Step 1: Subquery to get Activity IDs that match our criteria
-    pending_activity_ids_query = (
-        select(Activity.id)
-        .join(Contact, Activity.contact_id == Contact.id)
-        .where(
+    meetings_pending = (
+        db.query(Activity)
+        .options(selectinload(Activity.contact).selectinload(Contact.account))
+        .filter(
             Activity.activity_type == "meeting_requested",
             Activity.contact_id.isnot(None),
-            Contact.next_followup > today,
         )
+        .order_by(Activity.activity_date.desc())
+        .all()
     )
-    pending_activity_ids = [row[0] for row in db.execute(pending_activity_ids_query).fetchall()]
-
-    # Step 2: Load activities by ID with eager loading (no joins = no duplication)
-    if pending_activity_ids:
-        meetings_pending = (
-            db.query(Activity)
-            .options(selectinload(Activity.contact).selectinload(Contact.account))
-            .filter(Activity.id.in_(pending_activity_ids))
-            .all()
-        )
-        # Sort in Python: by contact.next_followup, then by activity.id
-        meetings_pending.sort(key=lambda a: (a.contact.next_followup if a.contact else date.max, a.id))
-    else:
-        meetings_pending = []
 
     return templates.TemplateResponse(
         "today/index.html",

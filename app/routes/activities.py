@@ -1,5 +1,5 @@
 import logging
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
 from fastapi import APIRouter, Request, Depends, Form, HTTPException
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
@@ -12,6 +12,32 @@ from app.services.followup import calculate_next_followup
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/activities", tags=["activities"])
+
+
+def _add_business_days(start_date: date, num_days: int) -> date:
+    """Add business days (Mon-Fri) to a date, skipping weekends."""
+    current = start_date
+    days_added = 0
+    while days_added < num_days:
+        current += timedelta(days=1)
+        if current.weekday() < 5:
+            days_added += 1
+    return current
+
+
+def _normalize_to_business_day(d: date) -> date:
+    """
+    Ensure a date falls on a business day (Mon-Fri).
+    GLOBAL RULE: Follow-up dates should never land on weekends.
+    """
+    weekday = d.weekday()
+    if weekday == 5:  # Saturday -> Monday
+        return d + timedelta(days=2)
+    elif weekday == 6:  # Sunday -> Monday
+        return d + timedelta(days=1)
+    return d
+
+
 templates = Jinja2Templates(directory="app/templates")
 
 
@@ -134,6 +160,7 @@ async def update_activity(
     description: str = Form(None),
     activity_date: str = Form(...),
     contact_id: int = Form(None),
+    next_followup: str = Form(None),  # Manual follow-up date override
     db: Session = Depends(get_db),
 ):
     """Update an activity.
@@ -143,6 +170,13 @@ async def update_activity(
     2. Else if activity.opportunity exists → /opportunities/{id}
     3. Else if activity.contact exists → /contacts/{id}
     4. Else → /summary/my-weekly
+
+    FOLLOW-UP LOGIC:
+    - If user provides next_followup date, use it (manual override takes priority)
+    - Else if activity_type changes: apply auto-follow-up logic
+      - meeting_requested → meeting: apply standard 30-day follow-up
+      - other → meeting_requested: apply 2-business-day follow-up
+    - Else: preserve existing follow-up
     """
     activity = db.query(Activity).filter(Activity.id == activity_id).first()
     if not activity:
@@ -159,12 +193,36 @@ async def update_activity(
     else:
         redirect_url = "/summary/my-weekly"
 
+    # Track if activity_type is changing (for follow-up logic)
+    old_type = activity.activity_type
+    type_changed = old_type != activity_type
+
     # Apply updates
     activity.activity_type = activity_type
     activity.subject = subject
     activity.description = description or None
     activity.activity_date = datetime.strptime(activity_date, "%Y-%m-%dT%H:%M")
     activity.contact_id = contact_id if contact_id else None
+
+    # Update contact follow-up date
+    # GLOBAL RULE: All follow-up dates are normalized to business days (Mon-Fri)
+    if activity.contact_id:
+        contact = db.query(Contact).filter(Contact.id == activity.contact_id).first()
+        if contact:
+            if next_followup and next_followup.strip():
+                # Manual override: user explicitly set a follow-up date, normalize to business day
+                manual_date = datetime.strptime(next_followup, "%Y-%m-%d").date()
+                contact.next_followup = _normalize_to_business_day(manual_date)
+            elif type_changed:
+                # Auto-follow-up: only when activity_type changes and no manual date
+                if activity_type == "meeting":
+                    # Closing the loop: meeting occurred, set 30-day follow-up (normalized)
+                    contact.last_contacted = date.today()
+                    contact.next_followup = _normalize_to_business_day(date.today() + timedelta(days=30))
+                elif activity_type == "meeting_requested":
+                    # New meeting request: set 2-business-day follow-up
+                    contact.next_followup = _add_business_days(date.today(), 2)
+            # else: no manual date and no type change - preserve existing follow-up
 
     db.commit()
 

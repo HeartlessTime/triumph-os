@@ -10,9 +10,46 @@ from app.services.followup import calculate_next_followup
 from app.services.validators import validate_contact
 
 
-def update_contact_followup(contact: Contact):
-    """Update next_followup to 30 days from last_contacted after logging contact."""
-    contact.next_followup = contact.last_contacted + timedelta(days=30)
+def add_business_days(start_date: date, num_days: int) -> date:
+    """Add business days (Mon-Fri) to a date, skipping weekends."""
+    current = start_date
+    days_added = 0
+    while days_added < num_days:
+        current += timedelta(days=1)
+        # Monday=0, Sunday=6; skip Saturday(5) and Sunday(6)
+        if current.weekday() < 5:
+            days_added += 1
+    return current
+
+
+def normalize_to_business_day(d: date) -> date:
+    """
+    Ensure a date falls on a business day (Mon-Fri).
+    GLOBAL RULE: Follow-up dates should never land on weekends.
+    """
+    weekday = d.weekday()
+    if weekday == 5:  # Saturday -> Monday
+        return d + timedelta(days=2)
+    elif weekday == 6:  # Sunday -> Monday
+        return d + timedelta(days=1)
+    return d
+
+
+def update_contact_followup(contact: Contact, activity_type: str = None):
+    """Update next_followup based on activity type.
+
+    - "meeting_requested": Sets follow-up to 2 business days from today.
+      This is used when a meeting has been discussed but not yet scheduled.
+      Outlook is the source of truth for scheduled meetings - this app only
+      tracks reminders to follow up on pending meeting requests.
+    - All other activity types: Sets follow-up to 30 days from last_contacted (normalized to business day).
+    """
+    if activity_type == "meeting_requested":
+        # Short follow-up: check back in 2 business days to see if meeting was scheduled
+        contact.next_followup = add_business_days(date.today(), 2)
+    else:
+        # Standard follow-up: 30 days from last contact, normalized to business day
+        contact.next_followup = normalize_to_business_day(contact.last_contacted + timedelta(days=30))
 
 
 router = APIRouter(prefix="/contacts", tags=["contacts"])
@@ -435,6 +472,9 @@ async def log_meeting(
 
     # Update last_contacted on the contact
     contact.last_contacted = meeting_dt.date()
+    # Meeting occurred = standard 30-day follow-up (no special activity_type override)
+    # Note: Outlook remains the source of truth for scheduled meetings.
+    # This just logs that a meeting happened and sets a standard follow-up reminder.
     update_contact_followup(contact)
 
     db.commit()
@@ -461,8 +501,15 @@ async def log_contact(
     if not contact:
         raise HTTPException(status_code=404, detail="Contact not found")
 
-    contact.last_contacted = date.today()
-    update_contact_followup(contact)
+    # Update last_contacted ONLY for actual contact (not meeting_requested)
+    # For meeting_requested, the meeting hasn't happened yet - don't update last_contacted
+    if activity_type != "meeting_requested":
+        contact.last_contacted = date.today()
+
+    # Pass activity_type to determine follow-up timing:
+    # - "meeting_requested" gets a short 2 business day follow-up
+    # - All other types get the standard 30 day follow-up
+    update_contact_followup(contact, activity_type=activity_type)
 
     current_user = request.state.current_user
 
