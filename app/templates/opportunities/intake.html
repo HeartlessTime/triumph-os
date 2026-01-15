@@ -107,15 +107,22 @@
                             </div>
                             <div class="col-12">
                                 <label class="form-label">Clients (GCs / Contractors)</label>
-                                <div class="border rounded p-2" style="max-height: 150px; overflow-y: auto;">
-                                    {% for acc in accounts %}
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="checkbox" name="gc_ids" value="{{ acc.id }}" id="gc_{{ acc.id }}">
-                                        <label class="form-check-label" for="gc_{{ acc.id }}">{{ acc.name }}</label>
+                                <div class="position-relative">
+                                    <div class="input-group">
+                                        <input type="text" class="form-control" id="gc_search"
+                                            placeholder="Search or type to add..."
+                                            autocomplete="off">
+                                        <button class="btn btn-outline-secondary" type="button" id="addGcClientBtn" data-bs-toggle="modal" data-bs-target="#addGcClientModal">
+                                            <i class="bi bi-plus-lg"></i>
+                                        </button>
                                     </div>
-                                    {% endfor %}
+                                    <div id="gc_results" class="list-group position-absolute w-100" style="z-index: 1000; display: none; max-height: 200px; overflow-y: auto;"></div>
                                 </div>
-                                <div class="form-text">Select one or more clients bidding on this project.</div>
+                                <!-- Selected GCs displayed as pills -->
+                                <div id="selected_gcs" class="mt-2 d-flex flex-wrap gap-1"></div>
+                                <!-- Hidden inputs for selected GC IDs (dynamically added) -->
+                                <div id="gc_hidden_inputs"></div>
+                                <div class="form-text">Search and select one or more clients bidding on this project.</div>
                             </div>
                             <div class="col-md-6">
                                 <div class="form-check mt-3">
@@ -357,23 +364,65 @@
         </div>
     </div>
 </div>
+<!-- Add New GC/Client Modal (for GC multi-select) -->
+<div class="modal fade" id="addGcClientModal" tabindex="-1" aria-labelledby="addGcClientModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addGcClientModalLabel">
+                    <i class="bi bi-building-add me-2"></i>Add New GC / Client
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label for="new_gc_name" class="form-label">Client Name <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" id="new_gc_name" required>
+                </div>
+                <div class="mb-3">
+                    <label for="new_gc_email" class="form-label">Email</label>
+                    <input type="email" class="form-control" id="new_gc_email">
+                </div>
+                <div class="mb-3">
+                    <label for="new_gc_phone" class="form-label">Phone</label>
+                    <input type="tel" class="form-control" id="new_gc_phone">
+                </div>
+                <div class="mb-3">
+                    <label for="new_gc_address" class="form-label">Address</label>
+                    <textarea class="form-control" id="new_gc_address" rows="2"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="saveNewGcBtn">
+                    <i class="bi bi-check-lg me-1"></i>Save & Add
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block extra_js %}
 <script>
 (function() {
-    const accountSearch = document.getElementById('account_search');
-    const accountIdInput = document.getElementById('account_id');
-    const accountResults = document.getElementById('account_results');
-    const selectedAccountDiv = document.getElementById('selected_account');
-    const contactSelect = document.getElementById('primary_contact_id');
-
-    // Store accounts data from server
+    // ========================================
+    // SHARED: Accounts data from server
+    // ========================================
     const accounts = [
         {% for acc in accounts %}
         { id: {{ acc.id }}, name: "{{ acc.name | replace('"', '\\"') }}" },
         {% endfor %}
     ];
+
+    // ========================================
+    // END USER / CLIENT SELECTOR (single-select)
+    // ========================================
+    const accountSearch = document.getElementById('account_search');
+    const accountIdInput = document.getElementById('account_id');
+    const accountResults = document.getElementById('account_results');
+    const selectedAccountDiv = document.getElementById('selected_account');
+    const contactSelect = document.getElementById('primary_contact_id');
 
     // Pre-populate if account already selected
     {% if selected_account_id %}
@@ -385,7 +434,7 @@
     }
     {% endif %}
 
-    // Search functionality
+    // Search functionality for End User
     accountSearch.addEventListener('input', function() {
         const query = this.value.toLowerCase().trim();
         if (query.length < 1) {
@@ -422,13 +471,6 @@
         }
     });
 
-    // Hide dropdown on outside click
-    document.addEventListener('click', function(e) {
-        if (!accountSearch.contains(e.target) && !accountResults.contains(e.target)) {
-            accountResults.style.display = 'none';
-        }
-    });
-
     // Load contacts for selected account
     async function loadContactsForAccount(accountId) {
         try {
@@ -448,7 +490,7 @@
         }
     }
 
-    // Save new client
+    // Save new client (End User modal)
     document.getElementById('saveNewClientBtn').addEventListener('click', async function() {
         const name = document.getElementById('new_client_name').value.trim();
         const email = document.getElementById('new_client_email').value.trim();
@@ -470,24 +512,14 @@
             if (response.ok) {
                 const newAccount = await response.json();
 
-                // Add to local accounts list
+                // Add to shared accounts list
                 accounts.push({ id: newAccount.id, name: newAccount.name });
 
-                // Select the new account
+                // Select the new account as End User
                 accountIdInput.value = newAccount.id;
                 accountSearch.value = newAccount.name;
                 selectedAccountDiv.querySelector('span').textContent = newAccount.name;
                 selectedAccountDiv.style.display = 'block';
-
-                // Also add to GC checkbox list
-                const gcList = document.querySelector('[name="gc_ids"]').closest('.border');
-                const newCheckbox = document.createElement('div');
-                newCheckbox.className = 'form-check';
-                newCheckbox.innerHTML = `
-                    <input class="form-check-input" type="checkbox" name="gc_ids" value="${newAccount.id}" id="gc_${newAccount.id}">
-                    <label class="form-check-label" for="gc_${newAccount.id}">${newAccount.name}</label>
-                `;
-                gcList.appendChild(newCheckbox);
 
                 // Close modal
                 bootstrap.Modal.getInstance(document.getElementById('addClientModal')).hide();
@@ -504,6 +536,162 @@
         } catch (err) {
             console.error('Failed to create client:', err);
             alert('Failed to create client');
+        }
+    });
+
+    // ========================================
+    // GC / CONTRACTORS SELECTOR (multi-select)
+    // ========================================
+    const gcSearch = document.getElementById('gc_search');
+    const gcResults = document.getElementById('gc_results');
+    const selectedGcsDiv = document.getElementById('selected_gcs');
+    const gcHiddenInputs = document.getElementById('gc_hidden_inputs');
+
+    // Track selected GC IDs
+    const selectedGcIds = new Set();
+
+    // Render selected GCs as pills
+    function renderSelectedGcs() {
+        selectedGcsDiv.innerHTML = '';
+        gcHiddenInputs.innerHTML = '';
+
+        selectedGcIds.forEach(id => {
+            const account = accounts.find(a => a.id === id);
+            if (account) {
+                // Create pill
+                const pill = document.createElement('span');
+                pill.className = 'badge bg-primary d-inline-flex align-items-center gap-1';
+                pill.innerHTML = `
+                    ${account.name}
+                    <button type="button" class="btn-close btn-close-white" style="font-size: 0.6rem;" data-gc-id="${id}" aria-label="Remove"></button>
+                `;
+                selectedGcsDiv.appendChild(pill);
+
+                // Create hidden input
+                const hidden = document.createElement('input');
+                hidden.type = 'hidden';
+                hidden.name = 'gc_ids';
+                hidden.value = id;
+                gcHiddenInputs.appendChild(hidden);
+            }
+        });
+    }
+
+    // Add GC to selection
+    function addGc(id, name) {
+        if (!selectedGcIds.has(id)) {
+            selectedGcIds.add(id);
+            renderSelectedGcs();
+        }
+        gcSearch.value = '';
+        gcResults.style.display = 'none';
+    }
+
+    // Remove GC from selection
+    function removeGc(id) {
+        selectedGcIds.delete(id);
+        renderSelectedGcs();
+    }
+
+    // Search functionality for GCs
+    gcSearch.addEventListener('input', function() {
+        const query = this.value.toLowerCase().trim();
+        if (query.length < 1) {
+            gcResults.style.display = 'none';
+            return;
+        }
+
+        // Filter accounts not already selected
+        const matches = accounts
+            .filter(a => a.name.toLowerCase().includes(query) && !selectedGcIds.has(a.id))
+            .slice(0, 10);
+
+        if (matches.length === 0) {
+            gcResults.innerHTML = '<div class="list-group-item text-muted">No matches found</div>';
+        } else {
+            gcResults.innerHTML = matches.map(a =>
+                `<button type="button" class="list-group-item list-group-item-action" data-gc-select-id="${a.id}" data-gc-select-name="${a.name}">${a.name}</button>`
+            ).join('');
+        }
+        gcResults.style.display = 'block';
+    });
+
+    // Select GC from dropdown
+    gcResults.addEventListener('click', function(e) {
+        const item = e.target.closest('[data-gc-select-id]');
+        if (item) {
+            const id = parseInt(item.dataset.gcSelectId, 10);
+            const name = item.dataset.gcSelectName;
+            addGc(id, name);
+        }
+    });
+
+    // Remove GC pill click handler
+    selectedGcsDiv.addEventListener('click', function(e) {
+        const closeBtn = e.target.closest('[data-gc-id]');
+        if (closeBtn) {
+            const id = parseInt(closeBtn.dataset.gcId, 10);
+            removeGc(id);
+        }
+    });
+
+    // Save new GC client
+    document.getElementById('saveNewGcBtn').addEventListener('click', async function() {
+        const name = document.getElementById('new_gc_name').value.trim();
+        const email = document.getElementById('new_gc_email').value.trim();
+        const phone = document.getElementById('new_gc_phone').value.trim();
+        const address = document.getElementById('new_gc_address').value.trim();
+
+        if (!name) {
+            alert('Client name is required');
+            return;
+        }
+
+        try {
+            const response = await fetch('/accounts/api/quick-create', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, email, phone, address })
+            });
+
+            if (response.ok) {
+                const newAccount = await response.json();
+
+                // Add to shared accounts list
+                accounts.push({ id: newAccount.id, name: newAccount.name });
+
+                // Add to GC selection
+                addGc(newAccount.id, newAccount.name);
+
+                // Close modal
+                bootstrap.Modal.getInstance(document.getElementById('addGcClientModal')).hide();
+
+                // Clear form
+                document.getElementById('new_gc_name').value = '';
+                document.getElementById('new_gc_email').value = '';
+                document.getElementById('new_gc_phone').value = '';
+                document.getElementById('new_gc_address').value = '';
+            } else {
+                const error = await response.json();
+                alert('Error: ' + (error.detail || 'Failed to create client'));
+            }
+        } catch (err) {
+            console.error('Failed to create client:', err);
+            alert('Failed to create client');
+        }
+    });
+
+    // ========================================
+    // SHARED: Hide dropdowns on outside click
+    // ========================================
+    document.addEventListener('click', function(e) {
+        // End User dropdown
+        if (!accountSearch.contains(e.target) && !accountResults.contains(e.target)) {
+            accountResults.style.display = 'none';
+        }
+        // GC dropdown
+        if (!gcSearch.contains(e.target) && !gcResults.contains(e.target)) {
+            gcResults.style.display = 'none';
         }
     });
 })();
