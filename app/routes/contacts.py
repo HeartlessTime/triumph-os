@@ -60,6 +60,8 @@ async def list_contacts(
     request: Request,
     search: str = None,
     account_id: str = None,
+    sort: str = None,
+    dir: str = None,
     db: Session = Depends(get_db),
 ):
     """List all contacts with optional filtering."""
@@ -81,7 +83,31 @@ async def list_contacts(
     if account_id_int:
         query = query.filter(Contact.account_id == account_id_int)
 
-    contacts = query.order_by(Contact.last_name, Contact.first_name).all()
+    # Normalize direction
+    direction = dir if dir in ("asc", "desc") else None
+
+    # Apply sorting based on URL parameters
+    if sort == "name":
+        if direction == "desc":
+            query = query.order_by(Contact.last_name.desc(), Contact.first_name.desc())
+        else:
+            query = query.order_by(Contact.last_name.asc(), Contact.first_name.asc())
+    elif sort == "account":
+        if direction == "desc":
+            query = query.order_by(Account.name.desc(), Contact.last_name.asc())
+        else:
+            query = query.order_by(Account.name.asc(), Contact.last_name.asc())
+    elif sort == "last_contacted":
+        # Handle nulls - put uncontacted at the end for desc, beginning for asc
+        if direction == "asc":
+            query = query.order_by(Contact.last_contacted.asc().nullsfirst())
+        else:
+            query = query.order_by(Contact.last_contacted.desc().nullslast())
+    else:
+        # Default sort by name
+        query = query.order_by(Contact.last_name.asc(), Contact.first_name.asc())
+
+    contacts = query.all()
     accounts = db.query(Account).order_by(Account.name).all()
 
     return templates.TemplateResponse(
@@ -92,6 +118,8 @@ async def list_contacts(
             "accounts": accounts,
             "search": search,
             "account_id": account_id_int,
+            "sort": sort,
+            "dir": direction or ("asc" if sort in ("name", "account") else "desc"),
         },
     )
 

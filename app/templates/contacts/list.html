@@ -13,6 +13,7 @@
         color: #6c757d;
         cursor: pointer;
         transition: all 0.15s ease;
+        text-decoration: none;
     }
     .sort-btn:hover {
         border-color: #adb5bd;
@@ -64,18 +65,24 @@
                     <input type="text" class="form-control" id="contactsSearch" placeholder="Search by name or account...">
                 </div>
 
-                <!-- Sort Controls -->
+                <!-- Sort Controls (URL-driven) -->
                 <div class="d-flex gap-2 align-items-center ms-auto">
                     <span class="text-muted small me-1">Sort:</span>
-                    <button type="button" class="sort-btn active" data-sort="name" data-dir="asc">
-                        Name <i class="bi bi-sort-alpha-down sort-icon"></i>
-                    </button>
-                    <button type="button" class="sort-btn" data-sort="account" data-dir="asc">
-                        Account <i class="bi bi-sort-alpha-down sort-icon"></i>
-                    </button>
-                    <button type="button" class="sort-btn" data-sort="last_contacted" data-dir="desc">
-                        Last Contacted <i class="bi bi-sort-down sort-icon"></i>
-                    </button>
+                    {% set name_dir = 'desc' if sort == 'name' and dir == 'asc' else 'asc' %}
+                    <a href="/contacts?sort=name&dir={{ name_dir }}{% if account_id %}&account_id={{ account_id }}{% endif %}"
+                       class="sort-btn {% if sort == 'name' or not sort %}active{% endif %}">
+                        Name <i class="bi {% if sort == 'name' and dir == 'desc' %}bi-sort-alpha-up{% else %}bi-sort-alpha-down{% endif %} sort-icon"></i>
+                    </a>
+                    {% set account_dir = 'desc' if sort == 'account' and dir == 'asc' else 'asc' %}
+                    <a href="/contacts?sort=account&dir={{ account_dir }}{% if account_id %}&account_id={{ account_id }}{% endif %}"
+                       class="sort-btn {% if sort == 'account' %}active{% endif %}">
+                        Account <i class="bi {% if sort == 'account' and dir == 'desc' %}bi-sort-alpha-up{% else %}bi-sort-alpha-down{% endif %} sort-icon"></i>
+                    </a>
+                    {% set contacted_dir = 'asc' if sort == 'last_contacted' and dir == 'desc' else 'desc' %}
+                    <a href="/contacts?sort=last_contacted&dir={{ contacted_dir }}{% if account_id %}&account_id={{ account_id }}{% endif %}"
+                       class="sort-btn {% if sort == 'last_contacted' %}active{% endif %}">
+                        Last Contacted <i class="bi {% if sort == 'last_contacted' and dir == 'asc' %}bi-sort-up{% else %}bi-sort-down{% endif %} sort-icon"></i>
+                    </a>
                 </div>
             </div>
         </div>
@@ -100,7 +107,7 @@
                     <tbody id="contactsTableBody">
                         {% for contact in contacts %}
                         <tr class="contact-row"
-                            data-href="/contacts/{{ contact.id }}"
+                            data-href="/contacts/{{ contact.id }}{% if sort %}?from=/contacts?sort={{ sort }}{% if dir %}&dir={{ dir }}{% endif %}{% if account_id %}&account_id={{ account_id }}{% endif %}{% endif %}"
                             data-name="{{ contact.full_name|lower }}"
                             data-account="{{ contact.account.name|lower }}"
                             data-last-contacted="{{ contact.last_contacted.strftime('%Y-%m-%d') if contact.last_contacted else '0000-00-00' }}">
@@ -124,7 +131,7 @@
                             <td>{{ contact.best_phone or '—' }}</td>
                             <td>{{ contact.last_contacted.strftime('%b %d, %Y') if contact.last_contacted else '—' }}</td>
                             <td class="text-end">
-                                <a href="/contacts/{{ contact.id }}?from=/contacts#logContactModal" class="btn btn-sm btn-outline-primary" title="Log Contact">
+                                <a href="/contacts/{{ contact.id }}?from=/contacts{% if sort %}?sort={{ sort }}{% if dir %}&dir={{ dir }}{% endif %}{% if account_id %}&account_id={{ account_id }}{% endif %}{% endif %}#logContactModal" class="btn btn-sm btn-outline-primary" title="Log Contact">
                                     <i class="bi bi-telephone"></i>
                                 </a>
                                 <a href="/contacts/{{ contact.id }}/edit" class="btn btn-sm btn-outline-secondary" title="Edit">
@@ -158,49 +165,13 @@
 (function() {
     const searchInput = document.getElementById('contactsSearch');
     const tbody = document.getElementById('contactsTableBody');
-    const sortBtns = document.querySelectorAll('.sort-btn');
     const noResultsRow = document.querySelector('.no-results-row');
 
     if (!tbody || !searchInput) return;
 
     const rows = Array.from(tbody.querySelectorAll('.contact-row'));
 
-    // State persistence
-    const STATE_KEY = 'contacts:state:/contacts';
-
-    function saveState() {
-        const state = {
-            search: searchInput.value,
-            sortField: currentSort.field,
-            sortDir: currentSort.dir
-        };
-        sessionStorage.setItem(STATE_KEY, JSON.stringify(state));
-    }
-
-    function loadState() {
-        try {
-            return JSON.parse(sessionStorage.getItem(STATE_KEY)) || null;
-        } catch (e) { return null; }
-    }
-
-    // Current sort state
-    let currentSort = { field: 'name', dir: 'asc' };
-
-    // Map between button data-sort values and dataset field names
-    const fieldMap = {
-        'name': 'name',
-        'account': 'account',
-        'last_contacted': 'lastContacted'
-    };
-
-    // Reverse map to find button from field name
-    const reverseFieldMap = {
-        'name': 'name',
-        'account': 'account',
-        'lastContacted': 'last_contacted'
-    };
-
-    // Filter rows based on search term
+    // Filter rows based on search term (client-side search within current results)
     function filterRows(term) {
         term = term.toLowerCase().trim();
         let visibleCount = 0;
@@ -220,66 +191,9 @@
         }
     }
 
-    // Sort rows by field and direction
-    function sortRows(field, dir) {
-        rows.sort(function(a, b) {
-            let aVal = a.dataset[field] || '';
-            let bVal = b.dataset[field] || '';
-
-            // For last_contacted, compare as dates
-            if (field === 'lastContacted') {
-                aVal = a.dataset.lastContacted || '0000-00-00';
-                bVal = b.dataset.lastContacted || '0000-00-00';
-            }
-
-            let cmp = aVal.localeCompare(bVal);
-            return dir === 'desc' ? -cmp : cmp;
-        });
-
-        // Re-append rows in sorted order
-        rows.forEach(function(row) {
-            tbody.appendChild(row);
-        });
-
-        // Keep no-results row at end
-        if (noResultsRow) {
-            tbody.appendChild(noResultsRow);
-        }
-    }
-
-    // Update sort button UI
-    function updateSortUI(activeBtn, dir) {
-        sortBtns.forEach(function(btn) {
-            btn.classList.remove('active');
-            // Reset icons to default
-            const icon = btn.querySelector('.sort-icon');
-            if (icon) {
-                const field = btn.dataset.sort;
-                if (field === 'last_contacted') {
-                    icon.className = 'bi bi-sort-down sort-icon';
-                } else {
-                    icon.className = 'bi bi-sort-alpha-down sort-icon';
-                }
-            }
-        });
-
-        activeBtn.classList.add('active');
-        activeBtn.dataset.dir = dir;
-        const icon = activeBtn.querySelector('.sort-icon');
-        if (icon) {
-            const field = activeBtn.dataset.sort;
-            if (field === 'last_contacted') {
-                icon.className = dir === 'asc' ? 'bi bi-sort-up sort-icon' : 'bi bi-sort-down sort-icon';
-            } else {
-                icon.className = dir === 'asc' ? 'bi bi-sort-alpha-down sort-icon' : 'bi bi-sort-alpha-up sort-icon';
-            }
-        }
-    }
-
     // Search input handler
     searchInput.addEventListener('input', function() {
         filterRows(this.value);
-        saveState();
     });
 
     // Escape key clears search
@@ -287,49 +201,18 @@
         if (e.key === 'Escape') {
             this.value = '';
             filterRows('');
-            saveState();
         }
     });
 
-    // Sort button click handlers
-    sortBtns.forEach(function(btn) {
-        btn.addEventListener('click', function() {
-            const field = btn.dataset.sort;
-            let dir = btn.dataset.dir;
-
-            // If already active, toggle direction
-            if (btn.classList.contains('active')) {
-                dir = dir === 'asc' ? 'desc' : 'asc';
-                btn.dataset.dir = dir;
-            }
-
-            currentSort = { field: fieldMap[field], dir: dir };
-            sortRows(fieldMap[field], dir);
-            updateSortUI(btn, dir);
-            saveState();
+    // Row click navigation
+    rows.forEach(function(row) {
+        row.style.cursor = 'pointer';
+        row.addEventListener('click', function(e) {
+            // Don't navigate if clicking a link or button
+            if (e.target.closest('a, button')) return;
+            window.location.href = row.dataset.href;
         });
     });
-
-    // Restore state on page load
-    var savedState = loadState();
-    if (savedState) {
-        // Restore search
-        if (savedState.search) {
-            searchInput.value = savedState.search;
-            filterRows(savedState.search);
-        }
-
-        // Restore sort
-        if (savedState.sortField && savedState.sortDir) {
-            currentSort = { field: savedState.sortField, dir: savedState.sortDir };
-            var btnSortKey = reverseFieldMap[savedState.sortField] || savedState.sortField;
-            var targetBtn = document.querySelector('.sort-btn[data-sort="' + btnSortKey + '"]');
-            if (targetBtn) {
-                sortRows(savedState.sortField, savedState.sortDir);
-                updateSortUI(targetBtn, savedState.sortDir);
-            }
-        }
-    }
 })();
 </script>
 {% endblock %}

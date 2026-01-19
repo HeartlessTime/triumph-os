@@ -5,6 +5,13 @@
 {% block content %}
 <div class="content-area">
     <div class="page-header">
+        {% if return_to %}
+        <div class="mb-2">
+            <a href="{{ return_to }}" class="btn btn-sm btn-outline-secondary">
+                <i class="bi bi-arrow-left me-1"></i> Back
+            </a>
+        </div>
+        {% endif %}
         <nav aria-label="breadcrumb">
             <ol class="breadcrumb">
                 <li class="breadcrumb-item"><a href="/accounts">Accounts</a></li>

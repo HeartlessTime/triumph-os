@@ -13,6 +13,7 @@
         color: #6c757d;
         cursor: pointer;
         transition: all 0.15s ease;
+        text-decoration: none;
     }
     .sort-btn:hover {
         border-color: #adb5bd;
@@ -67,29 +68,33 @@
                 <!-- Account Type Filter -->
                 <div class="d-flex gap-2 align-items-center">
                     <span class="text-muted small me-1">Type:</span>
-                    <a href="/accounts{% if search %}?search={{ search }}{% endif %}"
+                    <a href="/accounts{% if sort %}?sort={{ sort }}{% if dir %}&dir={{ dir }}{% endif %}{% endif %}"
                        class="btn btn-sm {% if not account_type %}btn-primary{% else %}btn-outline-secondary{% endif %}">
                         All
                     </a>
-                    <a href="/accounts?account_type=end_user{% if search %}&search={{ search }}{% endif %}"
+                    <a href="/accounts?account_type=end_user{% if sort %}&sort={{ sort }}{% if dir %}&dir={{ dir }}{% endif %}{% endif %}"
                        class="btn btn-sm {% if account_type == 'end_user' %}btn-primary{% else %}btn-outline-secondary{% endif %}">
                         End Users
                     </a>
-                    <a href="/accounts?account_type=gc{% if search %}&search={{ search }}{% endif %}"
+                    <a href="/accounts?account_type=gc{% if sort %}&sort={{ sort }}{% if dir %}&dir={{ dir }}{% endif %}{% endif %}"
                        class="btn btn-sm {% if account_type == 'gc' %}btn-primary{% else %}btn-outline-secondary{% endif %}">
                         General Contractors
                     </a>
                 </div>
 
-                <!-- Sort Controls -->
+                <!-- Sort Controls (URL-driven) -->
                 <div class="d-flex gap-2 align-items-center ms-auto">
                     <span class="text-muted small me-1">Sort:</span>
-                    <button type="button" class="sort-btn active" data-sort="name" data-dir="asc">
-                        Name <i class="bi bi-sort-alpha-down sort-icon"></i>
-                    </button>
-                    <button type="button" class="sort-btn" data-sort="last_activity" data-dir="desc">
-                        Last Activity <i class="bi bi-sort-down sort-icon"></i>
-                    </button>
+                    {% set name_dir = 'desc' if sort == 'name' and dir == 'asc' else 'asc' %}
+                    <a href="/accounts?sort=name&dir={{ name_dir }}{% if account_type %}&account_type={{ account_type }}{% endif %}"
+                       class="sort-btn {% if sort == 'name' or not sort %}active{% endif %}">
+                        Name <i class="bi {% if sort == 'name' and dir == 'desc' %}bi-sort-alpha-up{% else %}bi-sort-alpha-down{% endif %} sort-icon"></i>
+                    </a>
+                    {% set activity_dir = 'asc' if sort == 'last_activity' and dir == 'desc' else 'desc' %}
+                    <a href="/accounts?sort=last_activity&dir={{ activity_dir }}{% if account_type %}&account_type={{ account_type }}{% endif %}"
+                       class="sort-btn {% if sort == 'last_activity' %}active{% endif %}">
+                        Last Activity <i class="bi {% if sort == 'last_activity' and dir == 'asc' %}bi-sort-up{% else %}bi-sort-down{% endif %} sort-icon"></i>
+                    </a>
                 </div>
             </div>
         </div>
@@ -117,7 +122,7 @@
                     <tbody id="accountsTableBody">
                         {% for account in accounts %}
                         <tr class="account-row"
-                            data-href="/accounts/{{ account.id }}"
+                            data-href="/accounts/{{ account.id }}{% if sort %}?from=/accounts?sort={{ sort }}{% if dir %}&dir={{ dir }}{% endif %}{% if account_type %}&account_type={{ account_type }}{% endif %}{% endif %}"
                             data-name="{{ account.name|lower }}"
                             data-last-activity="{{ account.last_contacted.strftime('%Y-%m-%d') if account.last_contacted else '0000-00-00' }}">
                             <td>
@@ -191,17 +196,13 @@
 (function() {
     const searchInput = document.getElementById('accountsSearch');
     const tbody = document.getElementById('accountsTableBody');
-    const sortBtns = document.querySelectorAll('.sort-btn');
     const noResultsRow = document.querySelector('.no-results-row');
 
     if (!tbody || !searchInput) return;
 
     const rows = Array.from(tbody.querySelectorAll('.account-row'));
 
-    // Current sort state
-    let currentSort = { field: 'name', dir: 'asc' };
-
-    // Filter rows based on search term
+    // Filter rows based on search term (client-side search within current results)
     function filterRows(term) {
         term = term.toLowerCase().trim();
         let visibleCount = 0;
@@ -220,61 +221,6 @@
         }
     }
 
-    // Sort rows by field and direction
-    function sortRows(field, dir) {
-        rows.sort(function(a, b) {
-            let aVal = a.dataset[field] || '';
-            let bVal = b.dataset[field] || '';
-
-            // For last_activity, compare as dates
-            if (field === 'lastActivity') {
-                aVal = a.dataset.lastActivity || '0000-00-00';
-                bVal = b.dataset.lastActivity || '0000-00-00';
-            }
-
-            let cmp = aVal.localeCompare(bVal);
-            return dir === 'desc' ? -cmp : cmp;
-        });
-
-        // Re-append rows in sorted order
-        rows.forEach(function(row) {
-            tbody.appendChild(row);
-        });
-
-        // Keep no-results row at end
-        if (noResultsRow) {
-            tbody.appendChild(noResultsRow);
-        }
-    }
-
-    // Update sort button UI
-    function updateSortUI(activeBtn, dir) {
-        sortBtns.forEach(function(btn) {
-            btn.classList.remove('active');
-            // Reset icons to default
-            const icon = btn.querySelector('.sort-icon');
-            if (icon) {
-                const field = btn.dataset.sort;
-                if (field === 'last_activity') {
-                    icon.className = 'bi bi-sort-down sort-icon';
-                } else {
-                    icon.className = 'bi bi-sort-alpha-down sort-icon';
-                }
-            }
-        });
-
-        activeBtn.classList.add('active');
-        const icon = activeBtn.querySelector('.sort-icon');
-        if (icon) {
-            const field = activeBtn.dataset.sort;
-            if (field === 'last_activity') {
-                icon.className = dir === 'asc' ? 'bi bi-sort-up sort-icon' : 'bi bi-sort-down sort-icon';
-            } else {
-                icon.className = dir === 'asc' ? 'bi bi-sort-alpha-down sort-icon' : 'bi bi-sort-alpha-up sort-icon';
-            }
-        }
-    }
-
     // Search input handler
     searchInput.addEventListener('input', function() {
         filterRows(this.value);
@@ -288,31 +234,15 @@
         }
     });
 
-    // Sort button click handlers
-    sortBtns.forEach(function(btn) {
-        btn.addEventListener('click', function() {
-            const field = btn.dataset.sort;
-            let dir = btn.dataset.dir;
-
-            // If already active, toggle direction
-            if (btn.classList.contains('active')) {
-                dir = dir === 'asc' ? 'desc' : 'asc';
-                btn.dataset.dir = dir;
-            }
-
-            // Map field names to data attributes
-            const fieldMap = {
-                'name': 'name',
-                'last_activity': 'lastActivity'
-            };
-
-            currentSort = { field: fieldMap[field], dir: dir };
-            sortRows(fieldMap[field], dir);
-            updateSortUI(btn, dir);
+    // Row click navigation
+    rows.forEach(function(row) {
+        row.style.cursor = 'pointer';
+        row.addEventListener('click', function(e) {
+            // Don't navigate if clicking a link or button
+            if (e.target.closest('a, button')) return;
+            window.location.href = row.dataset.href;
         });
     });
-
-    // Initial sort (name A-Z is default, already sorted by server)
 })();
 </script>
 {% endblock %}

@@ -31,6 +31,7 @@ async def list_accounts(
     industry: str = None,
     account_type: str = None,
     sort: str = None,
+    dir: str = None,
     db: Session = Depends(get_db),
 ):
     """List all accounts with optional filtering."""
@@ -57,9 +58,15 @@ async def list_accounts(
     if account_type:
         query = query.filter(Account.account_type == account_type)
 
+    # Normalize direction
+    direction = dir if dir in ("asc", "desc") else None
+
     # SQL-safe sorting (only real DB columns)
     if sort == "name":
-        query = query.order_by(Account.name.asc())
+        if direction == "desc":
+            query = query.order_by(Account.name.desc())
+        else:
+            query = query.order_by(Account.name.asc())
     elif sort == "value":
         # Subquery needed because total_pipeline_value is a Python property
         pipeline_subq = (
@@ -76,17 +83,18 @@ async def list_accounts(
         query = query.outerjoin(
             pipeline_subq, Account.id == pipeline_subq.c.account_id
         ).order_by(pipeline_subq.c.total_value.desc().nullslast())
-    elif sort != "last_contacted":
-        # Default sort (skip if last_contacted - handled in Python below)
+    elif sort != "last_activity":
+        # Default sort (skip if last_activity - handled in Python below)
         query = query.order_by(Account.name.asc())
 
     accounts = query.all()
 
-    # Python-side sort for last_contacted (it's a @property, not a DB column)
-    if sort == "last_contacted":
+    # Python-side sort for last_activity (it's a @property, not a DB column)
+    if sort == "last_activity":
+        reverse_sort = direction != "asc"  # Default to desc for last_activity
         accounts.sort(
             key=lambda a: a.last_contacted or date.min,
-            reverse=False,  # Oldest first (those not contacted recently at top)
+            reverse=reverse_sort,
         )
 
     return templates.TemplateResponse(
@@ -100,6 +108,7 @@ async def list_accounts(
             "account_type": account_type,
             "account_types": Account.ACCOUNT_TYPES,
             "sort": sort,
+            "dir": direction or ("asc" if sort == "name" else "desc"),
         },
     )
 
@@ -240,15 +249,11 @@ async def view_account(
     # Sort contacts by last_contacted DESC (most recent first), nulls last
     sorted_contacts = sorted(
         account.contacts,
-        key=lambda c: (c.last_contacted is None, c.last_contacted),
-        reverse=True,
-    )
-    # Reverse puts True (None) after False, so we need to adjust:
-    # We want: contacted contacts (DESC by date), then never-contacted
-    sorted_contacts = sorted(
-        account.contacts,
         key=lambda c: (c.last_contacted is None, -(c.last_contacted.toordinal() if c.last_contacted else 0)),
     )
+
+    # Get return URL from query params (for back navigation with sort preserved)
+    return_to = request.query_params.get("from")
 
     return templates.TemplateResponse(
         "accounts/view.html",
@@ -256,6 +261,7 @@ async def view_account(
             "request": request,
             "account": account,
             "sorted_contacts": sorted_contacts,
+            "return_to": return_to,
         },
     )
 
