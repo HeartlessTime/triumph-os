@@ -237,11 +237,25 @@ async def view_account(
     if not account:
         raise HTTPException(status_code=404, detail="Account not found")
 
+    # Sort contacts by last_contacted DESC (most recent first), nulls last
+    sorted_contacts = sorted(
+        account.contacts,
+        key=lambda c: (c.last_contacted is None, c.last_contacted),
+        reverse=True,
+    )
+    # Reverse puts True (None) after False, so we need to adjust:
+    # We want: contacted contacts (DESC by date), then never-contacted
+    sorted_contacts = sorted(
+        account.contacts,
+        key=lambda c: (c.last_contacted is None, -(c.last_contacted.toordinal() if c.last_contacted else 0)),
+    )
+
     return templates.TemplateResponse(
         "accounts/view.html",
         {
             "request": request,
             "account": account,
+            "sorted_contacts": sorted_contacts,
         },
     )
 
