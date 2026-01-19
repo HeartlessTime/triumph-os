@@ -97,6 +97,9 @@ async def list_accounts(
             reverse=reverse_sort,
         )
 
+    # Build query string for preserving state in navigation
+    query_string = str(request.query_params) if request.query_params else ""
+
     return templates.TemplateResponse(
         "accounts/list.html",
         {
@@ -109,6 +112,7 @@ async def list_accounts(
             "account_types": Account.ACCOUNT_TYPES,
             "sort": sort,
             "dir": direction or ("asc" if sort == "name" else "desc"),
+            "list_query_string": query_string,
         },
     )
 

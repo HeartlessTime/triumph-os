@@ -110,6 +110,9 @@ async def list_contacts(
     contacts = query.all()
     accounts = db.query(Account).order_by(Account.name).all()
 
+    # Build query string for preserving state in navigation
+    query_string = str(request.query_params) if request.query_params else ""
+
     return templates.TemplateResponse(
         "contacts/list.html",
         {
@@ -120,6 +123,7 @@ async def list_contacts(
             "account_id": account_id_int,
             "sort": sort,
             "dir": direction or ("asc" if sort in ("name", "account") else "desc"),
+            "list_query_string": query_string,
         },
     )
 

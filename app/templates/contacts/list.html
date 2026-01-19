@@ -107,7 +107,7 @@
                     <tbody id="contactsTableBody">
                         {% for contact in contacts %}
                         <tr class="contact-row"
-                            data-href="/contacts/{{ contact.id }}{% if sort %}?from=/contacts?sort={{ sort }}{% if dir %}&dir={{ dir }}{% endif %}{% if account_id %}&account_id={{ account_id }}{% endif %}{% endif %}"
+                            data-href="/contacts/{{ contact.id }}{% if list_query_string %}?from=/contacts?{{ list_query_string }}{% endif %}"
                             data-name="{{ contact.full_name|lower }}"
                             data-account="{{ contact.account.name|lower }}"
                             data-last-contacted="{{ contact.last_contacted.strftime('%Y-%m-%d') if contact.last_contacted else '0000-00-00' }}">
@@ -131,7 +131,7 @@
                             <td>{{ contact.best_phone or '—' }}</td>
                             <td>{{ contact.last_contacted.strftime('%b %d, %Y') if contact.last_contacted else '—' }}</td>
                             <td class="text-end">
-                                <a href="/contacts/{{ contact.id }}?from=/contacts{% if sort %}?sort={{ sort }}{% if dir %}&dir={{ dir }}{% endif %}{% if account_id %}&account_id={{ account_id }}{% endif %}{% endif %}#logContactModal" class="btn btn-sm btn-outline-primary" title="Log Contact">
+                                <a href="/contacts/{{ contact.id }}{% if list_query_string %}?from=/contacts?{{ list_query_string }}{% endif %}#logContactModal" class="btn btn-sm btn-outline-primary" title="Log Contact">
                                     <i class="bi bi-telephone"></i>
                                 </a>
                                 <a href="/contacts/{{ contact.id }}/edit" class="btn btn-sm btn-outline-secondary" title="Edit">
