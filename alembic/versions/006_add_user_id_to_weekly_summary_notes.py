@@ -32,28 +32,69 @@ def index_exists(table_name: str, index_name: str) -> bool:
     return index_name in indexes
 
 
+def constraint_exists(table_name: str, constraint_name: str) -> bool:
+    """Check if a foreign key constraint exists on a table."""
+    bind = op.get_bind()
+    inspector = inspect(bind)
+    fks = inspector.get_foreign_keys(table_name)
+    return any(fk.get("name") == constraint_name for fk in fks)
+
+
 def upgrade():
+    conn = op.get_bind()
+    dialect = conn.dialect.name  # "sqlite" or "postgresql"
+
     # Check if migration has already been applied
     if column_exists("weekly_summary_notes", "user_id"):
         return  # Already migrated
 
-    with op.batch_alter_table("weekly_summary_notes", recreate="always") as batch_op:
-        batch_op.add_column(
-            sa.Column("user_id", sa.Integer(), nullable=True)
+    if dialect == "sqlite":
+        # SQLite requires batch mode for ALTER TABLE
+        with op.batch_alter_table("weekly_summary_notes", recreate="always") as batch_op:
+            batch_op.add_column(
+                sa.Column("user_id", sa.Integer(), nullable=True)
+            )
+
+            # Only drop old index if it exists
+            if index_exists("weekly_summary_notes", "ix_weekly_summary_notes_week_section"):
+                batch_op.drop_index("ix_weekly_summary_notes_week_section")
+
+            batch_op.create_index(
+                "ix_weekly_summary_notes_week_section_user",
+                ["week_start", "section", "user_id"],
+                unique=True,
+            )
+
+            batch_op.create_foreign_key(
+                "fk_weekly_summary_notes_user_id",
+                "users",
+                ["user_id"],
+                ["id"],
+            )
+    else:
+        # PostgreSQL: direct ALTER TABLE (no table recreation)
+        op.add_column(
+            "weekly_summary_notes",
+            sa.Column("user_id", sa.Integer(), nullable=True),
         )
 
-        # Only drop old index if it exists
+        # Drop old index if it exists
         if index_exists("weekly_summary_notes", "ix_weekly_summary_notes_week_section"):
-            batch_op.drop_index("ix_weekly_summary_notes_week_section")
+            op.drop_index(
+                "ix_weekly_summary_notes_week_section",
+                table_name="weekly_summary_notes",
+            )
 
-        batch_op.create_index(
+        op.create_index(
             "ix_weekly_summary_notes_week_section_user",
+            "weekly_summary_notes",
             ["week_start", "section", "user_id"],
             unique=True,
         )
 
-        batch_op.create_foreign_key(
+        op.create_foreign_key(
             "fk_weekly_summary_notes_user_id",
+            "weekly_summary_notes",
             "users",
             ["user_id"],
             ["id"],
@@ -61,23 +102,50 @@ def upgrade():
 
 
 def downgrade():
+    conn = op.get_bind()
+    dialect = conn.dialect.name  # "sqlite" or "postgresql"
+
     # Check if migration needs to be reversed
     if not column_exists("weekly_summary_notes", "user_id"):
         return  # Already downgraded
 
-    with op.batch_alter_table("weekly_summary_notes", recreate="always") as batch_op:
-        batch_op.drop_constraint(
-            "fk_weekly_summary_notes_user_id",
-            type_="foreignkey",
-        )
+    if dialect == "sqlite":
+        with op.batch_alter_table("weekly_summary_notes", recreate="always") as batch_op:
+            batch_op.drop_constraint(
+                "fk_weekly_summary_notes_user_id",
+                type_="foreignkey",
+            )
 
-        batch_op.drop_index("ix_weekly_summary_notes_week_section_user")
+            batch_op.drop_index("ix_weekly_summary_notes_week_section_user")
 
-        batch_op.create_index(
+            batch_op.create_index(
+                "ix_weekly_summary_notes_week_section",
+                ["week_start", "section"],
+                unique=True,
+            )
+
+            batch_op.drop_column("user_id")
+    else:
+        # PostgreSQL: direct operations
+        if constraint_exists("weekly_summary_notes", "fk_weekly_summary_notes_user_id"):
+            op.drop_constraint(
+                "fk_weekly_summary_notes_user_id",
+                "weekly_summary_notes",
+                type_="foreignkey",
+            )
+
+        if index_exists("weekly_summary_notes", "ix_weekly_summary_notes_week_section_user"):
+            op.drop_index(
+                "ix_weekly_summary_notes_week_section_user",
+                table_name="weekly_summary_notes",
+            )
+
+        op.create_index(
             "ix_weekly_summary_notes_week_section",
+            "weekly_summary_notes",
             ["week_start", "section"],
             unique=True,
         )
 
-        batch_op.drop_column("user_id")
+        op.drop_column("weekly_summary_notes", "user_id")
 
