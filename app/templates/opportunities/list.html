@@ -78,7 +78,7 @@
                             <td>
                                 <span class="fw-medium">{{ opp.name }}</span>
                                 <span class="badge bg-{{ opp.health_score_color }} ms-1" title="Health Score">{{ opp.health_score }}</span>
-                                <div class="text-muted small">{{ opp.account.name }}</div>
+                                <div class="text-muted small">{{ opp.primary_account.name if opp.primary_account else 'No Account' }}</div>
                             </td>
                             <td>
                                 <span class="badge badge-stage badge-{{ opp.stage|lower|replace(' ', '-') }}">

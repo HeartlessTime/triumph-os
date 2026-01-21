@@ -14,8 +14,8 @@ class UserSummarySuppression(Base):
     __tablename__ = "user_summary_suppressions"
 
     id = Column(Integer, primary_key=True)
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
-    opportunity_id = Column(Integer, ForeignKey("opportunities.id"), nullable=False, index=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    opportunity_id = Column(Integer, ForeignKey("opportunities.id", ondelete="CASCADE"), nullable=False, index=True)
     suppressed_at = Column(DateTime, nullable=False, default=datetime.utcnow)
 
     # Unique constraint: one suppression per user/opportunity pair
@@ -24,8 +24,8 @@ class UserSummarySuppression(Base):
     )
 
     # Relationships
-    user = relationship("User", backref="summary_suppressions")
-    opportunity = relationship("Opportunity", backref="summary_suppressions")
+    user = relationship("User", back_populates="summary_suppressions")
+    opportunity = relationship("Opportunity", back_populates="summary_suppressions")
 
     def __repr__(self):
         return f"<UserSummarySuppression user={self.user_id} opp={self.opportunity_id}>"

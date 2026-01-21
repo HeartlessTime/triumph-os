@@ -116,7 +116,7 @@
                                         <a href="/opportunities/{{ opp.id }}" class="text-decoration-none fw-medium">
                                             {{ opp.name }}
                                         </a>
-                                        <div class="text-muted small">{{ opp.account.name }}</div>
+                                        <div class="text-muted small">{{ opp.primary_account.name if opp.primary_account else 'No Account' }}</div>
                                     </td>
                                     <td class="text-end">
                                         <span class="{{ opp.followup_status.css_class }}">
@@ -175,7 +175,7 @@
                                         <a href="/opportunities/{{ opp.id }}" class="text-decoration-none fw-medium">
                                             {{ opp.name }}
                                         </a>
-                                        <div class="text-muted small">{{ opp.account.name }}</div>
+                                        <div class="text-muted small">{{ opp.primary_account.name if opp.primary_account else 'No Account' }}</div>
                                     </td>
                                     <td class="text-end">
                                         <span class="{% if opp.days_until_bid <= 3 %}text-danger fw-bold{% elif opp.days_until_bid <= 7 %}text-warning{% endif %}">

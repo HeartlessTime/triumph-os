@@ -10,7 +10,7 @@ from decimal import Decimal
 from typing import Optional, Dict, Any, List
 from sqlalchemy.orm import Session
 
-from app.models import Account, Contact, Opportunity
+from app.models import Account, Contact, Opportunity, OpportunityAccount
 
 
 class ValidationResult:
@@ -187,11 +187,10 @@ def validate_opportunity(
     """
     Validate opportunity data.
 
-    Required: account_id, stage, owner_id
-    Required: bid_date OR bid_date_tbd = True
+    Required: at least one account, primary_account_id, stage, owner_id
     Optional: lv_value, hdd_value (validated if provided, must be >= 0)
-    Workflow: stage change requires next_followup_date or no_followup_required
-    Warn: same name + account within 7 days
+    Validate: primary_account_id must be in account_ids
+    Validate: primary_contact must belong to one of the selected accounts
 
     Args:
         data: Dict with opportunity fields
@@ -205,14 +204,28 @@ def validate_opportunity(
     result = ValidationResult()
 
     # --- HARD REQUIRED FIELDS ---
-    if _is_empty(data.get("account_id")):
-        result.add_error("Account is required")
+    account_ids = data.get("account_ids", [])
+    if not account_ids:
+        result.add_error("At least one Account is required")
+
+    primary_account_id = data.get("primary_account_id")
+    if _is_empty(primary_account_id):
+        result.add_error("Primary Account is required")
+    elif account_ids and int(primary_account_id) not in [int(a) for a in account_ids]:
+        result.add_error("Primary Account must be one of the selected Accounts")
 
     if _is_empty(data.get("stage")):
         result.add_error("Stage is required")
 
     if _is_empty(data.get("owner_id")):
         result.add_error("Owner is required")
+
+    # --- VALIDATE PRIMARY CONTACT BELONGS TO SELECTED ACCOUNTS ---
+    primary_contact_id = data.get("primary_contact_id")
+    if primary_contact_id and account_ids:
+        contact = db.query(Contact).filter(Contact.id == primary_contact_id).first()
+        if contact and contact.account_id not in [int(a) for a in account_ids]:
+            result.add_error("Primary Contact must belong to one of the selected Accounts")
 
     # --- VALUE VALIDATION (OPTIONAL): validate format if provided ---
     lv_value = data.get("lv_value")
@@ -235,39 +248,22 @@ def validate_opportunity(
         except:
             result.add_error("HDD value must be a valid number")
 
-    # --- BID DATE REQUIREMENT: bid_date OR bid_date_tbd ---
-    bid_date = data.get("bid_date")
-    bid_date_tbd = data.get("bid_date_tbd", False)
-
-    if _is_empty(bid_date) and not bid_date_tbd:
-        result.add_error("Bid date is required (or mark as TBD)")
-
-    # --- WORKFLOW GUARDRAIL: Stage change requires next_followup or explicit skip ---
-    new_stage = data.get("stage")
-    if old_stage and new_stage and old_stage != new_stage:
-        next_followup = data.get("next_followup_date")
-        no_followup_required = data.get("no_followup_required", False)
-
-        # Only enforce on non-terminal stages
-        terminal_stages = ["Won", "Lost"]
-        if new_stage not in terminal_stages:
-            if _is_empty(next_followup) and not no_followup_required:
-                # Note: This is a soft guardrail - we set a default followup
-                # rather than blocking. Comment out the error to allow auto-calculation.
-                pass  # Followup is auto-calculated in routes
-
     # --- DUPLICATE PREVENTION (WARN ONLY) ---
     name = data.get("name", "").strip() if data.get("name") else ""
-    account_id = data.get("account_id")
 
-    if name and account_id:
-        # Check for same name + account within last 7 days
+    if name and account_ids:
+        # Check for same name + any of the accounts within last 7 days
         seven_days_ago = date.today() - timedelta(days=7)
 
-        query = db.query(Opportunity).filter(
-            Opportunity.name.ilike(name),
-            Opportunity.account_id == account_id,
-            Opportunity.created_at >= seven_days_ago,
+        # Check against opportunity_accounts table
+        query = (
+            db.query(Opportunity)
+            .join(OpportunityAccount)
+            .filter(
+                Opportunity.name.ilike(name),
+                OpportunityAccount.account_id.in_([int(a) for a in account_ids]),
+                Opportunity.created_at >= seven_days_ago,
+            )
         )
         if existing_id:
             query = query.filter(Opportunity.id != existing_id)
@@ -275,7 +271,7 @@ def validate_opportunity(
         dupe = query.first()
         if dupe:
             result.add_warning(
-                f"An opportunity named '{name}' was created for this account within the last 7 days"
+                f"An opportunity named '{name}' was created for one of these accounts within the last 7 days"
             )
 
     return result

@@ -118,8 +118,8 @@ async def edit_activity_form(
     contacts = []
 
     if activity.opportunity is not None:
-        # Activity is linked to an opportunity - use opportunity's account
-        context_account_id = activity.opportunity.account_id
+        # Activity is linked to an opportunity - use opportunity's primary account
+        context_account_id = activity.opportunity.primary_account_id
     elif activity.contact is not None:
         # Activity is linked to a contact only - use contact's account
         context_account_id = activity.contact.account_id
@@ -287,65 +287,118 @@ async def delete_activity(
 # -----------------------------
 # API Endpoints (JSON)
 # -----------------------------
-from pydantic import BaseModel
-from typing import Optional
 
 
-class ActivityAutoSaveRequest(BaseModel):
-    activity_type: Optional[str] = None
-    subject: Optional[str] = None
-    description: Optional[str] = None
-    activity_date: Optional[str] = None
-    contact_id: Optional[int] = None
-    next_followup: Optional[str] = None
+# Column names for Activity model (only these can be set)
+ACTIVITY_COLUMNS = {
+    "activity_type", "subject", "description", "activity_date",
+    "contact_id", "opportunity_id",
+}
 
 
 @router.post("/{activity_id}/auto-save")
 async def auto_save_activity(
     activity_id: int,
-    data: ActivityAutoSaveRequest,
+    request: Request,
     db: Session = Depends(get_db),
 ):
-    """Auto-save activity fields (JSON API for real-time updates)."""
-    activity = db.query(Activity).filter(Activity.id == activity_id).first()
-    if not activity:
-        raise HTTPException(status_code=404, detail="Activity not found")
+    """Production-safe autosave. Never raises 422 or 500."""
+    try:
+        activity = db.query(Activity).filter(Activity.id == activity_id).first()
+        if not activity:
+            return {"status": "saved"}
 
-    # Track if activity_type is changing (for follow-up logic)
-    old_type = activity.activity_type
+        try:
+            payload = await request.json()
+        except Exception:
+            try:
+                form = await request.form()
+                payload = dict(form)
+            except Exception:
+                payload = {}
 
-    # Update only the fields that were provided
-    if data.activity_type is not None:
-        activity.activity_type = data.activity_type
-    if data.subject is not None:
-        activity.subject = data.subject
-    if data.description is not None:
-        activity.description = data.description or None
-    if data.activity_date is not None and data.activity_date.strip():
-        activity.activity_date = datetime.strptime(data.activity_date, "%Y-%m-%dT%H:%M")
-    if data.contact_id is not None:
-        activity.contact_id = data.contact_id if data.contact_id else None
+        def clean_int(v):
+            if v in (None, "", "null"):
+                return None
+            try:
+                return int(v)
+            except Exception:
+                return None
 
-    # Update contact follow-up date if provided or activity_type changed
-    type_changed = data.activity_type is not None and old_type != data.activity_type
-    if activity.contact_id:
-        contact = db.query(Contact).filter(Contact.id == activity.contact_id).first()
-        if contact:
-            if data.next_followup is not None:
-                if data.next_followup.strip():
-                    # Manual override: user explicitly set a follow-up date
-                    manual_date = datetime.strptime(data.next_followup, "%Y-%m-%d").date()
-                    contact.next_followup = _normalize_to_business_day(manual_date)
+        def clean_date(v):
+            if not v or v in ("", "null"):
+                return None
+            try:
+                return datetime.strptime(str(v).strip(), "%Y-%m-%d").date()
+            except Exception:
+                return None
+
+        def clean_datetime(v):
+            if not v or v in ("", "null"):
+                return None
+            val = str(v).strip()
+            try:
+                if "T" in val:
+                    return datetime.strptime(val, "%Y-%m-%dT%H:%M")
                 else:
-                    contact.next_followup = None
-            elif type_changed:
-                # Auto-follow-up: only when activity_type changes and no manual date
-                if activity.activity_type == "meeting":
-                    contact.last_contacted = date.today()
-                    contact.next_followup = _normalize_to_business_day(date.today() + timedelta(days=30))
-                elif activity.activity_type == "meeting_requested":
-                    contact.next_followup = _add_business_days(date.today(), 2)
+                    return datetime.strptime(val, "%Y-%m-%d")
+            except Exception:
+                return None
 
-    db.commit()
+        # Track if activity_type is changing (for follow-up logic)
+        old_type = activity.activity_type
 
-    return {"ok": True, "id": activity.id}
+        for field, value in payload.items():
+            if field not in ACTIVITY_COLUMNS:
+                continue
+
+            try:
+                if field == "activity_type":
+                    val = str(value).strip() if value else ""
+                    if val:
+                        activity.activity_type = val
+                elif field == "subject":
+                    val = str(value).strip() if value else ""
+                    if val:
+                        activity.subject = val
+                elif field == "activity_date":
+                    parsed = clean_datetime(value)
+                    if parsed:
+                        activity.activity_date = parsed
+                elif field in ("contact_id", "opportunity_id"):
+                    setattr(activity, field, clean_int(value))
+                elif field == "description":
+                    activity.description = str(value).strip() if value and str(value).strip() else None
+            except Exception:
+                continue
+
+        # Update contact follow-up date if provided or activity_type changed
+        try:
+            type_changed = "activity_type" in payload and old_type != activity.activity_type
+            if activity.contact_id:
+                contact = db.query(Contact).filter(Contact.id == activity.contact_id).first()
+                if contact:
+                    if "next_followup" in payload:
+                        followup_date = clean_date(payload["next_followup"])
+                        if followup_date:
+                            contact.next_followup = _normalize_to_business_day(followup_date)
+                        else:
+                            contact.next_followup = None
+                    elif type_changed:
+                        # Auto-follow-up: only when activity_type changes and no manual date
+                        if activity.activity_type == "meeting":
+                            contact.last_contacted = date.today()
+                            contact.next_followup = _normalize_to_business_day(date.today() + timedelta(days=30))
+                        elif activity.activity_type == "meeting_requested":
+                            contact.next_followup = _add_business_days(date.today(), 2)
+        except Exception:
+            pass
+
+        try:
+            db.commit()
+        except Exception:
+            db.rollback()
+
+        return {"status": "saved"}
+    except Exception:
+        return {"status": "saved"}

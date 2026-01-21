@@ -213,7 +213,7 @@ def get_demo_opportunities():
         "GC is pre-qualified. Strong relationship. Competitive bid with 3 other subs."
     )
     o1.created_at = datetime.utcnow() - timedelta(days=45)
-    o1.gcs = [1]
+    o1.primary_account_id = 1
     o1.related_contact_ids = [1, 2]
     o1.quick_links = ["https://triumph.example/bids/sunbelt-downtown"]
     o1.end_user_account_id = 3
@@ -241,7 +241,7 @@ def get_demo_opportunities():
     o2.next_followup = today + timedelta(days=3)
     o2.notes = "Phase 1 completed successfully. Repeat customer discount applied."
     o2.created_at = datetime.utcnow() - timedelta(days=30)
-    o2.gcs = [2]
+    o2.primary_account_id = 2
     o2.related_contact_ids = [3]
     o2.quick_links = ["https://triumph.example/bids/metro-riverside"]
     opportunities.append(o2)
@@ -268,7 +268,7 @@ def get_demo_opportunities():
     o3.next_followup = today - timedelta(days=5)  # Overdue!
     o3.notes = "Waiting on drawings. Follow up needed on timeline."
     o3.created_at = datetime.utcnow() - timedelta(days=20)
-    o3.gcs = [1]
+    o3.primary_account_id = 3
     o3.related_contact_ids = [4]
     o3.quick_links = ["https://triumph.example/bids/regional-medical"]
     opportunities.append(o3)
@@ -298,7 +298,7 @@ def get_demo_opportunities():
     o4.project_type = "Education"
     o4.notes = "Public bid. Bond funded. Site visit scheduled for next week."
     o4.created_at = datetime.utcnow() - timedelta(days=35)
-    o4.gcs = [4]
+    o4.primary_account_id = 4
     o4.related_contact_ids = [5]
     o4.quick_links = ["https://triumph.example/bids/valley-school"]
     opportunities.append(o4)
@@ -323,7 +323,7 @@ def get_demo_opportunities():
     o5.next_followup = today + timedelta(days=1)
     o5.notes = "Initial contact made. Waiting for drawings and timeline."
     o5.created_at = datetime.utcnow() - timedelta(days=12)
-    o5.gcs = [5]
+    o5.primary_account_id = 5
     o5.related_contact_ids = [6]
     o5.quick_links = []
     opportunities.append(o5)
@@ -348,7 +348,7 @@ def get_demo_opportunities():
     o6.last_contacted = today - timedelta(days=15)
     o6.notes = "Won at $180k. Project kickoff scheduled for next month."
     o6.created_at = datetime.utcnow() - timedelta(days=60)
-    o6.gcs = [1]
+    o6.primary_account_id = 1
     o6.related_contact_ids = [1]
     o6.quick_links = ["https://triumph.example/bids/sunbelt-retail-plaza"]
     opportunities.append(o6)

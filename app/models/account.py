@@ -29,10 +29,10 @@ class Account(Base):
     contacts = relationship(
         "Contact", back_populates="account", cascade="all, delete-orphan"
     )
+    # Legacy relationship - kept for migration
     opportunities = relationship(
         "Opportunity",
         back_populates="account",
-        cascade="all, delete-orphan",
         foreign_keys="Opportunity.account_id",
     )
     end_user_opportunities = relationship(
@@ -40,10 +40,16 @@ class Account(Base):
         back_populates="end_user_account",
         foreign_keys="Opportunity.end_user_account_id",
     )
+    # Multi-account relationship via junction table
+    opportunity_links = relationship(
+        "OpportunityAccount",
+        back_populates="account",
+        cascade="all, delete-orphan",
+    )
 
+    # Simplified - removed GC type
     ACCOUNT_TYPES = [
         ("end_user", "End User"),
-        ("gc", "General Contractor"),
     ]
 
     INDUSTRIES = [
@@ -91,17 +97,26 @@ class Account(Base):
 
     @property
     def total_pipeline_value(self):
+        """Calculate total pipeline value from linked opportunities."""
+        # Use opportunity_links to get all linked opportunities
         return sum(
-            opp.value or 0
-            for opp in self.opportunities
-            if opp.stage not in ["Won", "Lost"]
+            link.opportunity.value or 0
+            for link in self.opportunity_links
+            if link.opportunity.stage not in ["Won", "Lost"]
         )
 
     @property
     def open_opportunities_count(self):
+        """Count open opportunities linked to this account."""
         return len(
-            [opp for opp in self.opportunities if opp.stage not in ["Won", "Lost"]]
+            [link for link in self.opportunity_links
+             if link.opportunity.stage not in ["Won", "Lost"]]
         )
+
+    @property
+    def linked_opportunities(self):
+        """Get all opportunities linked to this account."""
+        return [link.opportunity for link in self.opportunity_links]
 
     @property
     def last_contacted(self):

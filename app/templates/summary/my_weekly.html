@@ -236,7 +236,7 @@
                                         <a href="/opportunities/{{ opp.id }}" class="text-decoration-none">
                                             {{ opp.name }}
                                         </a>
-                                        <div class="text-muted small">{{ opp.account.name }}</div>
+                                        <div class="text-muted small">{{ opp.primary_account.name if opp.primary_account else 'No Account' }}</div>
                                     </td>
                                     <td>
                                         <span class="badge badge-stage badge-{{ opp.stage|lower|replace(' ', '-') }}">
@@ -545,7 +545,7 @@
 - {{ activity.contact.full_name if activity.contact else activity.subject }} ({{ activity.contact.account.name if activity.contact and activity.contact.account else 'N/A' }}) - {{ activity.activity_date.strftime('%b %d') }}{% endfor %}</div>
 
     <div id="pipelineData">{% for opp in pipeline_changes %}
-- {{ opp.name }} ({{ opp.account.name }}) - {{ opp.stage }}{% endfor %}</div>
+- {{ opp.name }} ({{ opp.primary_account.name if opp.primary_account else 'No Account' }}) - {{ opp.stage }}{% endfor %}</div>
 
     <div id="tasksData">{% for task in tasks_completed %}
 - {{ task.title }}{% if task.opportunity %} ({{ task.opportunity.name }}){% endif %}{% endfor %}</div>

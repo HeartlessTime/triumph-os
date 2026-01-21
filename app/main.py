@@ -15,11 +15,9 @@ from app.routes import (
     contacts_router,
     opportunities_router,
     estimates_router,
-    documents_router,
     activities_router,
     tasks_router,
     guide_router,
-    # email_sync_router,  # EMAIL SYNC REMOVED - Feature disabled for MVP
     estimators_router,
     summary_router,
     today_router,
@@ -108,11 +106,9 @@ def create_app() -> FastAPI:
     app.include_router(contacts_router)
     app.include_router(opportunities_router)
     app.include_router(estimates_router)
-    app.include_router(documents_router)
     app.include_router(activities_router)
     app.include_router(tasks_router)
     app.include_router(guide_router)
-    # app.include_router(email_sync_router)  # EMAIL SYNC REMOVED - Feature disabled for MVP
     app.include_router(estimators_router)
     app.include_router(summary_router)
     app.include_router(today_router)
@@ -136,4 +132,3 @@ if __name__ == "__main__":
         port=port,
         reload=True,
     )
-  

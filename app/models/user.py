@@ -39,7 +39,12 @@ class User(Base):
     completed_tasks = relationship(
         "Task", back_populates="completed_by", foreign_keys="Task.completed_by_id"
     )
-    uploaded_documents = relationship("Document", back_populates="uploaded_by")
+    summary_suppressions = relationship(
+        "UserSummarySuppression",
+        back_populates="user",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
+    )
 
     ROLES = ["Admin", "Sales", "Estimator"]
 

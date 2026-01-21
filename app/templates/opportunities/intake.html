@@ -34,7 +34,7 @@
     </div>
     {% endif %}
 
-    <form method="post" action="/opportunities/intake" enctype="multipart/form-data">
+    <form method="post" action="/opportunities/intake">
         <!-- Hidden field for warning override -->
         {% if warnings %}
         <input type="hidden" name="confirm_warnings" value="true">
@@ -53,7 +53,7 @@
                 </div>
 
                 <div class="card mb-4">
-                    <div class="card-header">Basic Information</div>
+                    <div class="card-header">Project Details</div>
                     <div class="card-body">
                         <div class="row g-3">
                             <div class="col-md-6">
@@ -78,52 +78,55 @@
                                     <option value="Other">Other</option>
                                 </select>
                             </div>
-                            <div class="col-md-6">
-                                <label for="account_id" class="form-label">End-User / Client <span class="text-danger">*</span></label>
+
+                            <!-- Accounts Multi-Select -->
+                            <div class="col-12">
+                                <label class="form-label">Accounts <span class="text-danger">*</span></label>
                                 <div class="position-relative">
                                     <div class="input-group">
                                         <input type="text" class="form-control" id="account_search"
-                                            placeholder="Search or type to add..."
+                                            placeholder="Search accounts..."
                                             autocomplete="off">
-                                        <button class="btn btn-outline-secondary" type="button" id="addClientBtn" data-bs-toggle="modal" data-bs-target="#addClientModal">
+                                        <button class="btn btn-outline-secondary" type="button" data-bs-toggle="modal" data-bs-target="#addAccountModal">
                                             <i class="bi bi-plus-lg"></i>
                                         </button>
                                     </div>
-                                    <input type="hidden" id="account_id" name="account_id" value="{{ selected_account_id if selected_account_id else '' }}" required>
                                     <div id="account_results" class="list-group position-absolute w-100" style="z-index: 1000; display: none; max-height: 200px; overflow-y: auto;"></div>
                                 </div>
-                                <div id="selected_account" class="mt-2 small text-success" style="display: none;">
-                                    <i class="bi bi-check-circle me-1"></i><span></span>
+                                <!-- Selected Accounts displayed as pills -->
+                                <div id="selected_accounts" class="mt-2 d-flex flex-wrap gap-1"></div>
+                                <!-- Hidden inputs for selected Account IDs (dynamically added) -->
+                                <div id="account_hidden_inputs"></div>
+                                <div class="form-text">Select one or more accounts associated with this opportunity.</div>
+                            </div>
+
+                            <!-- Primary Account Selector -->
+                            <div class="col-md-6">
+                                <label for="primary_account_id" class="form-label">Primary Account <span class="text-danger">*</span></label>
+                                <select class="form-select" id="primary_account_id" name="primary_account_id" disabled>
+                                    <option value="">Select accounts first</option>
+                                </select>
+                                <div class="form-text text-muted" id="primary_account_hint">
+                                    Select accounts above first.
                                 </div>
                             </div>
+
+                            <!-- Primary Contact Selector -->
                             <div class="col-md-6">
                                 <label for="primary_contact_id" class="form-label">Primary Contact</label>
-                                <select class="form-select" id="primary_contact_id" name="primary_contact_id">
-                                    <option value="">Select Contact</option>
-                                    {% for contact in contacts %}
-                                    <option value="{{ contact.id }}">{{ contact.full_name }}</option>
-                                    {% endfor %}
-                                </select>
-                            </div>
-                            <div class="col-12">
-                                <label class="form-label">Clients (GCs / Contractors)</label>
-                                <div class="position-relative">
-                                    <div class="input-group">
-                                        <input type="text" class="form-control" id="gc_search"
-                                            placeholder="Search or type to add..."
-                                            autocomplete="off">
-                                        <button class="btn btn-outline-secondary" type="button" id="addGcClientBtn" data-bs-toggle="modal" data-bs-target="#addGcClientModal">
-                                            <i class="bi bi-plus-lg"></i>
-                                        </button>
-                                    </div>
-                                    <div id="gc_results" class="list-group position-absolute w-100" style="z-index: 1000; display: none; max-height: 200px; overflow-y: auto;"></div>
+                                <div class="input-group">
+                                    <select class="form-select" id="primary_contact_id" name="primary_contact_id" disabled>
+                                        <option value="">Select accounts first</option>
+                                    </select>
+                                    <button class="btn btn-outline-secondary" type="button" id="addContactBtn" data-bs-toggle="modal" data-bs-target="#addContactModal" disabled>
+                                        <i class="bi bi-plus-lg"></i>
+                                    </button>
                                 </div>
-                                <!-- Selected GCs displayed as pills -->
-                                <div id="selected_gcs" class="mt-2 d-flex flex-wrap gap-1"></div>
-                                <!-- Hidden inputs for selected GC IDs (dynamically added) -->
-                                <div id="gc_hidden_inputs"></div>
-                                <div class="form-text">Search and select one or more clients bidding on this project.</div>
+                                <div class="form-text text-muted" id="primary_contact_hint">
+                                    Select accounts to see available contacts.
+                                </div>
                             </div>
+
                             <div class="col-md-6">
                                 <div class="form-check mt-3">
                                     <input class="form-check-input" type="checkbox" id="rebid" name="rebid" value="true">
@@ -135,7 +138,7 @@
                 </div>
 
                 <div class="card mb-4">
-                    <div class="card-header">Bid Instructions</div>
+                    <div class="card-header">Bid Information</div>
                     <div class="card-body">
                         <div class="row g-3">
                             <div class="col-md-6">
@@ -157,14 +160,9 @@
                                 </select>
                             </div>
                             <div class="col-md-6">
-                                <label for="bid_date" class="form-label">Bid Date <span class="text-danger">*</span></label>
+                                <label for="bid_date" class="form-label">Bid Date</label>
                                 <input type="date" class="form-control" id="bid_date" name="bid_date"
                                     value="{{ form_bid_date if form_bid_date is defined else '' }}">
-                                <div class="form-check mt-2">
-                                    <input class="form-check-input" type="checkbox" id="bid_date_tbd" name="bid_date_tbd" value="true"
-                                        {% if form_bid_date_tbd is defined and form_bid_date_tbd %}checked{% endif %}>
-                                    <label class="form-check-label" for="bid_date_tbd">Bid date TBD</label>
-                                </div>
                             </div>
                             <div class="col-md-6">
                                 <label for="bid_time" class="form-label">Bid Time</label>
@@ -223,29 +221,11 @@
                 </div>
 
                 <div class="card mb-4">
-                    <div class="card-header">Plans & Documents</div>
-                    <div class="card-body">
-                        <div class="mb-3">
-                            <label for="plans" class="form-label">Upload Plans / Specs / RFP</label>
-                            <input type="file" class="form-control" id="plans" name="plans">
-                        </div>
-                        <div class="mb-3">
-                            <label for="addenda" class="form-label">Upload Addenda</label>
-                            <input type="file" class="form-control" id="addenda" name="addenda">
-                        </div>
-                        <div class="mb-3">
-                            <label for="previous_estimate_file" class="form-label">Upload Previous Estimate (optional)</label>
-                            <input type="file" class="form-control" id="previous_estimate_file" name="previous_estimate_file">
-                        </div>
-                    </div>
-                </div>
-
-                <div class="card mb-4">
                     <div class="card-header">Job Notes</div>
                     <div class="card-body">
                         <p class="text-muted small">Include project description, known risks, constraints, special notes, internal notes, etc.</p>
                         <textarea class="form-control" id="job_notes" name="job_notes" rows="5"
-                            placeholder="Project details, tight schedule, partial design, union site, GC history, owner-furnished equipment...">{{ form_job_notes if form_job_notes is defined else '' }}</textarea>
+                            placeholder="Project details, tight schedule, partial design, union site, history, owner-furnished equipment...">{{ form_job_notes if form_job_notes is defined else '' }}</textarea>
                     </div>
                 </div>
 
@@ -308,7 +288,8 @@
                         </p>
                         <ul class="small text-muted mt-2 mb-0">
                             <li>Opportunity Name</li>
-                            <li>End-User / Client</li>
+                            <li>At least one Account</li>
+                            <li>Primary Account</li>
                             <li>Bid Date (or check "TBD")</li>
                             <li>Sales Owner (defaults to you)</li>
                         </ul>
@@ -327,75 +308,78 @@
     </form>
 </div>
 
-<!-- Add New Client Modal -->
-<div class="modal fade" id="addClientModal" tabindex="-1" aria-labelledby="addClientModalLabel" aria-hidden="true">
+<!-- Add New Account Modal -->
+<div class="modal fade" id="addAccountModal" tabindex="-1" aria-labelledby="addAccountModalLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="addClientModalLabel">
-                    <i class="bi bi-building-add me-2"></i>Add New Client
+                <h5 class="modal-title" id="addAccountModalLabel">
+                    <i class="bi bi-building-add me-2"></i>Add New Account
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <div class="mb-3">
-                    <label for="new_client_name" class="form-label">Client Name <span class="text-danger">*</span></label>
-                    <input type="text" class="form-control" id="new_client_name" required>
+                    <label for="new_account_name" class="form-label">Account Name <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" id="new_account_name" required>
                 </div>
                 <div class="mb-3">
-                    <label for="new_client_email" class="form-label">Email</label>
-                    <input type="email" class="form-control" id="new_client_email">
+                    <label for="new_account_phone" class="form-label">Phone</label>
+                    <input type="tel" class="form-control" id="new_account_phone">
                 </div>
                 <div class="mb-3">
-                    <label for="new_client_phone" class="form-label">Phone</label>
-                    <input type="tel" class="form-control" id="new_client_phone">
-                </div>
-                <div class="mb-3">
-                    <label for="new_client_address" class="form-label">Address</label>
-                    <textarea class="form-control" id="new_client_address" rows="2"></textarea>
+                    <label for="new_account_address" class="form-label">Address</label>
+                    <textarea class="form-control" id="new_account_address" rows="2"></textarea>
                 </div>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-primary" id="saveNewClientBtn">
-                    <i class="bi bi-check-lg me-1"></i>Save Client
+                <button type="button" class="btn btn-primary" id="saveNewAccountBtn">
+                    <i class="bi bi-check-lg me-1"></i>Save & Add
                 </button>
             </div>
         </div>
     </div>
 </div>
-<!-- Add New GC/Client Modal (for GC multi-select) -->
-<div class="modal fade" id="addGcClientModal" tabindex="-1" aria-labelledby="addGcClientModalLabel" aria-hidden="true">
+
+<!-- Add New Contact Modal -->
+<div class="modal fade" id="addContactModal" tabindex="-1" aria-labelledby="addContactModalLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="addGcClientModalLabel">
-                    <i class="bi bi-building-add me-2"></i>Add New GC / Client
+                <h5 class="modal-title" id="addContactModalLabel">
+                    <i class="bi bi-person-add me-2"></i>Add New Contact
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <div class="mb-3">
-                    <label for="new_gc_name" class="form-label">Client Name <span class="text-danger">*</span></label>
-                    <input type="text" class="form-control" id="new_gc_name" required>
+                    <label for="new_contact_account_id" class="form-label">Account <span class="text-danger">*</span></label>
+                    <select class="form-select" id="new_contact_account_id" required>
+                        <option value="">Select Account</option>
+                    </select>
                 </div>
                 <div class="mb-3">
-                    <label for="new_gc_email" class="form-label">Email</label>
-                    <input type="email" class="form-control" id="new_gc_email">
+                    <label for="new_contact_first_name" class="form-label">First Name <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" id="new_contact_first_name" required>
                 </div>
                 <div class="mb-3">
-                    <label for="new_gc_phone" class="form-label">Phone</label>
-                    <input type="tel" class="form-control" id="new_gc_phone">
+                    <label for="new_contact_last_name" class="form-label">Last Name</label>
+                    <input type="text" class="form-control" id="new_contact_last_name">
                 </div>
                 <div class="mb-3">
-                    <label for="new_gc_address" class="form-label">Address</label>
-                    <textarea class="form-control" id="new_gc_address" rows="2"></textarea>
+                    <label for="new_contact_email" class="form-label">Email</label>
+                    <input type="email" class="form-control" id="new_contact_email">
+                </div>
+                <div class="mb-3">
+                    <label for="new_contact_phone" class="form-label">Phone</label>
+                    <input type="tel" class="form-control" id="new_contact_phone">
                 </div>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-primary" id="saveNewGcBtn">
-                    <i class="bi bi-check-lg me-1"></i>Save & Add
+                <button type="button" class="btn btn-primary" id="saveNewContactBtn">
+                    <i class="bi bi-check-lg me-1"></i>Save Contact
                 </button>
             </div>
         </div>
@@ -416,146 +400,28 @@
     ];
 
     // ========================================
-    // END USER / CLIENT SELECTOR (single-select)
+    // ACCOUNTS MULTI-SELECT
     // ========================================
     const accountSearch = document.getElementById('account_search');
-    const accountIdInput = document.getElementById('account_id');
     const accountResults = document.getElementById('account_results');
-    const selectedAccountDiv = document.getElementById('selected_account');
-    const contactSelect = document.getElementById('primary_contact_id');
+    const selectedAccountsDiv = document.getElementById('selected_accounts');
+    const accountHiddenInputs = document.getElementById('account_hidden_inputs');
+    const primaryAccountSelect = document.getElementById('primary_account_id');
+    const primaryAccountHint = document.getElementById('primary_account_hint');
+    const primaryContactSelect = document.getElementById('primary_contact_id');
+    const primaryContactHint = document.getElementById('primary_contact_hint');
+    const addContactBtn = document.getElementById('addContactBtn');
+    const newContactAccountSelect = document.getElementById('new_contact_account_id');
 
-    // Pre-populate if account already selected
-    {% if selected_account_id %}
-    const preselected = accounts.find(a => a.id === {{ selected_account_id }});
-    if (preselected) {
-        accountSearch.value = preselected.name;
-        selectedAccountDiv.querySelector('span').textContent = preselected.name;
-        selectedAccountDiv.style.display = 'block';
-    }
-    {% endif %}
+    // Track selected Account IDs
+    const selectedAccountIds = new Set();
 
-    // Search functionality for End User
-    accountSearch.addEventListener('input', function() {
-        const query = this.value.toLowerCase().trim();
-        if (query.length < 1) {
-            accountResults.style.display = 'none';
-            return;
-        }
+    // Render selected Accounts as pills
+    function renderSelectedAccounts() {
+        selectedAccountsDiv.innerHTML = '';
+        accountHiddenInputs.innerHTML = '';
 
-        const matches = accounts.filter(a => a.name.toLowerCase().includes(query)).slice(0, 10);
-
-        if (matches.length === 0) {
-            accountResults.innerHTML = '<div class="list-group-item text-muted">No matches found</div>';
-        } else {
-            accountResults.innerHTML = matches.map(a =>
-                `<button type="button" class="list-group-item list-group-item-action" data-id="${a.id}" data-name="${a.name}">${a.name}</button>`
-            ).join('');
-        }
-        accountResults.style.display = 'block';
-    });
-
-    // Select account from dropdown
-    accountResults.addEventListener('click', function(e) {
-        const item = e.target.closest('[data-id]');
-        if (item) {
-            const id = item.dataset.id;
-            const name = item.dataset.name;
-            accountIdInput.value = id;
-            accountSearch.value = name;
-            selectedAccountDiv.querySelector('span').textContent = name;
-            selectedAccountDiv.style.display = 'block';
-            accountResults.style.display = 'none';
-
-            // Load contacts for this account
-            loadContactsForAccount(id);
-        }
-    });
-
-    // Load contacts for selected account
-    async function loadContactsForAccount(accountId) {
-        try {
-            const response = await fetch(`/accounts/api/${accountId}/contacts`);
-            if (response.ok) {
-                const contacts = await response.json();
-                contactSelect.innerHTML = '<option value="">Select Contact</option>';
-                contacts.forEach(c => {
-                    const option = document.createElement('option');
-                    option.value = c.id;
-                    option.textContent = c.full_name;
-                    contactSelect.appendChild(option);
-                });
-            }
-        } catch (err) {
-            console.error('Failed to load contacts:', err);
-        }
-    }
-
-    // Save new client (End User modal)
-    document.getElementById('saveNewClientBtn').addEventListener('click', async function() {
-        const name = document.getElementById('new_client_name').value.trim();
-        const email = document.getElementById('new_client_email').value.trim();
-        const phone = document.getElementById('new_client_phone').value.trim();
-        const address = document.getElementById('new_client_address').value.trim();
-
-        if (!name) {
-            alert('Client name is required');
-            return;
-        }
-
-        try {
-            const response = await fetch('/accounts/api/quick-create', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name, email, phone, address })
-            });
-
-            if (response.ok) {
-                const newAccount = await response.json();
-
-                // Add to shared accounts list
-                accounts.push({ id: newAccount.id, name: newAccount.name });
-
-                // Select the new account as End User
-                accountIdInput.value = newAccount.id;
-                accountSearch.value = newAccount.name;
-                selectedAccountDiv.querySelector('span').textContent = newAccount.name;
-                selectedAccountDiv.style.display = 'block';
-
-                // Close modal
-                bootstrap.Modal.getInstance(document.getElementById('addClientModal')).hide();
-
-                // Clear form
-                document.getElementById('new_client_name').value = '';
-                document.getElementById('new_client_email').value = '';
-                document.getElementById('new_client_phone').value = '';
-                document.getElementById('new_client_address').value = '';
-            } else {
-                const error = await response.json();
-                alert('Error: ' + (error.detail || 'Failed to create client'));
-            }
-        } catch (err) {
-            console.error('Failed to create client:', err);
-            alert('Failed to create client');
-        }
-    });
-
-    // ========================================
-    // GC / CONTRACTORS SELECTOR (multi-select)
-    // ========================================
-    const gcSearch = document.getElementById('gc_search');
-    const gcResults = document.getElementById('gc_results');
-    const selectedGcsDiv = document.getElementById('selected_gcs');
-    const gcHiddenInputs = document.getElementById('gc_hidden_inputs');
-
-    // Track selected GC IDs
-    const selectedGcIds = new Set();
-
-    // Render selected GCs as pills
-    function renderSelectedGcs() {
-        selectedGcsDiv.innerHTML = '';
-        gcHiddenInputs.innerHTML = '';
-
-        selectedGcIds.forEach(id => {
+        selectedAccountIds.forEach(id => {
             const account = accounts.find(a => a.id === id);
             if (account) {
                 // Create pill
@@ -563,87 +429,193 @@
                 pill.className = 'badge bg-primary d-inline-flex align-items-center gap-1';
                 pill.innerHTML = `
                     ${account.name}
-                    <button type="button" class="btn-close btn-close-white" style="font-size: 0.6rem;" data-gc-id="${id}" aria-label="Remove"></button>
+                    <button type="button" class="btn-close btn-close-white" style="font-size: 0.6rem;" data-account-id="${id}" aria-label="Remove"></button>
                 `;
-                selectedGcsDiv.appendChild(pill);
+                selectedAccountsDiv.appendChild(pill);
 
                 // Create hidden input
                 const hidden = document.createElement('input');
                 hidden.type = 'hidden';
-                hidden.name = 'gc_ids';
+                hidden.name = 'account_ids';
                 hidden.value = id;
-                gcHiddenInputs.appendChild(hidden);
+                accountHiddenInputs.appendChild(hidden);
+            }
+        });
+
+        // Update Primary Account dropdown
+        updatePrimaryAccountOptions();
+        // Update Primary Contact dropdown
+        updatePrimaryContactOptions();
+        // Update Add Contact modal account dropdown
+        updateContactModalAccounts();
+    }
+
+    // Update Primary Account dropdown with selected accounts
+    function updatePrimaryAccountOptions() {
+        const currentValue = primaryAccountSelect.value;
+        primaryAccountSelect.innerHTML = '';
+
+        if (selectedAccountIds.size === 0) {
+            primaryAccountSelect.innerHTML = '<option value="">Select accounts first</option>';
+            primaryAccountSelect.disabled = true;
+            primaryAccountHint.textContent = 'Select accounts above first.';
+            primaryAccountHint.classList.remove('d-none');
+            return;
+        }
+
+        primaryAccountSelect.innerHTML = '<option value="">Select Primary Account</option>';
+        selectedAccountIds.forEach(id => {
+            const account = accounts.find(a => a.id === id);
+            if (account) {
+                const option = document.createElement('option');
+                option.value = account.id;
+                option.textContent = account.name;
+                if (account.id.toString() === currentValue) {
+                    option.selected = true;
+                }
+                primaryAccountSelect.appendChild(option);
+            }
+        });
+
+        primaryAccountSelect.disabled = false;
+        primaryAccountHint.classList.add('d-none');
+
+        // Auto-select if only one account
+        if (selectedAccountIds.size === 1) {
+            primaryAccountSelect.value = Array.from(selectedAccountIds)[0];
+        }
+    }
+
+    // Update Primary Contact dropdown from ALL selected accounts
+    async function updatePrimaryContactOptions() {
+        const accountIds = Array.from(selectedAccountIds);
+
+        if (accountIds.length === 0) {
+            primaryContactSelect.innerHTML = '<option value="">Select accounts first</option>';
+            primaryContactSelect.disabled = true;
+            addContactBtn.disabled = true;
+            primaryContactHint.textContent = 'Select accounts to see available contacts.';
+            primaryContactHint.classList.remove('d-none');
+            return;
+        }
+
+        // Fetch contacts for all selected accounts
+        try {
+            const response = await fetch('/accounts/api/contacts-for-accounts?account_ids=' + accountIds.join(','));
+            if (!response.ok) {
+                throw new Error('Failed to fetch contacts');
+            }
+
+            const contacts = await response.json();
+            const currentValue = primaryContactSelect.value;
+
+            primaryContactSelect.innerHTML = '<option value="">Select Contact</option>';
+
+            if (contacts.length === 0) {
+                primaryContactHint.textContent = 'No contacts found for selected accounts.';
+                primaryContactHint.classList.remove('d-none');
+            } else {
+                primaryContactHint.classList.add('d-none');
+                contacts.forEach(c => {
+                    const option = document.createElement('option');
+                    option.value = c.id;
+                    option.textContent = c.display_name;
+                    if (c.id.toString() === currentValue) {
+                        option.selected = true;
+                    }
+                    primaryContactSelect.appendChild(option);
+                });
+            }
+
+            primaryContactSelect.disabled = false;
+            addContactBtn.disabled = false;
+
+        } catch (err) {
+            console.error('Failed to load contacts:', err);
+            primaryContactHint.textContent = 'Error loading contacts.';
+            primaryContactHint.classList.remove('d-none');
+        }
+    }
+
+    // Update Add Contact modal account dropdown
+    function updateContactModalAccounts() {
+        newContactAccountSelect.innerHTML = '<option value="">Select Account</option>';
+        selectedAccountIds.forEach(id => {
+            const account = accounts.find(a => a.id === id);
+            if (account) {
+                const option = document.createElement('option');
+                option.value = account.id;
+                option.textContent = account.name;
+                newContactAccountSelect.appendChild(option);
             }
         });
     }
 
-    // Add GC to selection
-    function addGc(id, name) {
-        if (!selectedGcIds.has(id)) {
-            selectedGcIds.add(id);
-            renderSelectedGcs();
+    // Add Account to selection
+    function addAccount(id) {
+        if (!selectedAccountIds.has(id)) {
+            selectedAccountIds.add(id);
+            renderSelectedAccounts();
         }
-        gcSearch.value = '';
-        gcResults.style.display = 'none';
+        accountSearch.value = '';
+        accountResults.style.display = 'none';
     }
 
-    // Remove GC from selection
-    function removeGc(id) {
-        selectedGcIds.delete(id);
-        renderSelectedGcs();
+    // Remove Account from selection
+    function removeAccount(id) {
+        selectedAccountIds.delete(id);
+        renderSelectedAccounts();
     }
 
-    // Search functionality for GCs
-    gcSearch.addEventListener('input', function() {
+    // Search functionality for Accounts
+    accountSearch.addEventListener('input', function() {
         const query = this.value.toLowerCase().trim();
         if (query.length < 1) {
-            gcResults.style.display = 'none';
+            accountResults.style.display = 'none';
             return;
         }
 
         // Filter accounts not already selected
         const matches = accounts
-            .filter(a => a.name.toLowerCase().includes(query) && !selectedGcIds.has(a.id))
+            .filter(a => a.name.toLowerCase().includes(query) && !selectedAccountIds.has(a.id))
             .slice(0, 10);
 
         if (matches.length === 0) {
-            gcResults.innerHTML = '<div class="list-group-item text-muted">No matches found</div>';
+            accountResults.innerHTML = '<div class="list-group-item text-muted">No matches found</div>';
         } else {
-            gcResults.innerHTML = matches.map(a =>
-                `<button type="button" class="list-group-item list-group-item-action" data-gc-select-id="${a.id}" data-gc-select-name="${a.name}">${a.name}</button>`
+            accountResults.innerHTML = matches.map(a =>
+                `<button type="button" class="list-group-item list-group-item-action" data-account-select-id="${a.id}">${a.name}</button>`
             ).join('');
         }
-        gcResults.style.display = 'block';
+        accountResults.style.display = 'block';
     });
 
-    // Select GC from dropdown
-    gcResults.addEventListener('click', function(e) {
-        const item = e.target.closest('[data-gc-select-id]');
+    // Select Account from dropdown
+    accountResults.addEventListener('click', function(e) {
+        const item = e.target.closest('[data-account-select-id]');
         if (item) {
-            const id = parseInt(item.dataset.gcSelectId, 10);
-            const name = item.dataset.gcSelectName;
-            addGc(id, name);
+            const id = parseInt(item.dataset.accountSelectId, 10);
+            addAccount(id);
         }
     });
 
-    // Remove GC pill click handler
-    selectedGcsDiv.addEventListener('click', function(e) {
-        const closeBtn = e.target.closest('[data-gc-id]');
+    // Remove Account pill click handler
+    selectedAccountsDiv.addEventListener('click', function(e) {
+        const closeBtn = e.target.closest('[data-account-id]');
         if (closeBtn) {
-            const id = parseInt(closeBtn.dataset.gcId, 10);
-            removeGc(id);
+            const id = parseInt(closeBtn.dataset.accountId, 10);
+            removeAccount(id);
         }
     });
 
-    // Save new GC client
-    document.getElementById('saveNewGcBtn').addEventListener('click', async function() {
-        const name = document.getElementById('new_gc_name').value.trim();
-        const email = document.getElementById('new_gc_email').value.trim();
-        const phone = document.getElementById('new_gc_phone').value.trim();
-        const address = document.getElementById('new_gc_address').value.trim();
+    // Save new Account
+    document.getElementById('saveNewAccountBtn').addEventListener('click', async function() {
+        const name = document.getElementById('new_account_name').value.trim();
+        const phone = document.getElementById('new_account_phone').value.trim();
+        const address = document.getElementById('new_account_address').value.trim();
 
         if (!name) {
-            alert('Client name is required');
+            alert('Account name is required');
             return;
         }
 
@@ -651,7 +623,7 @@
             const response = await fetch('/accounts/api/quick-create', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name, email, phone, address })
+                body: JSON.stringify({ name, phone, address })
             });
 
             if (response.ok) {
@@ -660,24 +632,85 @@
                 // Add to shared accounts list
                 accounts.push({ id: newAccount.id, name: newAccount.name });
 
-                // Add to GC selection
-                addGc(newAccount.id, newAccount.name);
+                // Add to selection
+                addAccount(newAccount.id);
 
                 // Close modal
-                bootstrap.Modal.getInstance(document.getElementById('addGcClientModal')).hide();
+                bootstrap.Modal.getInstance(document.getElementById('addAccountModal')).hide();
 
                 // Clear form
-                document.getElementById('new_gc_name').value = '';
-                document.getElementById('new_gc_email').value = '';
-                document.getElementById('new_gc_phone').value = '';
-                document.getElementById('new_gc_address').value = '';
+                document.getElementById('new_account_name').value = '';
+                document.getElementById('new_account_phone').value = '';
+                document.getElementById('new_account_address').value = '';
             } else {
                 const error = await response.json();
-                alert('Error: ' + (error.detail || 'Failed to create client'));
+                alert('Error: ' + (error.detail || 'Failed to create account'));
             }
         } catch (err) {
-            console.error('Failed to create client:', err);
-            alert('Failed to create client');
+            console.error('Failed to create account:', err);
+            alert('Failed to create account');
+        }
+    });
+
+    // Save new Contact
+    document.getElementById('saveNewContactBtn').addEventListener('click', async function() {
+        const accountId = document.getElementById('new_contact_account_id').value;
+        const firstName = document.getElementById('new_contact_first_name').value.trim();
+        const lastName = document.getElementById('new_contact_last_name').value.trim();
+        const email = document.getElementById('new_contact_email').value.trim();
+        const phone = document.getElementById('new_contact_phone').value.trim();
+
+        if (!accountId) {
+            alert('Account is required');
+            return;
+        }
+        if (!firstName) {
+            alert('First name is required');
+            return;
+        }
+        if (!email && !phone) {
+            alert('Email or phone is required');
+            return;
+        }
+
+        try {
+            const response = await fetch('/contacts/api/quick-create', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    account_id: parseInt(accountId, 10),
+                    first_name: firstName,
+                    last_name: lastName,
+                    email: email,
+                    phone: phone
+                })
+            });
+
+            if (response.ok) {
+                const newContact = await response.json();
+
+                // Close modal
+                bootstrap.Modal.getInstance(document.getElementById('addContactModal')).hide();
+
+                // Clear form
+                document.getElementById('new_contact_account_id').value = '';
+                document.getElementById('new_contact_first_name').value = '';
+                document.getElementById('new_contact_last_name').value = '';
+                document.getElementById('new_contact_email').value = '';
+                document.getElementById('new_contact_phone').value = '';
+
+                // Refresh contacts dropdown
+                await updatePrimaryContactOptions();
+
+                // Select the new contact
+                primaryContactSelect.value = newContact.id;
+            } else {
+                const error = await response.json();
+                alert('Error: ' + (error.detail || 'Failed to create contact'));
+            }
+        } catch (err) {
+            console.error('Failed to create contact:', err);
+            alert('Failed to create contact');
         }
     });
 
@@ -685,15 +718,13 @@
     // SHARED: Hide dropdowns on outside click
     // ========================================
     document.addEventListener('click', function(e) {
-        // End User dropdown
         if (!accountSearch.contains(e.target) && !accountResults.contains(e.target)) {
             accountResults.style.display = 'none';
         }
-        // GC dropdown
-        if (!gcSearch.contains(e.target) && !gcResults.contains(e.target)) {
-            gcResults.style.display = 'none';
-        }
     });
+
+    // Initialize
+    renderSelectedAccounts();
 })();
 </script>
 {% endblock %}

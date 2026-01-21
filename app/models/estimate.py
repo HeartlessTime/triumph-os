@@ -52,7 +52,6 @@ class Estimate(Base):
         cascade="all, delete-orphan",
         order_by="EstimateLineItem.sort_order",
     )
-    documents = relationship("Document", back_populates="estimate")
 
     STATUSES = ["Draft", "Review", "Approved", "Sent", "Revised"]
 

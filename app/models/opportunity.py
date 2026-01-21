@@ -37,18 +37,24 @@ class Opportunity(Base):
     __tablename__ = "opportunities"
 
     id = Column(Integer, primary_key=True)
+    # Primary account - required, must be one of the linked accounts
+    primary_account_id = Column(
+        Integer,
+        ForeignKey("accounts.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
+    # Legacy account_id - kept for migration, will be deprecated
     account_id = Column(
         Integer,
         ForeignKey("accounts.id", ondelete="CASCADE"),
-        nullable=False,
+        nullable=True,
         index=True,
     )
     name = Column(String(255), nullable=False)
     description = Column(Text, nullable=True)
     stage = Column(String(50), nullable=False, default="Prospecting", index=True)
-    # Make probability optional in DB; keep default for legacy rows
     probability = Column(Integer, nullable=True, default=10)
-    # Removed overall GC contract `value` (stored elsewhere); keep lv + hdd split
     bid_date = Column(Date, nullable=True, index=True)
     close_date = Column(Date, nullable=True)
     last_contacted = Column(Date, nullable=True)
@@ -74,8 +80,6 @@ class Opportunity(Base):
     primary_contact_id = Column(Integer, ForeignKey("contacts.id"), nullable=True)
     source = Column(String(100), nullable=True)
     notes = Column(Text, nullable=True)
-    # General contractors bidding on this project (store list of account ids)
-    gcs = Column(JSON, nullable=True)
     # Related contact ids (list of contact ids)
     related_contact_ids = Column(JSON, nullable=True)
     # Quick links (list of url strings or objects)
@@ -97,6 +101,12 @@ class Opportunity(Base):
     )
 
     # Relationships
+    primary_account = relationship(
+        "Account",
+        foreign_keys=[primary_account_id],
+        backref="primary_opportunities",
+    )
+    # Legacy relationship - kept for migration
     account = relationship(
         "Account", back_populates="opportunities", foreign_keys=[account_id]
     )
@@ -104,6 +114,12 @@ class Opportunity(Base):
         "Account",
         back_populates="end_user_opportunities",
         foreign_keys=[end_user_account_id],
+    )
+    # Multi-account relationship via junction table
+    account_links = relationship(
+        "OpportunityAccount",
+        back_populates="opportunity",
+        cascade="all, delete-orphan",
     )
     owner = relationship(
         "User", back_populates="owned_opportunities", foreign_keys=[owner_id]
@@ -132,11 +148,14 @@ class Opportunity(Base):
     tasks = relationship(
         "Task", back_populates="opportunity", cascade="all, delete-orphan"
     )
-    documents = relationship(
-        "Document", back_populates="opportunity", cascade="all, delete-orphan"
-    )
     vendor_quote_requests = relationship(
         "VendorQuoteRequest", back_populates="opportunity", cascade="all, delete-orphan"
+    )
+    summary_suppressions = relationship(
+        "UserSummarySuppression",
+        back_populates="opportunity",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
     )
 
     STAGES = [
@@ -170,7 +189,7 @@ class Opportunity(Base):
     ]
 
     STALLED_REASONS = [
-        "Waiting on GC",
+        "Waiting on Client",
         "Waiting on bid results",
         "Waiting on drawings",
         "Budget unclear",
@@ -185,6 +204,16 @@ class Opportunity(Base):
         {"item": "Labor estimate complete", "done": False},
         {"item": "Management review", "done": False},
     ]
+
+    @property
+    def accounts(self):
+        """Return list of accounts for this opportunity."""
+        return [link.account for link in self.account_links]
+
+    @property
+    def account_ids(self):
+        """Return list of account IDs for this opportunity."""
+        return [link.account_id for link in self.account_links]
 
     @property
     def scopes(self):

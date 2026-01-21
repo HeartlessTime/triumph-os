@@ -13,7 +13,7 @@
             </ol>
         </nav>
         <h1>New Estimate</h1>
-        <p class="text-muted">{{ opportunity.name }} — {{ opportunity.account.name }}</p>
+        <p class="text-muted">{{ opportunity.name }} — {{ opportunity.primary_account.name if opportunity.primary_account else 'No Account' }}</p>
     </div>
     
     <div class="row">

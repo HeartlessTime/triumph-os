@@ -80,8 +80,8 @@
                                         <a href="/opportunities/{{ activity.opportunity.id }}" class="text-decoration-none">
                                             {{ activity.opportunity.name }}
                                         </a>
-                                        {% if activity.opportunity.account %}
-                                        <span class="text-muted">@ {{ activity.opportunity.account.name }}</span>
+                                        {% if activity.opportunity.primary_account %}
+                                        <span class="text-muted">@ {{ activity.opportunity.primary_account.name }}</span>
                                         {% endif %}
                                     </div>
                                     {% endif %}

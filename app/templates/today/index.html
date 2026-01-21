@@ -28,7 +28,7 @@
                                     <a href="/opportunities/{{ opp.id }}" class="text-decoration-none fw-medium">
                                         {{ opp.name }}
                                     </a>
-                                    <div class="text-muted small">{{ opp.account.name }}</div>
+                                    <div class="text-muted small">{{ opp.primary_account.name if opp.primary_account else 'No Account' }}</div>
                                 </div>
                                 <span class="badge {% if opp.next_followup < today %}bg-danger{% else %}bg-warning text-dark{% endif %}">
                                     {% if opp.next_followup < today %}
@@ -199,7 +199,7 @@
                                     <a href="/opportunities/{{ opp.id }}" class="text-decoration-none fw-medium">
                                         {{ opp.name }}
                                     </a>
-                                    <div class="text-muted small">{{ opp.account.name }}</div>
+                                    <div class="text-muted small">{{ opp.primary_account.name if opp.primary_account else 'No Account' }}</div>
                                 </div>
                                 <div class="text-end">
                                     <span class="badge {% if opp.bid_date == today %}bg-danger{% elif opp.days_until_bid <= 3 %}bg-warning text-dark{% else %}bg-info{% endif %}">

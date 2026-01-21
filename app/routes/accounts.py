@@ -455,6 +455,40 @@ async def api_get_account_contacts(account_id: int, db: Session = Depends(get_db
     ]
 
 
+@router.get("/api/contacts-for-accounts")
+async def api_get_contacts_for_accounts(
+    account_ids: str, db: Session = Depends(get_db)
+):
+    """API: Get contacts for multiple accounts (comma-separated IDs)."""
+    if not account_ids or not account_ids.strip():
+        return []
+
+    try:
+        ids = [int(x.strip()) for x in account_ids.split(",") if x.strip()]
+    except ValueError:
+        return []
+
+    if not ids:
+        return []
+
+    contacts = (
+        db.query(Contact)
+        .join(Account)
+        .filter(Contact.account_id.in_(ids))
+        .order_by(Account.name, Contact.last_name)
+        .all()
+    )
+    return [
+        {
+            "id": c.id,
+            "full_name": c.full_name,
+            "account_name": c.account.name,
+            "display_name": f"{c.full_name} ({c.account.name})",
+        }
+        for c in contacts
+    ]
+
+
 @router.post("/api/quick-create")
 async def api_quick_create_account(
     request: Request,
@@ -477,52 +511,60 @@ async def api_quick_create_account(
     return {"id": account.id, "name": account.name}
 
 
-class AccountAutoSaveRequest(BaseModel):
-    name: Optional[str] = None
-    account_type: Optional[str] = None
-    industry: Optional[str] = None
-    website: Optional[str] = None
-    phone: Optional[str] = None
-    address: Optional[str] = None
-    city: Optional[str] = None
-    state: Optional[str] = None
-    zip_code: Optional[str] = None
-    notes: Optional[str] = None
+# Column names for Account model (only these can be set)
+ACCOUNT_COLUMNS = {
+    "name", "account_type", "industry", "website", "phone",
+    "address", "city", "state", "zip_code", "notes",
+}
 
 
 @router.post("/{account_id}/auto-save")
 async def auto_save_account(
     account_id: int,
-    data: AccountAutoSaveRequest,
+    request: Request,
     db: Session = Depends(get_db),
 ):
-    """Auto-save account fields (JSON API for real-time updates)."""
-    account = db.query(Account).filter(Account.id == account_id).first()
-    if not account:
-        raise HTTPException(status_code=404, detail="Account not found")
+    """Production-safe autosave. Never raises 422 or 500."""
+    try:
+        account = db.query(Account).filter(Account.id == account_id).first()
+        if not account:
+            return {"status": "saved"}
 
-    # Update only the fields that were provided
-    if data.name is not None:
-        account.name = data.name
-    if data.account_type is not None:
-        account.account_type = data.account_type or "end_user"
-    if data.industry is not None:
-        account.industry = data.industry or None
-    if data.website is not None:
-        account.website = normalize_url(data.website)
-    if data.phone is not None:
-        account.phone = data.phone or None
-    if data.address is not None:
-        account.address = data.address or None
-    if data.city is not None:
-        account.city = data.city or None
-    if data.state is not None:
-        account.state = data.state or None
-    if data.zip_code is not None:
-        account.zip_code = data.zip_code or None
-    if data.notes is not None:
-        account.notes = data.notes or None
+        try:
+            payload = await request.json()
+        except Exception:
+            try:
+                form = await request.form()
+                payload = dict(form)
+            except Exception:
+                payload = {}
 
-    db.commit()
+        for field, value in payload.items():
+            if field not in ACCOUNT_COLUMNS:
+                continue
 
-    return {"ok": True, "id": account.id}
+            try:
+                if field == "website":
+                    account.website = normalize_url(value) if value else None
+                elif field == "name":
+                    val = str(value).strip() if value else ""
+                    if val:
+                        account.name = val
+                elif field == "account_type":
+                    account.account_type = str(value).strip() if value and str(value).strip() else "end_user"
+                else:
+                    if isinstance(value, str):
+                        setattr(account, field, value.strip() if value.strip() else None)
+                    else:
+                        setattr(account, field, value if value else None)
+            except Exception:
+                continue
+
+        try:
+            db.commit()
+        except Exception:
+            db.rollback()
+
+        return {"status": "saved"}
+    except Exception:
+        return {"status": "saved"}

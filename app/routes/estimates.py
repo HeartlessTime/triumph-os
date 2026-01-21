@@ -6,7 +6,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy.orm import Session
 
 from app.database import get_db
-from app.models import Opportunity, Estimate, EstimateLineItem, Document
+from app.models import Opportunity, Estimate, EstimateLineItem
 from app.services.estimate import (
     recalculate_estimate,
     get_next_version,
@@ -300,23 +300,6 @@ async def generate_proposal(
     generate_proposal_pdf(
         estimate=estimate, opportunity=opportunity, output_path=file_path
     )
-
-    # Create document record
-    file_size = os.path.getsize(file_path)
-
-    document = Document(
-        opportunity_id=opportunity.id,
-        estimate_id=estimate.id,
-        name=f"Proposal v{estimate.version}",
-        original_filename=filename,
-        file_path=file_path,
-        file_size=file_size,
-        mime_type="application/pdf",
-        document_type="proposal",
-    )
-
-    db.add(document)
-    db.commit()
 
     return RedirectResponse(url=f"/opportunities/{opportunity.id}", status_code=303)
 
