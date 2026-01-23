@@ -488,12 +488,10 @@
                     <table class="dense-table">
                         <tbody>
                             {% for activity in meetings_pending %}
-                            <tr>
+                            <tr data-href="/activities/{{ activity.id }}/edit?from=/">
                                 <td style="width: 45%;">
-                                    <a href="/contacts/{{ activity.contact.id }}" class="row-link">
-                                        <span class="entity-name">{{ activity.contact.full_name }}</span>
-                                        <div class="entity-sub">{{ activity.contact.account.name if activity.contact.account else '' }}</div>
-                                    </a>
+                                    <span class="entity-name">{{ activity.contact.full_name }}</span>
+                                    <div class="entity-sub">{{ activity.contact.account.name if activity.contact.account else '' }}</div>
                                     {% if activity.description %}
                                     <div class="entity-sub text-truncate" style="max-width: 250px; font-style: italic;">{{ activity.description[:80] }}{% if activity.description|length > 80 %}...{% endif %}</div>
                                     {% endif %}
@@ -510,7 +508,7 @@
                                             title="Mark as Meeting Occurred">
                                         <i class="bi bi-check-lg me-1"></i>Met
                                     </button>
-                                    <a href="/activities/{{ activity.id }}/edit" class="btn btn-action btn-view"><i class="bi bi-pencil"></i></a>
+                                    <a href="/activities/{{ activity.id }}/edit?from=/" class="btn btn-action btn-view"><i class="bi bi-pencil"></i></a>
                                 </td>
                             </tr>
                             {% endfor %}
@@ -524,7 +522,7 @@
                     <table class="dense-table">
                         <tbody>
                             {% for activity in meetings_completed %}
-                            <tr>
+                            <tr data-href="/activities/{{ activity.id }}/edit?from=/">
                                 <td style="width: 45%;">
                                     <span class="entity-name">{{ activity.contact.full_name if activity.contact else activity.subject }}</span>
                                     <div class="entity-sub">{{ activity.contact.account.name if activity.contact and activity.contact.account else '' }}</div>
@@ -538,7 +536,7 @@
                                     </span>
                                 </td>
                                 <td class="text-end">
-                                    <a href="/activities/{{ activity.id }}/edit" class="btn btn-action btn-view"><i class="bi bi-eye"></i></a>
+                                    <a href="/activities/{{ activity.id }}/edit?from=/" class="btn btn-action btn-view"><i class="bi bi-eye"></i></a>
                                 </td>
                             </tr>
                             {% endfor %}
