@@ -208,13 +208,23 @@ def get_executive_summary(
     # ----------------------------
     # Return the actual Activity records so each row has a real ID for editing.
     # Previously returned deduplicated Contact objects which had no Activity ID.
-    outreach_types = ["call", "email", "site_visit", "other"]  # Excludes "meeting" (shown separately)
+    # Site visits are now shown in their own section
+    outreach_types = ["call", "email", "other"]  # Excludes "meeting" and "site_visit" (shown separately)
     outreach_activities = [
         a for a in activities_logged
         if a.activity_type in outreach_types and a.contact_id is not None
     ]
     # Sort by activity_date descending (most recent first)
     outreach_activities.sort(key=lambda a: a.activity_date, reverse=True)
+
+    # ----------------------------
+    # SITE VISITS (separate section)
+    # ----------------------------
+    site_visits = [
+        a for a in activities_logged
+        if a.activity_type == "site_visit"
+    ]
+    site_visits.sort(key=lambda a: a.activity_date, reverse=True)
 
     # ----------------------------
     # PIPELINE CHANGES (from activities)
@@ -254,8 +264,10 @@ def get_executive_summary(
         "activities_logged_count": activities_logged_count,
         "meetings_count": meetings_count,
         "outreach_count": len(outreach_activities),
+        "site_visits_count": len(site_visits),
         # Lists
         "outreach_activities": outreach_activities,  # Activity records (editable)
+        "site_visits": site_visits,  # Site visit activities (separate section)
         "pipeline_changes": pipeline_changes,
         "tasks_completed": tasks_completed,
         "new_accounts": new_accounts,

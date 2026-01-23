@@ -42,6 +42,28 @@
     .activity-item[data-href]:hover {
         background-color: rgba(0, 123, 255, 0.08);
     }
+    /* Pastel section header backgrounds */
+    .section--summary .tos-section-header {
+        background: #f5f3ff;  /* light purple */
+    }
+    .section--outreach .tos-section-header {
+        background: #fef7f0;  /* warm peach */
+    }
+    .section--pipeline .tos-section-header {
+        background: #fef0f7;  /* soft pink */
+    }
+    .section--tasks .tos-section-header {
+        background: #f0fef4;  /* light green */
+    }
+    .section--site-visits .tos-section-header {
+        background: #fff7ed;  /* soft orange */
+    }
+    .section--activity .tos-section-header {
+        background: #f0f7fe;  /* soft blue */
+    }
+    .section--notes .tos-section-header {
+        background: #fefce8;  /* pale yellow */
+    }
 </style>
 {% endblock %}
 
@@ -136,8 +158,8 @@
                                     <a href="/contacts/{{ activity.contact.id }}" class="tos-row-link tos-entity-name">
                                         {{ activity.contact.full_name }}
                                     </a>
-                                    {% if activity.contact.title %}
-                                    <div class="tos-entity-sub">{{ activity.contact.title }}</div>
+                                    {% if activity.description %}
+                                    <div class="tos-entity-sub text-truncate" style="max-width: 200px; font-style: italic;">{{ activity.description[:60] }}{% if activity.description|length > 60 %}...{% endif %}</div>
                                     {% endif %}
                                     {% else %}
                                     <span class="tos-entity-sub">{{ activity.subject }}</span>
@@ -275,6 +297,62 @@
                     <textarea class="form-control form-control-sm auto-save-note" rows="2"
                         data-section="tasks" data-note-type="team"
                         placeholder="Add notes about tasks...">{{ section_notes.get('tasks', '') }}</textarea>
+                </div>
+            </div>
+        </div>
+
+        <!-- Site Visits This Week -->
+        <div class="col-lg-6">
+            <div class="tos-card h-100 d-flex flex-column section--site-visits">
+                <div class="tos-section-header">
+                    <i class="bi bi-geo-alt me-2"></i>Site Visits This Week ({{ site_visits|length }})
+                </div>
+                <div class="summary-card-body flex-grow-1" style="overflow-y: auto;">
+                    {% if site_visits %}
+                    <table class="tos-table">
+                        <thead>
+                            <tr>
+                                <th>Purpose</th>
+                                <th>Account / Opp</th>
+                                <th>Date</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for visit in site_visits %}
+                            <tr data-href="/activities/{{ visit.id }}/edit?from=/summary/weekly">
+                                <td>
+                                    <span class="tos-entity-name">{{ visit.subject or 'Site Visit' }}</span>
+                                    {% if visit.contact %}
+                                    <div class="tos-entity-sub">{{ visit.contact.full_name }}</div>
+                                    {% endif %}
+                                    {% if visit.description %}
+                                    <div class="tos-entity-sub text-truncate" style="max-width: 180px; font-style: italic;">{{ visit.description[:50] }}{% if visit.description|length > 50 %}...{% endif %}</div>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if visit.opportunity %}
+                                    <a href="/opportunities/{{ visit.opportunity.id }}" class="tos-row-link tos-entity-sub">
+                                        {{ visit.opportunity.name }}
+                                    </a>
+                                    {% elif visit.contact and visit.contact.account %}
+                                    <a href="/accounts/{{ visit.contact.account.id }}" class="tos-row-link tos-entity-sub">
+                                        {{ visit.contact.account.name }}
+                                    </a>
+                                    {% else %}
+                                    <span class="tos-entity-sub">—</span>
+                                    {% endif %}
+                                </td>
+                                <td class="tos-entity-sub">{{ visit.activity_date.strftime('%b %d') }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    {% else %}
+                    <div class="tos-empty-state">
+                        <i class="bi bi-geo-alt"></i>
+                        <p>No site visits this period</p>
+                    </div>
+                    {% endif %}
                 </div>
             </div>
         </div>

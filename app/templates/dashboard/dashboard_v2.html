@@ -44,6 +44,20 @@
         color: #475569;
     }
 
+    /* Pastel section header backgrounds */
+    .dashboard-v2 .section--outreach .section-header {
+        background: #fef7f0;  /* warm peach */
+    }
+    .dashboard-v2 .section--meetings .section-header {
+        background: #f0f7fe;  /* soft blue */
+    }
+    .dashboard-v2 .section--tasks .section-header {
+        background: #f0fef4;  /* light green */
+    }
+    .dashboard-v2 .section--pipeline .section-header {
+        background: #fef0f7;  /* soft pink */
+    }
+
     .dashboard-v2 .section-header .badge {
         font-size: 0.7rem;
         padding: 0.2em 0.5em;
@@ -449,13 +463,16 @@
                     <div class="sub-header"><i class="bi bi-hourglass-split me-1"></i>Pending (awaiting confirmation)</div>
                     <table class="dense-table">
                         <tbody>
-                            {% for activity in meetings_pending[:10] %}
+                            {% for activity in meetings_pending %}
                             <tr>
                                 <td style="width: 45%;">
                                     <a href="/contacts/{{ activity.contact.id }}" class="row-link">
                                         <span class="entity-name">{{ activity.contact.full_name }}</span>
                                         <div class="entity-sub">{{ activity.contact.account.name if activity.contact.account else '' }}</div>
                                     </a>
+                                    {% if activity.description %}
+                                    <div class="entity-sub text-truncate" style="max-width: 250px; font-style: italic;">{{ activity.description[:80] }}{% if activity.description|length > 80 %}...{% endif %}</div>
+                                    {% endif %}
                                 </td>
                                 <td>
                                     <span class="text-muted" style="font-size: 0.75rem;">
@@ -478,14 +495,17 @@
                     {% endif %}
 
                     {% if meetings_completed %}
-                    <div class="sub-header"><i class="bi bi-check-circle me-1"></i>Completed (last 7 days)</div>
+                    <div class="sub-header"><i class="bi bi-check-circle me-1"></i>Completed (this week)</div>
                     <table class="dense-table">
                         <tbody>
-                            {% for activity in meetings_completed[:5] %}
+                            {% for activity in meetings_completed %}
                             <tr>
                                 <td style="width: 45%;">
-                                    <span class="entity-name" style="color: #64748b;">{{ activity.contact.full_name if activity.contact else activity.subject }}</span>
+                                    <span class="entity-name">{{ activity.contact.full_name if activity.contact else activity.subject }}</span>
                                     <div class="entity-sub">{{ activity.contact.account.name if activity.contact and activity.contact.account else '' }}</div>
+                                    {% if activity.description %}
+                                    <div class="entity-sub text-truncate" style="max-width: 250px; font-style: italic;">{{ activity.description[:80] }}{% if activity.description|length > 80 %}...{% endif %}</div>
+                                    {% endif %}
                                 </td>
                                 <td>
                                     <span class="badge badge-completed">
@@ -667,6 +687,8 @@
         <div class="modal-content">
             <form method="post" id="siteVisitForm" action="/activities/add?from=/">
                 <input type="hidden" name="activity_type" value="site_visit">
+                <input type="hidden" id="siteVisitOppId" name="opportunity_id" value="">
+                <input type="hidden" id="siteVisitContactId" name="contact_id" value="">
                 <div class="modal-header py-2">
                     <h6 class="modal-title" id="logSiteVisitModalLabel"><i class="bi bi-geo-alt me-2"></i>Log Site Visit</h6>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
@@ -677,13 +699,13 @@
                         <input type="datetime-local" class="form-control form-control-sm" id="siteVisitDate" name="activity_date" required>
                     </div>
                     <div class="mb-2">
-                        <label for="siteVisitOpportunity" class="form-label small mb-1">Opportunity</label>
-                        <select class="form-select form-select-sm" id="siteVisitOpportunity" name="opportunity_id">
-                            <option value="">-- Select Opportunity --</option>
-                            {% for opp in all_open_opps %}
-                            <option value="{{ opp.id }}">{{ opp.name }} ({{ opp.primary_account.name if opp.primary_account else 'No Account' }})</option>
-                            {% endfor %}
-                        </select>
+                        <label class="form-label small mb-1">Opportunity</label>
+                        <div class="position-relative">
+                            <input type="text" class="form-control form-control-sm" id="siteVisitOppSearch"
+                                placeholder="Search opportunities..." autocomplete="off">
+                            <div id="siteVisitOppResults" class="list-group position-absolute w-100" style="z-index: 1050; display: none; max-height: 150px; overflow-y: auto; box-shadow: 0 2px 8px rgba(0,0,0,0.15);"></div>
+                        </div>
+                        <div id="siteVisitOppSelected" class="mt-1"></div>
                     </div>
                     <div class="mb-2">
                         <label for="siteVisitSubject" class="form-label small mb-1">Purpose <span class="text-danger">*</span></label>
@@ -696,13 +718,13 @@
                         </select>
                     </div>
                     <div class="mb-2">
-                        <label for="siteVisitContact" class="form-label small mb-1">Contact</label>
-                        <select class="form-select form-select-sm" id="siteVisitContact" name="contact_id">
-                            <option value="">-- Select Contact --</option>
-                            {% for contact in all_contacts %}
-                            <option value="{{ contact.id }}">{{ contact.full_name }} ({{ contact.account.name if contact.account else 'No Account' }})</option>
-                            {% endfor %}
-                        </select>
+                        <label class="form-label small mb-1">Contact</label>
+                        <div class="position-relative">
+                            <input type="text" class="form-control form-control-sm" id="siteVisitContactSearch"
+                                placeholder="Search contacts..." autocomplete="off">
+                            <div id="siteVisitContactResults" class="list-group position-absolute w-100" style="z-index: 1050; display: none; max-height: 150px; overflow-y: auto; box-shadow: 0 2px 8px rgba(0,0,0,0.15);"></div>
+                        </div>
+                        <div id="siteVisitContactSelected" class="mt-1"></div>
                     </div>
                     <div class="mb-0">
                         <label for="siteVisitNotes" class="form-label small mb-1">Notes</label>
@@ -763,5 +785,142 @@ document.getElementById('logSiteVisitModal').addEventListener('show.bs.modal', f
     const minutes = String(now.getMinutes()).padStart(2, '0');
     document.getElementById('siteVisitDate').value = `${year}-${month}-${day}T${hours}:${minutes}`;
 });
+
+// Site Visit Modal: Searchable selects
+(function() {
+    // Data from server
+    const opportunities = [
+        {% for opp in all_open_opps %}
+        { id: {{ opp.id }}, name: "{{ opp.name | replace('"', '\\"') }}", account: "{{ (opp.primary_account.name if opp.primary_account else 'No Account') | replace('"', '\\"') }}" },
+        {% endfor %}
+    ];
+    const contacts = [
+        {% for contact in all_contacts %}
+        { id: {{ contact.id }}, name: "{{ contact.full_name | replace('"', '\\"') }}", account: "{{ (contact.account.name if contact.account else 'No Account') | replace('"', '\\"') }}" },
+        {% endfor %}
+    ];
+
+    // Opportunity search
+    const oppSearch = document.getElementById('siteVisitOppSearch');
+    const oppResults = document.getElementById('siteVisitOppResults');
+    const oppSelected = document.getElementById('siteVisitOppSelected');
+    const oppIdInput = document.getElementById('siteVisitOppId');
+    let selectedOppId = null;
+
+    oppSearch.addEventListener('input', function() {
+        const query = this.value.toLowerCase().trim();
+        if (query.length < 1) {
+            oppResults.style.display = 'none';
+            return;
+        }
+        const matches = opportunities.filter(o =>
+            o.name.toLowerCase().includes(query) || o.account.toLowerCase().includes(query)
+        ).slice(0, 8);
+
+        if (matches.length === 0) {
+            oppResults.innerHTML = '<div class="list-group-item text-muted small">No matches found</div>';
+        } else {
+            oppResults.innerHTML = matches.map(o =>
+                `<button type="button" class="list-group-item list-group-item-action py-1 small" data-opp-id="${o.id}">${o.name} <span class="text-muted">(${o.account})</span></button>`
+            ).join('');
+        }
+        oppResults.style.display = 'block';
+    });
+
+    oppResults.addEventListener('click', function(e) {
+        const btn = e.target.closest('[data-opp-id]');
+        if (btn) {
+            const id = parseInt(btn.dataset.oppId, 10);
+            const opp = opportunities.find(o => o.id === id);
+            if (opp) {
+                selectedOppId = id;
+                oppIdInput.value = id;
+                oppSearch.value = '';
+                oppResults.style.display = 'none';
+                oppSelected.innerHTML = `<span class="badge bg-primary d-inline-flex align-items-center gap-1">${opp.name} <button type="button" class="btn-close btn-close-white" style="font-size: 0.5rem;" data-clear-opp aria-label="Remove"></button></span>`;
+            }
+        }
+    });
+
+    oppSelected.addEventListener('click', function(e) {
+        if (e.target.closest('[data-clear-opp]')) {
+            selectedOppId = null;
+            oppIdInput.value = '';
+            oppSelected.innerHTML = '';
+        }
+    });
+
+    // Contact search
+    const contactSearch = document.getElementById('siteVisitContactSearch');
+    const contactResults = document.getElementById('siteVisitContactResults');
+    const contactSelected = document.getElementById('siteVisitContactSelected');
+    const contactIdInput = document.getElementById('siteVisitContactId');
+    let selectedContactId = null;
+
+    contactSearch.addEventListener('input', function() {
+        const query = this.value.toLowerCase().trim();
+        if (query.length < 1) {
+            contactResults.style.display = 'none';
+            return;
+        }
+        const matches = contacts.filter(c =>
+            c.name.toLowerCase().includes(query) || c.account.toLowerCase().includes(query)
+        ).slice(0, 8);
+
+        if (matches.length === 0) {
+            contactResults.innerHTML = '<div class="list-group-item text-muted small">No matches found</div>';
+        } else {
+            contactResults.innerHTML = matches.map(c =>
+                `<button type="button" class="list-group-item list-group-item-action py-1 small" data-contact-id="${c.id}">${c.name} <span class="text-muted">(${c.account})</span></button>`
+            ).join('');
+        }
+        contactResults.style.display = 'block';
+    });
+
+    contactResults.addEventListener('click', function(e) {
+        const btn = e.target.closest('[data-contact-id]');
+        if (btn) {
+            const id = parseInt(btn.dataset.contactId, 10);
+            const contact = contacts.find(c => c.id === id);
+            if (contact) {
+                selectedContactId = id;
+                contactIdInput.value = id;
+                contactSearch.value = '';
+                contactResults.style.display = 'none';
+                contactSelected.innerHTML = `<span class="badge bg-secondary d-inline-flex align-items-center gap-1">${contact.name} <button type="button" class="btn-close btn-close-white" style="font-size: 0.5rem;" data-clear-contact aria-label="Remove"></button></span>`;
+            }
+        }
+    });
+
+    contactSelected.addEventListener('click', function(e) {
+        if (e.target.closest('[data-clear-contact]')) {
+            selectedContactId = null;
+            contactIdInput.value = '';
+            contactSelected.innerHTML = '';
+        }
+    });
+
+    // Hide dropdowns on outside click
+    document.addEventListener('click', function(e) {
+        if (!oppSearch.contains(e.target) && !oppResults.contains(e.target)) {
+            oppResults.style.display = 'none';
+        }
+        if (!contactSearch.contains(e.target) && !contactResults.contains(e.target)) {
+            contactResults.style.display = 'none';
+        }
+    });
+
+    // Reset form on modal close
+    document.getElementById('logSiteVisitModal').addEventListener('hidden.bs.modal', function() {
+        selectedOppId = null;
+        selectedContactId = null;
+        oppIdInput.value = '';
+        contactIdInput.value = '';
+        oppSearch.value = '';
+        contactSearch.value = '';
+        oppSelected.innerHTML = '';
+        contactSelected.innerHTML = '';
+    });
+})();
 </script>
 {% endblock %}

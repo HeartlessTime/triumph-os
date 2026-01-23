@@ -1,4 +1,4 @@
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
 from fastapi import APIRouter, Request, Depends
 from fastapi.responses import HTMLResponse
 from sqlalchemy.orm import Session, selectinload
@@ -14,6 +14,13 @@ router = APIRouter(tags=["dashboard"])
 USE_DASHBOARD_V2 = True
 
 
+def get_week_start_monday(for_date: date = None) -> date:
+    """Get the Monday of the week for a given date (or current week if None)."""
+    target = for_date or date.today()
+    days_since_monday = target.weekday()
+    return target - timedelta(days=days_since_monday)
+
+
 @router.get("/", response_class=HTMLResponse)
 async def dashboard(request: Request, db: Session = Depends(get_db)):
     today = date.today()
@@ -25,7 +32,11 @@ async def dashboard(request: Request, db: Session = Depends(get_db)):
         )
 
     # Dashboard V2: Additional data for execution-focused view
-    week_ago = today - timedelta(days=7)
+    # Use same week boundaries as Weekly Summary for consistency
+    week_start = get_week_start_monday(today)
+    week_end = week_start + timedelta(days=6)
+    start_datetime = datetime.combine(week_start, datetime.min.time())
+    end_datetime = datetime.combine(week_end, datetime.max.time())
 
     # Contacts with follow-ups due today or overdue
     followup_contacts = (
@@ -36,7 +47,7 @@ async def dashboard(request: Request, db: Session = Depends(get_db)):
         .all()
     )
 
-    # Meetings pending: "meeting_requested" activities with a contact
+    # Meetings pending: "meeting_requested" activities with a contact (all future)
     meetings_pending = (
         db.query(Activity)
         .options(selectinload(Activity.contact).selectinload(Contact.account))
@@ -48,16 +59,16 @@ async def dashboard(request: Request, db: Session = Depends(get_db)):
         .all()
     )
 
-    # Meetings completed: "meeting" activities from last 7 days
+    # Meetings completed: "meeting" activities during current week (same as Summary)
     meetings_completed = (
         db.query(Activity)
         .options(selectinload(Activity.contact).selectinload(Contact.account))
         .filter(
             Activity.activity_type == "meeting",
-            Activity.activity_date >= week_ago,
+            Activity.activity_date >= start_datetime,
+            Activity.activity_date <= end_datetime,
         )
         .order_by(Activity.activity_date.desc())
-        .limit(10)
         .all()
     )
 
