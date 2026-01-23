@@ -58,6 +58,9 @@
     .section--site-visits .tos-section-header {
         background: #fff7ed;  /* soft orange */
     }
+    .section--meetings .tos-section-header {
+        background: #f0f7fe;  /* soft blue */
+    }
     .section--activity .tos-section-header {
         background: #f0f7fe;  /* soft blue */
     }
@@ -133,6 +136,7 @@
     </div>
 
     <div class="row g-3">
+        <!-- ROW 1: Outreach & Meetings -->
         <!-- Outreach & Follow-ups -->
         <div class="col-lg-6">
             <div class="tos-card h-100 d-flex flex-column section--outreach">
@@ -195,112 +199,62 @@
             </div>
         </div>
 
-        <!-- Pipeline Movement -->
+        <!-- Meetings This Week -->
         <div class="col-lg-6">
-            <div class="tos-card h-100 d-flex flex-column section--pipeline">
+            <div class="tos-card h-100 d-flex flex-column section--meetings">
                 <div class="tos-section-header">
-                    <i class="bi bi-arrow-left-right me-2"></i>Pipeline Movement
+                    <i class="bi bi-calendar-check me-2"></i>Meetings This Week ({{ meetings|length }})
                 </div>
                 <div class="summary-card-body flex-grow-1" style="overflow-y: auto;">
-                    {% if pipeline_changes %}
+                    {% if meetings %}
                     <table class="tos-table">
                         <thead>
                             <tr>
-                                <th>Opportunity</th>
-                                <th>Stage</th>
-                                <th>Updated</th>
+                                <th>Contact</th>
+                                <th>Account</th>
+                                <th>Date</th>
                             </tr>
                         </thead>
                         <tbody>
-                            {% for opp in pipeline_changes %}
-                            <tr>
+                            {% for meeting in meetings %}
+                            <tr data-href="/activities/{{ meeting.id }}/edit?from=/summary/weekly">
                                 <td>
-                                    <a href="/opportunities/{{ opp.id }}" class="tos-row-link tos-entity-name">
-                                        {{ opp.name }}
+                                    {% if meeting.contact %}
+                                    <a href="/contacts/{{ meeting.contact.id }}" class="tos-row-link tos-entity-name">
+                                        {{ meeting.contact.full_name }}
                                     </a>
-                                    <div class="tos-entity-sub">{{ opp.primary_account.name if opp.primary_account else 'No Account' }}</div>
-                                </td>
-                                <td>
-                                    <span class="badge badge-stage badge-{{ opp.stage|lower|replace(' ', '-') }}">
-                                        {{ opp.stage }}
-                                    </span>
-                                </td>
-                                <td class="tos-entity-sub">{{ opp.updated_at.strftime('%b %d') }}</td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                    {% else %}
-                    <div class="tos-empty-state">
-                        <i class="bi bi-inbox"></i>
-                        <p>No pipeline changes this period</p>
-                    </div>
-                    {% endif %}
-                </div>
-                <div style="padding: 0.5rem 0.75rem; background: #f8fafc; border-top: 1px solid #e2e8f0;">
-                    <label class="form-label small text-muted mb-1"><i class="bi bi-pencil me-1"></i>Notes</label>
-                    <textarea class="form-control form-control-sm auto-save-note" rows="2"
-                        data-section="pipeline" data-note-type="team"
-                        placeholder="Add notes about pipeline...">{{ section_notes.get('pipeline', '') }}</textarea>
-                </div>
-            </div>
-        </div>
-
-        <!-- Tasks Completed -->
-        <div class="col-lg-6">
-            <div class="tos-card h-100 d-flex flex-column section--tasks">
-                <div class="tos-section-header">
-                    <i class="bi bi-check2-square me-2"></i>Tasks Completed
-                </div>
-                <div class="summary-card-body flex-grow-1" style="overflow-y: auto;">
-                    {% if tasks_completed %}
-                    <table class="tos-table">
-                        <thead>
-                            <tr>
-                                <th>Task</th>
-                                <th>Opportunity</th>
-                                <th>Completed</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for task in tasks_completed %}
-                            <tr data-href="/tasks/{{ task.id }}/edit?from=/summary/weekly">
-                                <td>
-                                    <span class="tos-entity-name">{{ task.title }}</span>
-                                    {% if task.description %}
-                                    <div class="tos-entity-sub text-truncate" style="max-width: 200px;">{{ task.description }}</div>
+                                    {% else %}
+                                    <span class="tos-entity-name">{{ meeting.subject }}</span>
+                                    {% endif %}
+                                    {% if meeting.description %}
+                                    <div class="tos-entity-sub text-truncate" style="max-width: 200px; font-style: italic;">{{ meeting.description[:60] }}{% if meeting.description|length > 60 %}...{% endif %}</div>
                                     {% endif %}
                                 </td>
                                 <td>
-                                    {% if task.opportunity %}
-                                    <a href="/opportunities/{{ task.opportunity.id }}" class="tos-row-link tos-entity-sub">
-                                        {{ task.opportunity.name }}
+                                    {% if meeting.contact and meeting.contact.account %}
+                                    <a href="/accounts/{{ meeting.contact.account.id }}" class="tos-row-link tos-entity-sub">
+                                        {{ meeting.contact.account.name }}
                                     </a>
                                     {% else %}
                                     <span class="tos-entity-sub">-</span>
                                     {% endif %}
                                 </td>
-                                <td class="tos-entity-sub">{{ task.updated_at.strftime('%b %d') }}</td>
+                                <td class="tos-entity-sub">{{ meeting.activity_date.strftime('%b %d') }}</td>
                             </tr>
                             {% endfor %}
                         </tbody>
                     </table>
                     {% else %}
                     <div class="tos-empty-state">
-                        <i class="bi bi-list-task"></i>
-                        <p>No tasks completed this period</p>
+                        <i class="bi bi-calendar-x"></i>
+                        <p>No meetings this period</p>
                     </div>
                     {% endif %}
-                </div>
-                <div style="padding: 0.5rem 0.75rem; background: #f8fafc; border-top: 1px solid #e2e8f0;">
-                    <label class="form-label small text-muted mb-1"><i class="bi bi-pencil me-1"></i>Notes</label>
-                    <textarea class="form-control form-control-sm auto-save-note" rows="2"
-                        data-section="tasks" data-note-type="team"
-                        placeholder="Add notes about tasks...">{{ section_notes.get('tasks', '') }}</textarea>
                 </div>
             </div>
         </div>
 
+        <!-- ROW 2: Site Visits & Pipeline -->
         <!-- Site Visits This Week -->
         <div class="col-lg-6">
             <div class="tos-card h-100 d-flex flex-column section--site-visits">
@@ -353,6 +307,113 @@
                         <p>No site visits this period</p>
                     </div>
                     {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Pipeline Movement -->
+        <div class="col-lg-6">
+            <div class="tos-card h-100 d-flex flex-column section--pipeline">
+                <div class="tos-section-header">
+                    <i class="bi bi-arrow-left-right me-2"></i>Pipeline Movement
+                </div>
+                <div class="summary-card-body flex-grow-1" style="overflow-y: auto;">
+                    {% if pipeline_changes %}
+                    <table class="tos-table">
+                        <thead>
+                            <tr>
+                                <th>Opportunity</th>
+                                <th>Stage</th>
+                                <th>Updated</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for opp in pipeline_changes %}
+                            <tr>
+                                <td>
+                                    <a href="/opportunities/{{ opp.id }}" class="tos-row-link tos-entity-name">
+                                        {{ opp.name }}
+                                    </a>
+                                    <div class="tos-entity-sub">{{ opp.primary_account.name if opp.primary_account else 'No Account' }}</div>
+                                </td>
+                                <td>
+                                    <span class="badge badge-stage badge-{{ opp.stage|lower|replace(' ', '-') }}">
+                                        {{ opp.stage }}
+                                    </span>
+                                </td>
+                                <td class="tos-entity-sub">{{ opp.updated_at.strftime('%b %d') }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    {% else %}
+                    <div class="tos-empty-state">
+                        <i class="bi bi-inbox"></i>
+                        <p>No pipeline changes this period</p>
+                    </div>
+                    {% endif %}
+                </div>
+                <div style="padding: 0.5rem 0.75rem; background: #f8fafc; border-top: 1px solid #e2e8f0;">
+                    <label class="form-label small text-muted mb-1"><i class="bi bi-pencil me-1"></i>Notes</label>
+                    <textarea class="form-control form-control-sm auto-save-note" rows="2"
+                        data-section="pipeline" data-note-type="team"
+                        placeholder="Add notes about pipeline...">{{ section_notes.get('pipeline', '') }}</textarea>
+                </div>
+            </div>
+        </div>
+
+        <!-- ROW 3: Tasks & New Records -->
+        <!-- Tasks Completed -->
+        <div class="col-lg-6">
+            <div class="tos-card h-100 d-flex flex-column section--tasks">
+                <div class="tos-section-header">
+                    <i class="bi bi-check2-square me-2"></i>Tasks Completed
+                </div>
+                <div class="summary-card-body flex-grow-1" style="overflow-y: auto;">
+                    {% if tasks_completed %}
+                    <table class="tos-table">
+                        <thead>
+                            <tr>
+                                <th>Task</th>
+                                <th>Opportunity</th>
+                                <th>Completed</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for task in tasks_completed %}
+                            <tr data-href="/tasks/{{ task.id }}/edit?from=/summary/weekly">
+                                <td>
+                                    <span class="tos-entity-name">{{ task.title }}</span>
+                                    {% if task.description %}
+                                    <div class="tos-entity-sub text-truncate" style="max-width: 200px;">{{ task.description }}</div>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if task.opportunity %}
+                                    <a href="/opportunities/{{ task.opportunity.id }}" class="tos-row-link tos-entity-sub">
+                                        {{ task.opportunity.name }}
+                                    </a>
+                                    {% else %}
+                                    <span class="tos-entity-sub">-</span>
+                                    {% endif %}
+                                </td>
+                                <td class="tos-entity-sub">{{ task.updated_at.strftime('%b %d') }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    {% else %}
+                    <div class="tos-empty-state">
+                        <i class="bi bi-list-task"></i>
+                        <p>No tasks completed this period</p>
+                    </div>
+                    {% endif %}
+                </div>
+                <div style="padding: 0.5rem 0.75rem; background: #f8fafc; border-top: 1px solid #e2e8f0;">
+                    <label class="form-label small text-muted mb-1"><i class="bi bi-pencil me-1"></i>Notes</label>
+                    <textarea class="form-control form-control-sm auto-save-note" rows="2"
+                        data-section="tasks" data-note-type="team"
+                        placeholder="Add notes about tasks...">{{ section_notes.get('tasks', '') }}</textarea>
                 </div>
             </div>
         </div>

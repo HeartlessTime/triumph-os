@@ -1,4 +1,4 @@
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from decimal import Decimal
 from fastapi import APIRouter, Request, Depends, Form, HTTPException
 from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
@@ -563,6 +563,28 @@ async def log_contact(opp_id: int, db: Session = Depends(get_db)):
     db.commit()
 
     return RedirectResponse(url=f"/opportunities/{opp_id}", status_code=303)
+
+
+# -----------------------------
+# Push Follow-up (Quick Action)
+# -----------------------------
+@router.post("/{opp_id}/push-followup")
+async def push_followup(request: Request, opp_id: int, db: Session = Depends(get_db)):
+    """Push the next follow-up date by 7 days from today.
+
+    This allows users to manually defer follow-up when no action is required.
+    """
+    opportunity = db.query(Opportunity).filter(Opportunity.id == opp_id).first()
+    if not opportunity:
+        raise HTTPException(status_code=404, detail="Opportunity not found")
+
+    # Push follow-up to 7 days from today
+    opportunity.next_followup = date.today() + timedelta(days=7)
+    db.commit()
+
+    # Redirect back to where we came from (Dashboard by default)
+    redirect_to = request.query_params.get("from", "/")
+    return RedirectResponse(url=redirect_to, status_code=303)
 
 
 # -----------------------------

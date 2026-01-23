@@ -100,6 +100,25 @@
         background: #f8fafc;
     }
 
+    /* Clickable rows */
+    .dashboard-v2 .dense-table tr[data-href] {
+        cursor: pointer;
+    }
+    .dashboard-v2 .dense-table tr[data-href]:hover {
+        background: rgba(0, 123, 255, 0.06);
+    }
+
+    /* Push button styling */
+    .dashboard-v2 .btn-push {
+        background: #fef3c7;
+        color: #92400e;
+        border: 1px solid #fcd34d;
+    }
+    .dashboard-v2 .btn-push:hover {
+        background: #fde68a;
+        color: #78350f;
+    }
+
     /* Status badges - muted pastel palette */
     .dashboard-v2 .badge-overdue {
         background: #fef2f2;
@@ -329,17 +348,20 @@
                     <table class="dense-table">
                         <tbody>
                             {% for opp in overdue_opps %}
-                            <tr>
+                            <tr data-href="/opportunities/{{ opp.id }}">
                                 <td style="width: 40%;">
-                                    <a href="/opportunities/{{ opp.id }}" class="row-link">
-                                        <span class="entity-name">{{ opp.name }}</span>
-                                        <div class="entity-sub">{{ opp.primary_account.name if opp.primary_account else 'No Account' }}</div>
-                                    </a>
+                                    <span class="entity-name">{{ opp.name }}</span>
+                                    <div class="entity-sub">{{ opp.primary_account.name if opp.primary_account else 'No Account' }}</div>
                                 </td>
                                 <td>
                                     <span class="badge badge-overdue">{{ opp.followup_status.days_until|abs }}d overdue</span>
                                 </td>
                                 <td class="text-end" style="white-space: nowrap;">
+                                    <form method="post" action="/opportunities/{{ opp.id }}/push-followup?from=/" class="d-inline">
+                                        <button type="submit" class="btn btn-action btn-push" title="Push follow-up 7 days">
+                                            <i class="bi bi-calendar-plus me-1"></i>+7d
+                                        </button>
+                                    </form>
                                     <form method="post" action="/opportunities/{{ opp.id }}/log-contact" class="d-inline">
                                         <button type="submit" class="btn btn-action btn-log" title="Log Contact">
                                             <i class="bi bi-telephone me-1"></i>Log
@@ -350,12 +372,10 @@
                             </tr>
                             {% endfor %}
                             {% for contact in overdue_contacts %}
-                            <tr>
+                            <tr data-href="/contacts/{{ contact.id }}">
                                 <td style="width: 40%;">
-                                    <a href="/contacts/{{ contact.id }}" class="row-link">
-                                        <span class="entity-name">{{ contact.full_name }}</span>
-                                        <div class="entity-sub">{{ contact.account.name if contact.account else 'No Account' }}</div>
-                                    </a>
+                                    <span class="entity-name">{{ contact.full_name }}</span>
+                                    <div class="entity-sub">{{ contact.account.name if contact.account else 'No Account' }}</div>
                                 </td>
                                 <td>
                                     <span class="badge badge-overdue">{{ (today - contact.next_followup).days }}d overdue</span>
@@ -374,17 +394,20 @@
                     <table class="dense-table">
                         <tbody>
                             {% for opp in today_opps %}
-                            <tr>
+                            <tr data-href="/opportunities/{{ opp.id }}">
                                 <td style="width: 40%;">
-                                    <a href="/opportunities/{{ opp.id }}" class="row-link">
-                                        <span class="entity-name">{{ opp.name }}</span>
-                                        <div class="entity-sub">{{ opp.primary_account.name if opp.primary_account else 'No Account' }}</div>
-                                    </a>
+                                    <span class="entity-name">{{ opp.name }}</span>
+                                    <div class="entity-sub">{{ opp.primary_account.name if opp.primary_account else 'No Account' }}</div>
                                 </td>
                                 <td>
                                     <span class="badge badge-today">Due today</span>
                                 </td>
                                 <td class="text-end" style="white-space: nowrap;">
+                                    <form method="post" action="/opportunities/{{ opp.id }}/push-followup?from=/" class="d-inline">
+                                        <button type="submit" class="btn btn-action btn-push" title="Push follow-up 7 days">
+                                            <i class="bi bi-calendar-plus me-1"></i>+7d
+                                        </button>
+                                    </form>
                                     <form method="post" action="/opportunities/{{ opp.id }}/log-contact" class="d-inline">
                                         <button type="submit" class="btn btn-action btn-log" title="Log Contact">
                                             <i class="bi bi-telephone me-1"></i>Log
@@ -395,12 +418,10 @@
                             </tr>
                             {% endfor %}
                             {% for contact in today_contacts %}
-                            <tr>
+                            <tr data-href="/contacts/{{ contact.id }}">
                                 <td style="width: 40%;">
-                                    <a href="/contacts/{{ contact.id }}" class="row-link">
-                                        <span class="entity-name">{{ contact.full_name }}</span>
-                                        <div class="entity-sub">{{ contact.account.name if contact.account else 'No Account' }}</div>
-                                    </a>
+                                    <span class="entity-name">{{ contact.full_name }}</span>
+                                    <div class="entity-sub">{{ contact.account.name if contact.account else 'No Account' }}</div>
                                 </td>
                                 <td>
                                     <span class="badge badge-today">Due today</span>
@@ -419,17 +440,20 @@
                     <table class="dense-table">
                         <tbody>
                             {% for opp in soon_opps %}
-                            <tr>
+                            <tr data-href="/opportunities/{{ opp.id }}">
                                 <td style="width: 40%;">
-                                    <a href="/opportunities/{{ opp.id }}" class="row-link">
-                                        <span class="entity-name">{{ opp.name }}</span>
-                                        <div class="entity-sub">{{ opp.primary_account.name if opp.primary_account else 'No Account' }}</div>
-                                    </a>
+                                    <span class="entity-name">{{ opp.name }}</span>
+                                    <div class="entity-sub">{{ opp.primary_account.name if opp.primary_account else 'No Account' }}</div>
                                 </td>
                                 <td>
                                     <span class="badge badge-soon">In {{ opp.followup_status.days_until }}d</span>
                                 </td>
                                 <td class="text-end" style="white-space: nowrap;">
+                                    <form method="post" action="/opportunities/{{ opp.id }}/push-followup?from=/" class="d-inline">
+                                        <button type="submit" class="btn btn-action btn-push" title="Push follow-up 7 days">
+                                            <i class="bi bi-calendar-plus me-1"></i>+7d
+                                        </button>
+                                    </form>
                                     <form method="post" action="/opportunities/{{ opp.id }}/log-contact" class="d-inline">
                                         <button type="submit" class="btn btn-action btn-log" title="Log Contact">
                                             <i class="bi bi-telephone me-1"></i>Log
@@ -496,6 +520,7 @@
 
                     {% if meetings_completed %}
                     <div class="sub-header"><i class="bi bi-check-circle me-1"></i>Completed (this week)</div>
+                    <div style="max-height: 200px; overflow-y: auto;">
                     <table class="dense-table">
                         <tbody>
                             {% for activity in meetings_completed %}
@@ -519,6 +544,7 @@
                             {% endfor %}
                         </tbody>
                     </table>
+                    </div>
                     {% endif %}
 
                     {% if not meetings_pending and not meetings_completed %}
@@ -773,6 +799,19 @@ document.querySelectorAll('.mark-meeting-btn').forEach(function(btn) {
             alert('Failed to update meeting');
         });
     });
+});
+
+// Clickable rows handler - navigates to detail page when row is clicked
+// Does not interfere with buttons, forms, or links inside the row
+document.addEventListener('click', function(e) {
+    const clickable = e.target.closest('tr[data-href]');
+    if (!clickable) return;
+
+    // Ignore clicks on interactive elements inside the row
+    if (e.target.closest('a, button, input, textarea, select, form')) return;
+
+    // Navigate to the detail page
+    window.location.href = clickable.dataset.href;
 });
 
 // Site Visit Modal: set default date/time when modal opens
