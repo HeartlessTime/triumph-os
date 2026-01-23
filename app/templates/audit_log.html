@@ -4,27 +4,26 @@
 
 {% block content %}
 <div class="content-area">
-    <div class="page-header d-flex justify-content-between align-items-center">
+    <div class="tos-page-header d-flex justify-content-between align-items-center">
         <div>
             <nav aria-label="breadcrumb">
-                <ol class="breadcrumb">
+                <ol class="breadcrumb mb-1">
                     <li class="breadcrumb-item"><a href="/">Dashboard</a></li>
                     <li class="breadcrumb-item active">Audit Log</li>
                 </ol>
             </nav>
-            <h1><i class="bi bi-journal-text me-2"></i>Activity Audit Log</h1>
-            <p class="text-muted mb-0">Read-only view of all system activities</p>
+            <h1>Activity Audit Log</h1>
+            <p class="tos-entity-sub mb-0">Read-only view of all system activities</p>
         </div>
-        <div class="text-muted">
-            <span class="badge bg-secondary">{{ total_count }} total activities</span>
+        <div>
+            <span class="tos-badge-neutral">{{ total_count }} total activities</span>
         </div>
     </div>
 
-    <div class="card">
-        <div class="card-body p-0">
-            {% if activities %}
-            <div class="table-responsive">
-                <table class="table table-hover mb-0">
+    <div class="tos-card">
+        {% if activities %}
+        <div class="table-responsive">
+            <table class="tos-table">
                     <thead>
                         <tr>
                             <th style="width: 160px;">Timestamp</th>
@@ -54,65 +53,57 @@
                                 {% endif %}
                             </td>
                             <td>
-                                <span class="badge
-                                    {% if activity.activity_type == 'call' %}bg-success
-                                    {% elif activity.activity_type == 'meeting' %}bg-primary
-                                    {% elif activity.activity_type == 'email' %}bg-info
-                                    {% elif activity.activity_type == 'site_visit' %}bg-warning text-dark
-                                    {% elif activity.activity_type == 'task_completed' %}bg-success
-                                    {% else %}bg-secondary{% endif %}">
+                                <span class="{% if activity.activity_type == 'call' %}tos-badge-completed{% elif activity.activity_type == 'meeting' %}tos-badge-pending{% elif activity.activity_type == 'email' %}tos-badge-info{% elif activity.activity_type == 'site_visit' %}tos-badge-today{% elif activity.activity_type == 'task_completed' %}tos-badge-completed{% else %}tos-badge-neutral{% endif %}">
                                     {{ activity.icon }} {{ activity.type_display }}
                                 </span>
                             </td>
                             <td>
-                                <div class="fw-medium">{{ activity.subject }}</div>
+                                <span class="tos-entity-name">{{ activity.subject }}</span>
                                 {% if activity.description %}
-                                <div class="text-muted small text-truncate" style="max-width: 400px;">
+                                <div class="tos-entity-sub text-truncate" style="max-width: 400px;">
                                     {{ activity.description }}
                                 </div>
                                 {% endif %}
                             </td>
                             <td>
-                                <div class="small">
-                                    {% if activity.opportunity %}
-                                    <div class="mb-1">
-                                        <i class="bi bi-bullseye text-primary me-1"></i>
-                                        <a href="/opportunities/{{ activity.opportunity.id }}" class="text-decoration-none">
-                                            {{ activity.opportunity.name }}
-                                        </a>
-                                        {% if activity.opportunity.primary_account %}
-                                        <span class="text-muted">@ {{ activity.opportunity.primary_account.name }}</span>
-                                        {% endif %}
-                                    </div>
-                                    {% endif %}
-                                    {% if activity.contact %}
-                                    <div>
-                                        <i class="bi bi-person text-success me-1"></i>
-                                        <a href="/contacts/{{ activity.contact.id }}" class="text-decoration-none">
-                                            {{ activity.contact.full_name }}
-                                        </a>
-                                        {% if activity.contact.account %}
-                                        <span class="text-muted">@ {{ activity.contact.account.name }}</span>
-                                        {% endif %}
-                                    </div>
-                                    {% endif %}
-                                    {% if not activity.opportunity and not activity.contact %}
-                                    <span class="text-muted">—</span>
+                                {% if activity.opportunity %}
+                                <div class="mb-1">
+                                    <i class="bi bi-bullseye me-1"></i>
+                                    <a href="/opportunities/{{ activity.opportunity.id }}" class="tos-row-link">
+                                        {{ activity.opportunity.name }}
+                                    </a>
+                                    {% if activity.opportunity.primary_account %}
+                                    <span class="tos-entity-sub">@ {{ activity.opportunity.primary_account.name }}</span>
                                     {% endif %}
                                 </div>
+                                {% endif %}
+                                {% if activity.contact %}
+                                <div>
+                                    <i class="bi bi-person me-1"></i>
+                                    <a href="/contacts/{{ activity.contact.id }}" class="tos-row-link">
+                                        {{ activity.contact.full_name }}
+                                    </a>
+                                    {% if activity.contact.account %}
+                                    <span class="tos-entity-sub">@ {{ activity.contact.account.name }}</span>
+                                    {% endif %}
+                                </div>
+                                {% endif %}
+                                {% if not activity.opportunity and not activity.contact %}
+                                <span class="tos-entity-sub">—</span>
+                                {% endif %}
                             </td>
                         </tr>
                         {% endfor %}
                     </tbody>
                 </table>
-            </div>
+        </div>
 
-            <!-- Pagination -->
-            {% if total_pages > 1 %}
-            <div class="card-footer bg-light d-flex justify-content-between align-items-center">
-                <div class="text-muted small">
-                    Showing {{ (page - 1) * page_size + 1 }} - {{ [page * page_size, total_count] | min }} of {{ total_count }}
-                </div>
+        <!-- Pagination -->
+        {% if total_pages > 1 %}
+        <div class="tos-card-footer d-flex justify-content-between align-items-center" style="padding: 0.75rem 1rem; background: #f8fafc; border-top: 1px solid #e2e8f0;">
+            <div class="tos-entity-sub">
+                Showing {{ (page - 1) * page_size + 1 }} - {{ [page * page_size, total_count] | min }} of {{ total_count }}
+            </div>
                 <nav aria-label="Audit log pagination">
                     <ul class="pagination pagination-sm mb-0">
                         {% if page > 1 %}
@@ -151,18 +142,16 @@
                         </li>
                         {% endif %}
                     </ul>
-                </nav>
-            </div>
-            {% endif %}
-
-            {% else %}
-            <div class="empty-state">
-                <i class="bi bi-journal-x"></i>
-                <h5>No Activities Found</h5>
-                <p class="text-muted">There are no activities recorded in the system yet.</p>
-            </div>
-            {% endif %}
+            </nav>
         </div>
+        {% endif %}
+
+        {% else %}
+        <div class="tos-empty-state">
+            <i class="bi bi-journal-x"></i>
+            <p>No activities recorded in the system yet.</p>
+        </div>
+        {% endif %}
     </div>
 </div>
 {% endblock %}

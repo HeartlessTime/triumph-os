@@ -10,7 +10,7 @@ Shows actionable items for today and the upcoming week:
 
 from datetime import date, datetime, timedelta
 from fastapi import APIRouter, Request, Depends, HTTPException
-from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from sqlalchemy import select
 from sqlalchemy.orm import Session, selectinload
 
@@ -19,6 +19,9 @@ from app.models import Opportunity, Task, Contact, Activity
 from app.template_config import templates, utc_now
 
 router = APIRouter(tags=["today"])
+
+# Feature flag: Set to True to redirect /today to dashboard
+REDIRECT_TODAY_TO_DASHBOARD = True
 
 
 def add_business_days(start_date: date, num_days: int) -> date:
@@ -105,7 +108,16 @@ async def mark_meeting_occurred(
 
 @router.get("/today", response_class=HTMLResponse)
 async def today_page(request: Request, db: Session = Depends(get_db)):
-    """Today / This Week page showing actionable items."""
+    """Today / This Week page showing actionable items.
+
+    NOTE: This page is deprecated. When REDIRECT_TODAY_TO_DASHBOARD is True,
+    users are redirected to the main Dashboard which now serves as the
+    daily execution page.
+    """
+    # Redirect to dashboard if feature flag is enabled
+    if REDIRECT_TODAY_TO_DASHBOARD:
+        return RedirectResponse(url="/", status_code=302)
+
     today = date.today()
     week_from_now = today + timedelta(days=7)
 

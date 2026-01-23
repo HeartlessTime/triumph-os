@@ -2,7 +2,7 @@ from datetime import date, timedelta
 from sqlalchemy.orm import Session, selectinload
 from sqlalchemy import func
 
-from app.models import Opportunity, Task, Activity, User
+from app.models import Opportunity, Task, Activity, User, Contact
 from app.services.followup import get_followup_status
 
 
@@ -144,6 +144,21 @@ def get_dashboard_data(db: Session, today: date) -> dict:
             }
         )
 
+    # Open opportunities and contacts for site visit modal
+    all_open_opps = (
+        db.query(Opportunity)
+        .options(selectinload(Opportunity.account))
+        .filter(Opportunity.stage.in_(open_stages))
+        .order_by(Opportunity.name)
+        .all()
+    )
+    all_contacts = (
+        db.query(Contact)
+        .options(selectinload(Contact.account))
+        .order_by(Contact.last_name, Contact.first_name)
+        .all()
+    )
+
     return {
         "pipeline_value": pipeline_value,
         "stalled_count": stalled_count,
@@ -156,4 +171,6 @@ def get_dashboard_data(db: Session, today: date) -> dict:
         "stage_data": stage_data,
         "today": today,
         "estimator_capacity": estimator_capacity,
+        "all_open_opps": all_open_opps,
+        "all_contacts": all_contacts,
     }

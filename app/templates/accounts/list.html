@@ -4,36 +4,6 @@
 
 {% block extra_css %}
 <style>
-    .sort-btn {
-        background: none;
-        border: 1px solid #dee2e6;
-        padding: 0.375rem 0.75rem;
-        border-radius: 0.25rem;
-        font-size: 0.875rem;
-        color: #6c757d;
-        cursor: pointer;
-        transition: all 0.15s ease;
-        text-decoration: none;
-    }
-    .sort-btn:hover {
-        border-color: #adb5bd;
-        color: #495057;
-    }
-    .sort-btn.active {
-        border-color: #0d6efd;
-        color: #0d6efd;
-        background-color: rgba(13, 110, 253, 0.05);
-    }
-    .sort-btn .sort-icon {
-        margin-left: 0.25rem;
-        opacity: 0.5;
-    }
-    .sort-btn.active .sort-icon {
-        opacity: 1;
-    }
-    .accounts-search {
-        max-width: 350px;
-    }
     .no-results-row {
         display: none;
     }
@@ -45,148 +15,143 @@
 
 {% block content %}
 <div class="content-area">
-    <div class="page-header d-flex justify-content-between align-items-center">
+    <div class="tos-page-header d-flex justify-content-between align-items-center">
         <div>
             <h1>Accounts</h1>
-            <p class="text-muted mb-0">Manage customer accounts</p>
+            <p>Manage customer accounts</p>
         </div>
-        <a href="/accounts/new" class="btn btn-primary">
-            <i class="bi bi-plus-lg me-1"></i> New Account
+        <a href="/accounts/new" class="tos-btn tos-btn-primary">
+            <i class="bi bi-plus-lg"></i> New Account
         </a>
     </div>
 
     <!-- Search, Filter & Sort Controls -->
-    <div class="card mb-4">
-        <div class="card-body">
-            <div class="d-flex flex-wrap gap-3 align-items-center">
-                <!-- Search Input -->
-                <div class="input-group accounts-search">
-                    <span class="input-group-text"><i class="bi bi-search"></i></span>
-                    <input type="text" class="form-control" id="accountsSearch" placeholder="Search by account name...">
-                </div>
+    <div class="tos-controls">
+        <div class="d-flex flex-wrap gap-3 align-items-center">
+            <!-- Search Input -->
+            <div class="input-group tos-search-input">
+                <span class="input-group-text"><i class="bi bi-search"></i></span>
+                <input type="text" class="form-control form-control-sm" id="accountsSearch" placeholder="Search by account name...">
+            </div>
 
-                <!-- Account Type Filter -->
-                <div class="d-flex gap-2 align-items-center">
-                    <span class="text-muted small me-1">Type:</span>
-                    <a href="/accounts{% if sort %}?sort={{ sort }}{% if dir %}&dir={{ dir }}{% endif %}{% endif %}"
-                       class="btn btn-sm {% if not account_type %}btn-primary{% else %}btn-outline-secondary{% endif %}">
-                        All
-                    </a>
-                    <a href="/accounts?account_type=end_user{% if sort %}&sort={{ sort }}{% if dir %}&dir={{ dir }}{% endif %}{% endif %}"
-                       class="btn btn-sm {% if account_type == 'end_user' %}btn-primary{% else %}btn-outline-secondary{% endif %}">
-                        End Users
-                    </a>
-                    <a href="/accounts?account_type=gc{% if sort %}&sort={{ sort }}{% if dir %}&dir={{ dir }}{% endif %}{% endif %}"
-                       class="btn btn-sm {% if account_type == 'gc' %}btn-primary{% else %}btn-outline-secondary{% endif %}">
-                        General Contractors
-                    </a>
-                </div>
+            <!-- Account Type Filter -->
+            <div class="d-flex gap-2 align-items-center">
+                <span class="text-muted small me-1">Type:</span>
+                <a href="/accounts{% if sort %}?sort={{ sort }}{% if dir %}&dir={{ dir }}{% endif %}{% endif %}"
+                   class="tos-filter-pill {% if not account_type %}active{% endif %}">
+                    All
+                </a>
+                <a href="/accounts?account_type=end_user{% if sort %}&sort={{ sort }}{% if dir %}&dir={{ dir }}{% endif %}{% endif %}"
+                   class="tos-filter-pill {% if account_type == 'end_user' %}active{% endif %}">
+                    End Users
+                </a>
+                <a href="/accounts?account_type=gc{% if sort %}&sort={{ sort }}{% if dir %}&dir={{ dir }}{% endif %}{% endif %}"
+                   class="tos-filter-pill {% if account_type == 'gc' %}active{% endif %}">
+                    GCs
+                </a>
+            </div>
 
-                <!-- Sort Controls (URL-driven) -->
-                <div class="d-flex gap-2 align-items-center ms-auto">
-                    <span class="text-muted small me-1">Sort:</span>
-                    {% set name_dir = 'desc' if sort == 'name' and dir == 'asc' else 'asc' %}
-                    <a href="/accounts?sort=name&dir={{ name_dir }}{% if account_type %}&account_type={{ account_type }}{% endif %}"
-                       class="sort-btn {% if sort == 'name' or not sort %}active{% endif %}">
-                        Name <i class="bi {% if sort == 'name' and dir == 'desc' %}bi-sort-alpha-up{% else %}bi-sort-alpha-down{% endif %} sort-icon"></i>
-                    </a>
-                    {% set activity_dir = 'asc' if sort == 'last_activity' and dir == 'desc' else 'desc' %}
-                    <a href="/accounts?sort=last_activity&dir={{ activity_dir }}{% if account_type %}&account_type={{ account_type }}{% endif %}"
-                       class="sort-btn {% if sort == 'last_activity' %}active{% endif %}">
-                        Last Activity <i class="bi {% if sort == 'last_activity' and dir == 'asc' %}bi-sort-up{% else %}bi-sort-down{% endif %} sort-icon"></i>
-                    </a>
-                </div>
+            <!-- Sort Controls (URL-driven) -->
+            <div class="d-flex gap-2 align-items-center ms-auto">
+                <span class="text-muted small me-1">Sort:</span>
+                {% set name_dir = 'desc' if sort == 'name' and dir == 'asc' else 'asc' %}
+                <a href="/accounts?sort=name&dir={{ name_dir }}{% if account_type %}&account_type={{ account_type }}{% endif %}"
+                   class="tos-sort-btn {% if sort == 'name' or not sort %}active{% endif %}">
+                    Name <i class="bi {% if sort == 'name' and dir == 'desc' %}bi-sort-alpha-up{% else %}bi-sort-alpha-down{% endif %} sort-icon"></i>
+                </a>
+                {% set activity_dir = 'asc' if sort == 'last_activity' and dir == 'desc' else 'desc' %}
+                <a href="/accounts?sort=last_activity&dir={{ activity_dir }}{% if account_type %}&account_type={{ account_type }}{% endif %}"
+                   class="tos-sort-btn {% if sort == 'last_activity' %}active{% endif %}">
+                    Last Activity <i class="bi {% if sort == 'last_activity' and dir == 'asc' %}bi-sort-up{% else %}bi-sort-down{% endif %} sort-icon"></i>
+                </a>
             </div>
         </div>
     </div>
 
     <!-- Accounts Table -->
-    <div class="card">
-        <div class="card-body p-0">
-            {% if accounts %}
-            <div class="table-responsive">
-                <table class="table table-hover">
-                    <thead>
-                        <tr>
-                            <th>Account Name</th>
-                            <th>Type</th>
-                            <th>Industry</th>
-                            <th>Location</th>
-                            <th>Contacts</th>
-                            <th>Last Contacted</th>
-                            <th>Open Opps</th>
-                            <th>Pipeline</th>
-                            <th></th>
-                        </tr>
-                    </thead>
-                    <tbody id="accountsTableBody">
-                        {% for account in accounts %}
-                        <tr class="account-row"
-                            data-href="/accounts/{{ account.id }}{% if list_query_string %}?from=/accounts?{{ list_query_string }}{% endif %}"
-                            data-name="{{ account.name|lower }}"
-                            data-last-activity="{{ account.last_contacted.strftime('%Y-%m-%d') if account.last_contacted else '0000-00-00' }}">
-                            <td>
-                                <span class="fw-medium">{{ account.name }}</span>
-                            </td>
-                            <td>
-                                {% if account.account_type == 'gc' %}
-                                <span class="badge bg-info bg-opacity-10 text-info">GC</span>
-                                {% else %}
-                                <span class="badge bg-secondary bg-opacity-10 text-secondary">End User</span>
-                                {% endif %}
-                            </td>
-                            <td>
-                                {% if account.industry %}
-                                <span class="badge bg-secondary bg-opacity-10 text-secondary">{{ account.industry }}</span>
-                                {% else %}
-                                <span class="text-muted">—</span>
-                                {% endif %}
-                            </td>
-                            <td>
-                                {% if account.city %}
-                                {{ account.city }}{% if account.state %}, {{ account.state }}{% endif %}
-                                {% else %}
-                                <span class="text-muted">—</span>
-                                {% endif %}
-                            </td>
-                            <td>{{ account.contacts|length }}</td>
-                            <td>{{ account.last_contacted.strftime('%b %d') if account.last_contacted else '—' }}</td>
-                            <td>
-                                {% if account.open_opportunities_count > 0 %}
-                                <span class="badge bg-primary">{{ account.open_opportunities_count }}</span>
-                                {% else %}
-                                <span class="text-muted">0</span>
-                                {% endif %}
-                            </td>
-                            <td>
-                                <span class="currency">{{ account.total_pipeline_value }}</span>
-                            </td>
-                            <td class="text-end">
-                                <a href="/accounts/{{ account.id }}/edit" class="btn btn-sm btn-outline-secondary" title="Edit">
-                                    <i class="bi bi-pencil"></i>
-                                </a>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                        <tr class="no-results-row">
-                            <td colspan="9" class="text-center text-muted py-4">
-                                <i class="bi bi-search me-2"></i>No accounts match your search
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-            {% else %}
-            <div class="empty-state py-5">
-                <i class="bi bi-building"></i>
-                <h5>No accounts found</h5>
-                <p>Create your first account to get started</p>
-                <a href="/accounts/new" class="btn btn-primary">
-                    <i class="bi bi-plus-lg me-1"></i> New Account
-                </a>
-            </div>
-            {% endif %}
+    <div class="tos-card">
+        {% if accounts %}
+        <div class="table-responsive">
+            <table class="tos-table">
+                <thead>
+                    <tr>
+                        <th>Account Name</th>
+                        <th>Type</th>
+                        <th>Industry</th>
+                        <th>Location</th>
+                        <th>Contacts</th>
+                        <th>Last Contacted</th>
+                        <th>Open Opps</th>
+                        <th>Pipeline</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody id="accountsTableBody">
+                    {% for account in accounts %}
+                    <tr class="account-row"
+                        data-href="/accounts/{{ account.id }}{% if list_query_string %}?from=/accounts?{{ list_query_string }}{% endif %}"
+                        data-name="{{ account.name|lower }}"
+                        data-last-activity="{{ account.last_contacted.strftime('%Y-%m-%d') if account.last_contacted else '0000-00-00' }}">
+                        <td>
+                            <span class="tos-entity-name">{{ account.name }}</span>
+                        </td>
+                        <td>
+                            {% if account.account_type == 'gc' %}
+                            <span class="tos-badge-info">GC</span>
+                            {% else %}
+                            <span class="tos-badge-neutral">End User</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if account.industry %}
+                            <span class="tos-badge-neutral">{{ account.industry }}</span>
+                            {% else %}
+                            <span class="text-muted">—</span>
+                            {% endif %}
+                        </td>
+                        <td class="tos-entity-sub">
+                            {% if account.city %}
+                            {{ account.city }}{% if account.state %}, {{ account.state }}{% endif %}
+                            {% else %}
+                            —
+                            {% endif %}
+                        </td>
+                        <td>{{ account.contacts|length }}</td>
+                        <td class="tos-entity-sub">{{ account.last_contacted.strftime('%b %d') if account.last_contacted else '—' }}</td>
+                        <td>
+                            {% if account.open_opportunities_count > 0 %}
+                            <span class="tos-badge-pending">{{ account.open_opportunities_count }}</span>
+                            {% else %}
+                            <span class="text-muted">0</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <span class="currency">{{ account.total_pipeline_value }}</span>
+                        </td>
+                        <td class="text-end">
+                            <a href="/accounts/{{ account.id }}/edit" class="tos-btn tos-btn-secondary" title="Edit">
+                                <i class="bi bi-pencil"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                    <tr class="no-results-row">
+                        <td colspan="9" class="text-center text-muted py-4">
+                            <i class="bi bi-search me-2"></i>No accounts match your search
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
         </div>
+        {% else %}
+        <div class="tos-empty-state">
+            <i class="bi bi-building"></i>
+            <p>No accounts found</p>
+            <a href="/accounts/new" class="tos-btn tos-btn-primary">
+                <i class="bi bi-plus-lg"></i> New Account
+            </a>
+        </div>
+        {% endif %}
     </div>
 </div>
 {% endblock %}

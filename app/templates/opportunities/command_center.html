@@ -35,10 +35,13 @@
                     <i class="bi bi-pencil me-1"></i> Edit
                 </a>
                 <form method="post" action="/opportunities/{{ opportunity.id }}/log-contact" class="d-inline">
-                    <button type="submit" class="btn btn-outline-primary">
+                    <button type="submit" class="btn btn-primary">
                         <i class="bi bi-telephone me-1"></i> Log Contact
                     </button>
                 </form>
+                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#logSiteVisitModal">
+                    <i class="bi bi-geo-alt me-1"></i> Site Visit
+                </button>
                 <form method="post" action="/opportunities/{{ opportunity.id }}/delete" class="d-inline" onsubmit="return confirm('Delete this opportunity and all related activities, tasks, and documents? This cannot be undone.');">
                     <button type="submit" class="btn btn-outline-danger">
                         <i class="bi bi-trash me-1"></i> Delete
@@ -122,11 +125,11 @@
 
     <!-- Primary Contact Card -->
     <div class="card mb-4">
-        <div class="card-header d-flex justify-content-between align-items-center">
-            <span><i class="bi bi-person me-2"></i>Primary Contact</span>
+        <div class="card-header">
+            <i class="bi bi-person me-2"></i>Primary Contact
             {% if opportunity.primary_contact %}
-            <a href="/contacts/{{ opportunity.primary_contact.id }}#logContactModal" class="btn btn-sm btn-outline-success">
-                <i class="bi bi-telephone me-1"></i> Log Contact
+            <a href="/contacts/{{ opportunity.primary_contact.id }}#logContactModal" class="btn btn-sm btn-primary ms-2">
+                <i class="bi bi-telephone me-1"></i> Log
             </a>
             {% endif %}
         </div>
@@ -170,10 +173,10 @@
         <div class="col-lg-8">
             <!-- Tasks Section -->
             <div class="card mb-4">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <span><i class="bi bi-check2-square me-2"></i>Tasks</span>
-                    <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#taskModal">
-                        <i class="bi bi-plus-lg me-1"></i> Add Task
+                <div class="card-header">
+                    <i class="bi bi-check2-square me-2"></i>Tasks
+                    <button class="btn btn-sm btn-outline-primary ms-2" data-bs-toggle="modal" data-bs-target="#taskModal">
+                        <i class="bi bi-plus-lg me-1"></i> Add
                     </button>
                 </div>
                 <div class="card-body p-0">
@@ -246,10 +249,10 @@
 
             <!-- Activity Timeline -->
             <div class="card mb-4">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <span><i class="bi bi-clock-history me-2"></i>Activity Timeline</span>
-                    <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#activityModal">
-                        <i class="bi bi-plus-lg me-1"></i> Log Activity
+                <div class="card-header">
+                    <i class="bi bi-clock-history me-2"></i>Activity Timeline
+                    <button class="btn btn-sm btn-outline-primary ms-2" data-bs-toggle="modal" data-bs-target="#activityModal">
+                        <i class="bi bi-plus-lg me-1"></i> Log
                     </button>
                 </div>
                 <div class="card-body">
@@ -560,4 +563,6 @@
         </div>
     </div>
 </div>
+
+{% include "partials/site_visit_modal.html" %}
 {% endblock %}

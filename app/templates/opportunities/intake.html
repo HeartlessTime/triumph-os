@@ -4,9 +4,9 @@
 
 {% block content %}
 <div class="content-area">
-    <div class="page-header">
+    <div class="tos-page-header">
         <nav aria-label="breadcrumb">
-            <ol class="breadcrumb">
+            <ol class="breadcrumb mb-1">
                 <li class="breadcrumb-item"><a href="/opportunities">Opportunities</a></li>
                 <li class="breadcrumb-item active">New Opportunity</li>
             </ol>
@@ -43,18 +43,18 @@
         <div class="row g-4">
             <div class="col-lg-8">
                 <!-- Opportunity Name - TOP -->
-                <div class="card mb-4">
-                    <div class="card-header">Opportunity Name</div>
-                    <div class="card-body">
-                        <input type="text" class="form-control form-control-lg" id="name" name="name"
+                <div class="tos-card mb-3">
+                    <div class="tos-section-header">Opportunity Name</div>
+                    <div class="p-3">
+                        <input type="text" class="form-control" id="name" name="name"
                             value="{{ form_name if form_name is defined else '' }}"
                             required placeholder="e.g., Office Building Renovation - Main Campus">
                     </div>
                 </div>
 
-                <div class="card mb-4">
-                    <div class="card-header">Project Details</div>
-                    <div class="card-body">
+                <div class="tos-card mb-3">
+                    <div class="tos-section-header">Project Details</div>
+                    <div class="p-3">
                         <div class="row g-3">
                             <div class="col-md-6">
                                 <label for="stage" class="form-label">Stage</label>
@@ -137,9 +137,9 @@
                     </div>
                 </div>
 
-                <div class="card mb-4">
-                    <div class="card-header">Bid Information</div>
-                    <div class="card-body">
+                <div class="tos-card mb-3">
+                    <div class="tos-section-header">Bid Information</div>
+                    <div class="p-3">
                         <div class="row g-3">
                             <div class="col-md-6">
                                 <label for="bid_type" class="form-label">Bid Type</label>
@@ -193,9 +193,9 @@
                 </div>
 
                 <!-- Job Walk / Pre-Bid Meeting Section -->
-                <div class="card mb-4">
-                    <div class="card-header">Job Walk / Pre-Bid Meeting</div>
-                    <div class="card-body">
+                <div class="tos-card mb-3">
+                    <div class="tos-section-header">Job Walk / Pre-Bid Meeting</div>
+                    <div class="p-3">
                         <div class="row g-3">
                             <div class="col-12">
                                 <div class="form-check">
@@ -220,18 +220,18 @@
                     </div>
                 </div>
 
-                <div class="card mb-4">
-                    <div class="card-header">Job Notes</div>
-                    <div class="card-body">
-                        <p class="text-muted small">Include project description, known risks, constraints, special notes, internal notes, etc.</p>
+                <div class="tos-card mb-3">
+                    <div class="tos-section-header">Job Notes</div>
+                    <div class="p-3">
+                        <p class="tos-entity-sub mb-2">Include project description, known risks, constraints, special notes, internal notes, etc.</p>
                         <textarea class="form-control" id="job_notes" name="job_notes" rows="5"
                             placeholder="Project details, tight schedule, partial design, union site, history, owner-furnished equipment...">{{ form_job_notes if form_job_notes is defined else '' }}</textarea>
                     </div>
                 </div>
 
-                <div class="card">
-                    <div class="card-header">Additional Details</div>
-                    <div class="card-body">
+                <div class="tos-card mb-3">
+                    <div class="tos-section-header">Additional Details</div>
+                    <div class="p-3">
                         <div class="row g-3">
                             <div class="col-md-6">
                                 <label for="source" class="form-label">Lead Source</label>
@@ -263,10 +263,10 @@
             </div>
 
             <div class="col-lg-4">
-                <div class="card mb-4">
-                    <div class="card-header">Assignment</div>
-                    <div class="card-body">
-                        <div class="mb-3">
+                <div class="tos-card mb-3">
+                    <div class="tos-section-header">Assignment</div>
+                    <div class="p-3">
+                        <div class="mb-2">
                             <label for="owner_id" class="form-label">Sales Owner <span class="text-danger">*</span></label>
                             <select class="form-select" id="owner_id" name="owner_id">
                                 <option value="">Assign to me</option>
@@ -274,19 +274,19 @@
                                 <option value="{{ u.id }}">{{ u.full_name }}</option>
                                 {% endfor %}
                             </select>
-                            <small class="text-muted">Leave blank to assign to yourself</small>
+                            <small class="tos-entity-sub">Leave blank to assign to yourself</small>
                         </div>
                     </div>
                 </div>
 
                 <!-- Help sidebar -->
-                <div class="card bg-light mb-4">
-                    <div class="card-body">
-                        <h6 class="card-title"><i class="bi bi-info-circle me-1"></i> Required Fields</h6>
-                        <p class="card-text small text-muted mb-0">
+                <div class="tos-card mb-3" style="background: #f8fafc;">
+                    <div class="p-3">
+                        <h6 class="mb-2" style="font-size: 0.85rem;"><i class="bi bi-info-circle me-1"></i> Required Fields</h6>
+                        <p class="tos-entity-sub mb-0">
                             Fields marked with <span class="text-danger">*</span> are required:
                         </p>
-                        <ul class="small text-muted mt-2 mb-0">
+                        <ul class="tos-entity-sub mt-2 mb-0" style="padding-left: 1.25rem;">
                             <li>Opportunity Name</li>
                             <li>At least one Account</li>
                             <li>Primary Account</li>
@@ -297,11 +297,11 @@
                 </div>
 
                 <div class="d-grid gap-2">
-                    <button type="submit" class="btn btn-primary btn-lg">
+                    <button type="submit" class="tos-btn tos-btn-primary" style="padding: 0.75rem 1rem;">
                         <i class="bi bi-check-lg me-1"></i>
                         {% if warnings %}Create Anyway{% else %}Create Opportunity{% endif %}
                     </button>
-                    <a href="/opportunities" class="btn btn-outline-secondary">Cancel</a>
+                    <a href="/opportunities" class="tos-btn tos-btn-secondary" style="padding: 0.5rem 1rem; text-align: center;">Cancel</a>
                 </div>
             </div>
         </div>

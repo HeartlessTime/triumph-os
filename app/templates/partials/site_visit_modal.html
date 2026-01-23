@@ -1,0 +1,84 @@
+{#
+    Site Visit Modal Partial
+
+    Required context variables:
+    - opportunity: The opportunity object (optional - when provided, site visit is linked to it)
+    - contacts: List of contacts for the dropdown (optional)
+    - return_url: URL to redirect to after submission (optional, defaults to opportunity detail or /)
+
+    Usage:
+    {% include "partials/site_visit_modal.html" %}
+#}
+
+<!-- Log Site Visit Modal -->
+<div class="modal fade" id="logSiteVisitModal" tabindex="-1" aria-labelledby="logSiteVisitModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            {% if opportunity %}
+            <form method="post" action="/activities/opportunity/{{ opportunity.id }}/add">
+            {% else %}
+            <form method="post" action="/activities/add?from={{ return_url | default('/') }}">
+            {% endif %}
+                <input type="hidden" name="activity_type" value="site_visit">
+                <input type="hidden" name="update_last_contacted" value="">
+                <div class="modal-header py-2">
+                    <h6 class="modal-title" id="logSiteVisitModalLabel"><i class="bi bi-geo-alt me-2"></i>Log Site Visit{% if opportunity %} - {{ opportunity.name }}{% endif %}</h6>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body py-2">
+                    <div class="mb-2">
+                        <label for="siteVisitDate" class="form-label small mb-1">Date & Time <span class="text-danger">*</span></label>
+                        <input type="datetime-local" class="form-control form-control-sm" id="siteVisitDate" name="activity_date" required>
+                    </div>
+                    <div class="mb-2">
+                        <label for="siteVisitSubject" class="form-label small mb-1">Purpose <span class="text-danger">*</span></label>
+                        <select class="form-select form-select-sm" id="siteVisitSubject" name="subject" required>
+                            <option value="Pre-bid walkthrough">Pre-bid walkthrough</option>
+                            <option value="Existing site evaluation">Existing site evaluation</option>
+                            <option value="Post-install check">Post-install check</option>
+                            <option value="Relationship visit">Relationship visit</option>
+                            <option value="Site Visit">Other</option>
+                        </select>
+                    </div>
+                    {% if contacts %}
+                    <div class="mb-2">
+                        <label for="siteVisitContact" class="form-label small mb-1">Contact</label>
+                        <select class="form-select form-select-sm" id="siteVisitContact" name="contact_id">
+                            <option value="">-- Select Contact --</option>
+                            {% for contact in contacts %}
+                            <option value="{{ contact.id }}">{{ contact.full_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    {% endif %}
+                    <div class="mb-0">
+                        <label for="siteVisitNotes" class="form-label small mb-1">Notes</label>
+                        <textarea class="form-control form-control-sm" id="siteVisitNotes" name="description" rows="2" placeholder="Optional notes..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer py-2">
+                    <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-sm btn-primary"><i class="bi bi-geo-alt me-1"></i>Log Site Visit</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+// Site Visit Modal: set default date/time when modal opens
+(function() {
+    var modal = document.getElementById('logSiteVisitModal');
+    if (modal) {
+        modal.addEventListener('show.bs.modal', function() {
+            var now = new Date();
+            var year = now.getFullYear();
+            var month = String(now.getMonth() + 1).padStart(2, '0');
+            var day = String(now.getDate()).padStart(2, '0');
+            var hours = String(now.getHours()).padStart(2, '0');
+            var minutes = String(now.getMinutes()).padStart(2, '0');
+            document.getElementById('siteVisitDate').value = year + '-' + month + '-' + day + 'T' + hours + ':' + minutes;
+        });
+    }
+})();
+</script>

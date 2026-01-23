@@ -1,0 +1,767 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Triumph OS{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Dashboard V2 - Dense execution-focused layout */
+    .dashboard-v2 {
+        --row-padding: 0.5rem 0.75rem;
+        --section-gap: 1rem;
+    }
+
+    .dashboard-v2 .content-area {
+        padding: 1rem 1.5rem;
+    }
+
+    .dashboard-v2 .page-header {
+        margin-bottom: 1rem;
+        padding-bottom: 0.75rem;
+        border-bottom: 1px solid #e2e8f0;
+    }
+
+    .dashboard-v2 .page-header h1 {
+        font-size: 1.25rem;
+        margin-bottom: 0;
+    }
+
+    .dashboard-v2 .section-card {
+        background: white;
+        border-radius: 0.5rem;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        margin-bottom: var(--section-gap);
+        overflow: hidden;
+    }
+
+    .dashboard-v2 .section-header {
+        background: #f8fafc;
+        padding: 0.5rem 0.75rem;
+        border-bottom: 1px solid #e2e8f0;
+        font-weight: 600;
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+        color: #475569;
+    }
+
+    .dashboard-v2 .section-header .badge {
+        font-size: 0.7rem;
+        padding: 0.2em 0.5em;
+        font-weight: 500;
+    }
+
+    .dashboard-v2 .section-body {
+        padding: 0;
+    }
+
+    /* Dense table styling */
+    .dashboard-v2 .dense-table {
+        width: 100%;
+        font-size: 0.85rem;
+        margin: 0;
+    }
+
+    .dashboard-v2 .dense-table th {
+        background: #f8fafc;
+        padding: 0.4rem 0.75rem;
+        font-weight: 500;
+        font-size: 0.7rem;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+        color: #64748b;
+        border-bottom: 1px solid #e2e8f0;
+    }
+
+    .dashboard-v2 .dense-table td {
+        padding: var(--row-padding);
+        border-bottom: 1px solid #f1f5f9;
+        vertical-align: middle;
+    }
+
+    .dashboard-v2 .dense-table tr:last-child td {
+        border-bottom: none;
+    }
+
+    .dashboard-v2 .dense-table tr:hover {
+        background: #f8fafc;
+    }
+
+    /* Status badges - muted pastel palette */
+    .dashboard-v2 .badge-overdue {
+        background: #fef2f2;
+        color: #991b1b;
+        font-weight: 500;
+    }
+
+    .dashboard-v2 .badge-today {
+        background: #fef3c7;
+        color: #92400e;
+        font-weight: 500;
+    }
+
+    .dashboard-v2 .badge-soon {
+        background: #f0fdf4;
+        color: #166534;
+        font-weight: 500;
+    }
+
+    .dashboard-v2 .badge-pending {
+        background: #eff6ff;
+        color: #1e40af;
+        font-weight: 500;
+    }
+
+    .dashboard-v2 .badge-completed {
+        background: #f0fdf4;
+        color: #166534;
+        font-weight: 500;
+    }
+
+    /* Priority badges - muted */
+    .dashboard-v2 .priority-high {
+        color: #dc2626;
+    }
+
+    .dashboard-v2 .priority-medium {
+        color: #d97706;
+    }
+
+    .dashboard-v2 .priority-low {
+        color: #6b7280;
+    }
+
+    /* Compact action buttons */
+    .dashboard-v2 .btn-action {
+        padding: 0.2rem 0.4rem;
+        font-size: 0.75rem;
+        line-height: 1;
+        border-radius: 0.25rem;
+    }
+
+    .dashboard-v2 .btn-log {
+        background: #ecfdf5;
+        color: #047857;
+        border: 1px solid #a7f3d0;
+    }
+
+    .dashboard-v2 .btn-log:hover {
+        background: #d1fae5;
+        color: #065f46;
+    }
+
+    .dashboard-v2 .btn-view {
+        background: #f8fafc;
+        color: #475569;
+        border: 1px solid #e2e8f0;
+    }
+
+    .dashboard-v2 .btn-view:hover {
+        background: #f1f5f9;
+        color: #334155;
+    }
+
+    /* Empty state - compact */
+    .dashboard-v2 .empty-state {
+        padding: 1.5rem;
+        text-align: center;
+        color: #94a3b8;
+        font-size: 0.85rem;
+    }
+
+    .dashboard-v2 .empty-state i {
+        font-size: 1.5rem;
+        margin-bottom: 0.5rem;
+        display: block;
+    }
+
+    /* Sub-section headers */
+    .dashboard-v2 .sub-header {
+        background: #fafafa;
+        padding: 0.35rem 0.75rem;
+        font-size: 0.7rem;
+        font-weight: 600;
+        color: #94a3b8;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        border-bottom: 1px solid #f1f5f9;
+    }
+
+    /* Row link styling */
+    .dashboard-v2 .row-link {
+        color: inherit;
+        text-decoration: none;
+    }
+
+    .dashboard-v2 .row-link:hover {
+        color: #2563eb;
+    }
+
+    .dashboard-v2 .entity-name {
+        font-weight: 500;
+        color: #1e293b;
+    }
+
+    .dashboard-v2 .entity-sub {
+        font-size: 0.75rem;
+        color: #94a3b8;
+    }
+
+    /* Task checkbox */
+    .dashboard-v2 .task-check {
+        width: 1.1rem;
+        height: 1.1rem;
+        cursor: pointer;
+    }
+
+    /* Responsive columns */
+    @media (min-width: 992px) {
+        .dashboard-v2 .dashboard-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        .dashboard-v2 .section-full {
+            grid-column: 1 / -1;
+        }
+    }
+
+    /* Quick stats row */
+    .dashboard-v2 .quick-stats {
+        display: flex;
+        gap: 1rem;
+        margin-bottom: 1rem;
+        flex-wrap: wrap;
+    }
+
+    .dashboard-v2 .quick-stat {
+        background: white;
+        padding: 0.5rem 1rem;
+        border-radius: 0.375rem;
+        border: 1px solid #e2e8f0;
+        font-size: 0.85rem;
+    }
+
+    .dashboard-v2 .quick-stat strong {
+        color: #1e293b;
+    }
+
+    .dashboard-v2 .quick-stat span {
+        color: #64748b;
+        margin-left: 0.25rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-v2">
+    <div class="content-area">
+        <!-- Header -->
+        <div class="page-header d-flex justify-content-between align-items-center">
+            <div>
+                <h1>Today's Execution</h1>
+                <small class="text-muted">{{ today.strftime('%A, %B %d, %Y') }}</small>
+            </div>
+            <div class="d-flex gap-2">
+                <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#quickAddTaskModal">
+                    <i class="bi bi-plus-lg me-1"></i>Task
+                </button>
+                <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#logSiteVisitModal">
+                    <i class="bi bi-geo-alt me-1"></i>Site Visit
+                </button>
+                <a href="/opportunities/intake" class="btn btn-sm btn-primary">
+                    <i class="bi bi-plus-lg me-1"></i>Opportunity
+                </a>
+            </div>
+        </div>
+
+        <!-- Quick Stats -->
+        <div class="quick-stats">
+            <div class="quick-stat">
+                <strong>{{ followup_opps|length + followup_contacts|length }}</strong>
+                <span>follow-ups due</span>
+            </div>
+            <div class="quick-stat">
+                <strong>{{ meetings_pending|length }}</strong>
+                <span>meetings pending</span>
+            </div>
+            <div class="quick-stat">
+                <strong>{{ my_tasks|length }}</strong>
+                <span>open tasks</span>
+            </div>
+            <div class="quick-stat">
+                <strong class="currency">{{ pipeline_value }}</strong>
+                <span>pipeline</span>
+            </div>
+        </div>
+
+        <div class="dashboard-grid">
+            <!-- SECTION 1: Outreach & Follow-Ups -->
+            <div class="section-card section-full section--outreach">
+                <div class="section-header">
+                    <i class="bi bi-telephone-outbound me-1"></i>Outreach & Follow-Ups
+                    <span class="badge badge-overdue ms-2">{{ followup_opps|length + followup_contacts|length }} due</span>
+                </div>
+                <div class="section-body">
+                    {% set overdue_opps = followup_opps | selectattr('followup_status') | selectattr('followup_status.status', 'equalto', 'overdue') | list %}
+                    {% set today_opps = followup_opps | selectattr('followup_status') | selectattr('followup_status.status', 'equalto', 'due_today') | list %}
+                    {% set soon_opps = followup_opps | selectattr('followup_status') | selectattr('followup_status.status', 'equalto', 'due_soon') | list %}
+
+                    {% set overdue_contacts = followup_contacts | selectattr('next_followup') | selectattr('next_followup', 'lt', today) | list %}
+                    {% set today_contacts = followup_contacts | selectattr('next_followup') | selectattr('next_followup', 'equalto', today) | list %}
+
+                    {% if overdue_opps or overdue_contacts %}
+                    <div class="sub-header text-danger"><i class="bi bi-exclamation-circle me-1"></i>Overdue</div>
+                    <table class="dense-table">
+                        <tbody>
+                            {% for opp in overdue_opps %}
+                            <tr>
+                                <td style="width: 40%;">
+                                    <a href="/opportunities/{{ opp.id }}" class="row-link">
+                                        <span class="entity-name">{{ opp.name }}</span>
+                                        <div class="entity-sub">{{ opp.primary_account.name if opp.primary_account else 'No Account' }}</div>
+                                    </a>
+                                </td>
+                                <td>
+                                    <span class="badge badge-overdue">{{ opp.followup_status.days_until|abs }}d overdue</span>
+                                </td>
+                                <td class="text-end" style="white-space: nowrap;">
+                                    <form method="post" action="/opportunities/{{ opp.id }}/log-contact" class="d-inline">
+                                        <button type="submit" class="btn btn-action btn-log" title="Log Contact">
+                                            <i class="bi bi-telephone me-1"></i>Log
+                                        </button>
+                                    </form>
+                                    <a href="/opportunities/{{ opp.id }}" class="btn btn-action btn-view"><i class="bi bi-eye"></i></a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                            {% for contact in overdue_contacts %}
+                            <tr>
+                                <td style="width: 40%;">
+                                    <a href="/contacts/{{ contact.id }}" class="row-link">
+                                        <span class="entity-name">{{ contact.full_name }}</span>
+                                        <div class="entity-sub">{{ contact.account.name if contact.account else 'No Account' }}</div>
+                                    </a>
+                                </td>
+                                <td>
+                                    <span class="badge badge-overdue">{{ (today - contact.next_followup).days }}d overdue</span>
+                                </td>
+                                <td class="text-end" style="white-space: nowrap;">
+                                    <a href="/contacts/{{ contact.id }}" class="btn btn-action btn-view"><i class="bi bi-eye"></i></a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    {% endif %}
+
+                    {% if today_opps or today_contacts %}
+                    <div class="sub-header text-warning"><i class="bi bi-clock me-1"></i>Due Today</div>
+                    <table class="dense-table">
+                        <tbody>
+                            {% for opp in today_opps %}
+                            <tr>
+                                <td style="width: 40%;">
+                                    <a href="/opportunities/{{ opp.id }}" class="row-link">
+                                        <span class="entity-name">{{ opp.name }}</span>
+                                        <div class="entity-sub">{{ opp.primary_account.name if opp.primary_account else 'No Account' }}</div>
+                                    </a>
+                                </td>
+                                <td>
+                                    <span class="badge badge-today">Due today</span>
+                                </td>
+                                <td class="text-end" style="white-space: nowrap;">
+                                    <form method="post" action="/opportunities/{{ opp.id }}/log-contact" class="d-inline">
+                                        <button type="submit" class="btn btn-action btn-log" title="Log Contact">
+                                            <i class="bi bi-telephone me-1"></i>Log
+                                        </button>
+                                    </form>
+                                    <a href="/opportunities/{{ opp.id }}" class="btn btn-action btn-view"><i class="bi bi-eye"></i></a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                            {% for contact in today_contacts %}
+                            <tr>
+                                <td style="width: 40%;">
+                                    <a href="/contacts/{{ contact.id }}" class="row-link">
+                                        <span class="entity-name">{{ contact.full_name }}</span>
+                                        <div class="entity-sub">{{ contact.account.name if contact.account else 'No Account' }}</div>
+                                    </a>
+                                </td>
+                                <td>
+                                    <span class="badge badge-today">Due today</span>
+                                </td>
+                                <td class="text-end" style="white-space: nowrap;">
+                                    <a href="/contacts/{{ contact.id }}" class="btn btn-action btn-view"><i class="bi bi-eye"></i></a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    {% endif %}
+
+                    {% if soon_opps %}
+                    <div class="sub-header text-success"><i class="bi bi-calendar-event me-1"></i>Due Soon</div>
+                    <table class="dense-table">
+                        <tbody>
+                            {% for opp in soon_opps %}
+                            <tr>
+                                <td style="width: 40%;">
+                                    <a href="/opportunities/{{ opp.id }}" class="row-link">
+                                        <span class="entity-name">{{ opp.name }}</span>
+                                        <div class="entity-sub">{{ opp.primary_account.name if opp.primary_account else 'No Account' }}</div>
+                                    </a>
+                                </td>
+                                <td>
+                                    <span class="badge badge-soon">In {{ opp.followup_status.days_until }}d</span>
+                                </td>
+                                <td class="text-end" style="white-space: nowrap;">
+                                    <form method="post" action="/opportunities/{{ opp.id }}/log-contact" class="d-inline">
+                                        <button type="submit" class="btn btn-action btn-log" title="Log Contact">
+                                            <i class="bi bi-telephone me-1"></i>Log
+                                        </button>
+                                    </form>
+                                    <a href="/opportunities/{{ opp.id }}" class="btn btn-action btn-view"><i class="bi bi-eye"></i></a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    {% endif %}
+
+                    {% if not followup_opps and not followup_contacts %}
+                    <div class="empty-state">
+                        <i class="bi bi-check-circle"></i>
+                        <div>All caught up! No follow-ups needed.</div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- SECTION 2: Meetings -->
+            <div class="section-card section--meetings">
+                <div class="section-header">
+                    <i class="bi bi-calendar-check me-1"></i>Meetings
+                    <span class="badge badge-pending ms-2">{{ meetings_pending|length }} pending</span>
+                </div>
+                <div class="section-body">
+                    {% if meetings_pending %}
+                    <div class="sub-header"><i class="bi bi-hourglass-split me-1"></i>Pending (awaiting confirmation)</div>
+                    <table class="dense-table">
+                        <tbody>
+                            {% for activity in meetings_pending[:10] %}
+                            <tr>
+                                <td style="width: 45%;">
+                                    <a href="/contacts/{{ activity.contact.id }}" class="row-link">
+                                        <span class="entity-name">{{ activity.contact.full_name }}</span>
+                                        <div class="entity-sub">{{ activity.contact.account.name if activity.contact.account else '' }}</div>
+                                    </a>
+                                </td>
+                                <td>
+                                    <span class="text-muted" style="font-size: 0.75rem;">
+                                        {{ activity.activity_date | localtime('%b %d') }}
+                                    </span>
+                                </td>
+                                <td class="text-end" style="white-space: nowrap;">
+                                    <button type="button"
+                                            class="btn btn-action btn-log mark-meeting-btn"
+                                            data-activity-id="{{ activity.id }}"
+                                            title="Mark as Meeting Occurred">
+                                        <i class="bi bi-check-lg me-1"></i>Met
+                                    </button>
+                                    <a href="/activities/{{ activity.id }}/edit" class="btn btn-action btn-view"><i class="bi bi-pencil"></i></a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    {% endif %}
+
+                    {% if meetings_completed %}
+                    <div class="sub-header"><i class="bi bi-check-circle me-1"></i>Completed (last 7 days)</div>
+                    <table class="dense-table">
+                        <tbody>
+                            {% for activity in meetings_completed[:5] %}
+                            <tr>
+                                <td style="width: 45%;">
+                                    <span class="entity-name" style="color: #64748b;">{{ activity.contact.full_name if activity.contact else activity.subject }}</span>
+                                    <div class="entity-sub">{{ activity.contact.account.name if activity.contact and activity.contact.account else '' }}</div>
+                                </td>
+                                <td>
+                                    <span class="badge badge-completed">
+                                        {{ activity.activity_date | localtime('%b %d') }}
+                                    </span>
+                                </td>
+                                <td class="text-end">
+                                    <a href="/activities/{{ activity.id }}/edit" class="btn btn-action btn-view"><i class="bi bi-eye"></i></a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    {% endif %}
+
+                    {% if not meetings_pending and not meetings_completed %}
+                    <div class="empty-state">
+                        <i class="bi bi-calendar"></i>
+                        <div>No meetings tracked.</div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- SECTION 3: Tasks -->
+            <div class="section-card section--tasks">
+                <div class="section-header">
+                    <i class="bi bi-check2-square me-1"></i>Tasks
+                    <span class="badge bg-secondary ms-2">{{ my_tasks|length }}</span>
+                    <button type="button" class="btn btn-action btn-view ms-2" data-bs-toggle="modal" data-bs-target="#quickAddTaskModal">
+                        <i class="bi bi-plus-lg"></i>
+                    </button>
+                </div>
+                <div class="section-body">
+                    {% if my_tasks %}
+                    <table class="dense-table">
+                        <tbody>
+                            {% for task in my_tasks %}
+                            <tr data-href="/tasks/{{ task.id }}/edit?from=/">
+                                <td style="width: 1.5rem; padding-right: 0;">
+                                    <button type="button"
+                                        class="btn btn-sm p-0 task-complete-btn {% if task.status == 'Completed' %}text-success{% else %}text-muted{% endif %}"
+                                        data-task-complete
+                                        data-task-id="{{ task.id }}"
+                                        data-completed="{{ 'true' if task.status == 'Completed' else 'false' }}"
+                                        title="{{ 'Reopen Task' if task.status == 'Completed' else 'Complete Task' }}"
+                                        style="font-size: 1rem; line-height: 1;"
+                                        >
+                                        <i class="bi {% if task.status == 'Completed' %}bi-check-circle-fill{% else %}bi-circle{% endif %}"></i>
+                                    </button>
+                                </td>
+                                <td>
+                                    <span class="entity-name {% if task.status == 'Completed' %}text-decoration-line-through text-muted{% endif %}">{{ task.title }}</span>
+                                    {% if task.opportunity %}
+                                    <div class="entity-sub">{{ task.opportunity.name }}</div>
+                                    {% endif %}
+                                </td>
+                                <td class="text-end" style="white-space: nowrap;">
+                                    <span class="priority-{{ task.priority|lower }}" style="font-size: 0.7rem; font-weight: 500;">
+                                        {{ task.priority[0] }}
+                                    </span>
+                                    {% if task.due_date %}
+                                    <span class="ms-1 {% if task.is_overdue %}text-danger{% else %}text-muted{% endif %}" style="font-size: 0.75rem;">
+                                        {{ task.due_date.strftime('%b %d') }}
+                                    </span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    {% else %}
+                    <div class="empty-state">
+                        <i class="bi bi-check-all"></i>
+                        <div>No open tasks.</div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- SECTION 4: Upcoming Bids (compact) -->
+            <div class="section-card section-full section--pipeline">
+                <div class="section-header">
+                    <i class="bi bi-calendar-event me-1"></i>Upcoming Bids (Next 14 Days)
+                    <span class="badge bg-primary ms-2">{{ upcoming_bids|length }}</span>
+                </div>
+                <div class="section-body">
+                    {% if upcoming_bids %}
+                    <table class="dense-table">
+                        <thead>
+                            <tr>
+                                <th>Opportunity</th>
+                                <th>Account</th>
+                                <th>Bid Date</th>
+                                <th class="text-end">Value</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for opp in upcoming_bids %}
+                            <tr>
+                                <td>
+                                    <a href="/opportunities/{{ opp.id }}" class="row-link entity-name">{{ opp.name }}</a>
+                                </td>
+                                <td class="entity-sub">{{ opp.primary_account.name if opp.primary_account else '—' }}</td>
+                                <td>
+                                    <span class="{% if opp.days_until_bid <= 3 %}text-danger fw-bold{% elif opp.days_until_bid <= 7 %}text-warning{% endif %}">
+                                        {{ opp.bid_date.strftime('%b %d') }}
+                                    </span>
+                                    <span class="text-muted" style="font-size: 0.7rem;">({{ opp.days_until_bid }}d)</span>
+                                </td>
+                                <td class="text-end">
+                                    <span class="currency" style="font-size: 0.85rem;">{{ opp.value or 0 }}</span>
+                                </td>
+                                <td class="text-end">
+                                    <a href="/opportunities/{{ opp.id }}" class="btn btn-action btn-view"><i class="bi bi-eye"></i></a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    {% else %}
+                    <div class="empty-state">
+                        <i class="bi bi-calendar"></i>
+                        <div>No bids in the next 14 days.</div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Add Task Modal -->
+<div class="modal fade" id="quickAddTaskModal" tabindex="-1" aria-labelledby="quickAddTaskModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="post" action="/tasks/quick-add">
+                <div class="modal-header py-2">
+                    <h6 class="modal-title" id="quickAddTaskModalLabel"><i class="bi bi-plus-circle me-2"></i>Quick Add Task</h6>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body py-2">
+                    <div class="mb-2">
+                        <label for="taskTitle" class="form-label small mb-1">Title <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control form-control-sm" id="taskTitle" name="title" required placeholder="What needs to be done?">
+                    </div>
+                    <div class="row mb-2">
+                        <div class="col-6">
+                            <label for="taskDueDate" class="form-label small mb-1">Due Date</label>
+                            <input type="date" class="form-control form-control-sm" id="taskDueDate" name="due_date">
+                        </div>
+                        <div class="col-6">
+                            <label for="taskPriority" class="form-label small mb-1">Priority</label>
+                            <select class="form-select form-select-sm" id="taskPriority" name="priority">
+                                <option value="Low">Low</option>
+                                <option value="Medium" selected>Medium</option>
+                                <option value="High">High</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="mb-0">
+                        <label for="taskNotes" class="form-label small mb-1">Notes</label>
+                        <input type="text" class="form-control form-control-sm" id="taskNotes" name="description" placeholder="Optional notes...">
+                    </div>
+                </div>
+                <div class="modal-footer py-2">
+                    <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-sm btn-primary"><i class="bi bi-plus-lg me-1"></i>Add Task</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Log Site Visit Modal -->
+<div class="modal fade" id="logSiteVisitModal" tabindex="-1" aria-labelledby="logSiteVisitModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="post" id="siteVisitForm" action="/activities/add?from=/">
+                <input type="hidden" name="activity_type" value="site_visit">
+                <div class="modal-header py-2">
+                    <h6 class="modal-title" id="logSiteVisitModalLabel"><i class="bi bi-geo-alt me-2"></i>Log Site Visit</h6>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body py-2">
+                    <div class="mb-2">
+                        <label for="siteVisitDate" class="form-label small mb-1">Date & Time <span class="text-danger">*</span></label>
+                        <input type="datetime-local" class="form-control form-control-sm" id="siteVisitDate" name="activity_date" required>
+                    </div>
+                    <div class="mb-2">
+                        <label for="siteVisitOpportunity" class="form-label small mb-1">Opportunity</label>
+                        <select class="form-select form-select-sm" id="siteVisitOpportunity" name="opportunity_id">
+                            <option value="">-- Select Opportunity --</option>
+                            {% for opp in all_open_opps %}
+                            <option value="{{ opp.id }}">{{ opp.name }} ({{ opp.primary_account.name if opp.primary_account else 'No Account' }})</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-2">
+                        <label for="siteVisitSubject" class="form-label small mb-1">Purpose <span class="text-danger">*</span></label>
+                        <select class="form-select form-select-sm" id="siteVisitSubject" name="subject" required>
+                            <option value="Pre-bid walkthrough">Pre-bid walkthrough</option>
+                            <option value="Existing site evaluation">Existing site evaluation</option>
+                            <option value="Post-install check">Post-install check</option>
+                            <option value="Relationship visit">Relationship visit</option>
+                            <option value="Site Visit">Other</option>
+                        </select>
+                    </div>
+                    <div class="mb-2">
+                        <label for="siteVisitContact" class="form-label small mb-1">Contact</label>
+                        <select class="form-select form-select-sm" id="siteVisitContact" name="contact_id">
+                            <option value="">-- Select Contact --</option>
+                            {% for contact in all_contacts %}
+                            <option value="{{ contact.id }}">{{ contact.full_name }} ({{ contact.account.name if contact.account else 'No Account' }})</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-0">
+                        <label for="siteVisitNotes" class="form-label small mb-1">Notes</label>
+                        <textarea class="form-control form-control-sm" id="siteVisitNotes" name="description" rows="2" placeholder="Optional notes..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer py-2">
+                    <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-sm btn-primary"><i class="bi bi-geo-alt me-1"></i>Log Site Visit</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Mark meeting as occurred (AJAX)
+document.querySelectorAll('.mark-meeting-btn').forEach(function(btn) {
+    btn.addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+
+        const activityId = this.dataset.activityId;
+        const row = this.closest('tr');
+
+        fetch('/today/mark-meeting-occurred/' + activityId, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Remove the row with fade effect
+                row.style.transition = 'opacity 0.3s';
+                row.style.opacity = '0';
+                setTimeout(() => row.remove(), 300);
+            } else {
+                alert(data.error || 'Failed to update meeting');
+            }
+        })
+        .catch(err => {
+            console.error('Error:', err);
+            alert('Failed to update meeting');
+        });
+    });
+});
+
+// Site Visit Modal: set default date/time when modal opens
+document.getElementById('logSiteVisitModal').addEventListener('show.bs.modal', function() {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    const hours = String(now.getHours()).padStart(2, '0');
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+    document.getElementById('siteVisitDate').value = `${year}-${month}-${day}T${hours}:${minutes}`;
+});
+</script>
+{% endblock %}

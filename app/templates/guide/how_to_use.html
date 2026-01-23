@@ -3,242 +3,236 @@
 {% block title %}Reference Guide - Triumph OS{% endblock %}
 
 {% block content %}
-<div class="page-header">
-    <h1><i class="bi bi-book me-2"></i>Triumph OS Reference Guide</h1>
-    <p class="text-muted">Quick reference for internal team</p>
-</div>
+<div class="content-area">
+    <div class="tos-page-header">
+        <h1><i class="bi bi-book me-2"></i>Triumph OS Reference Guide</h1>
+        <p>Quick reference for internal team</p>
+    </div>
 
-<!-- Quick Navigation -->
-<div class="card shadow-sm mb-4">
-    <div class="card-body py-2">
-        <div class="d-flex flex-wrap gap-2">
-            <span class="text-muted small align-self-center me-2">Jump to:</span>
-            <a href="#dashboard" class="btn btn-outline-secondary btn-sm">Dashboard</a>
-            <a href="#today" class="btn btn-outline-secondary btn-sm">Today</a>
-            <a href="#accounts" class="btn btn-outline-secondary btn-sm">Accounts</a>
-            <a href="#contacts" class="btn btn-outline-secondary btn-sm">Contacts</a>
-            <a href="#opportunities" class="btn btn-outline-secondary btn-sm">Opportunities</a>
-            <a href="#activities" class="btn btn-outline-secondary btn-sm">Activities</a>
-            <a href="#tasks" class="btn btn-outline-secondary btn-sm">Tasks</a>
-            <a href="#weekly-summary" class="btn btn-outline-secondary btn-sm">Weekly Summary</a>
+    <!-- Quick Navigation -->
+    <div class="tos-card mb-3">
+        <div style="padding: 0.5rem 0.75rem;">
+            <div class="d-flex flex-wrap gap-2 align-items-center">
+                <span class="text-muted small me-2">Jump to:</span>
+                <a href="#dashboard" class="tos-btn tos-btn-secondary">Dashboard</a>
+                <a href="#accounts" class="tos-btn tos-btn-secondary">Accounts</a>
+                <a href="#contacts" class="tos-btn tos-btn-secondary">Contacts</a>
+                <a href="#opportunities" class="tos-btn tos-btn-secondary">Opportunities</a>
+                <a href="#activities" class="tos-btn tos-btn-secondary">Activities</a>
+                <a href="#tasks" class="tos-btn tos-btn-secondary">Tasks</a>
+                <a href="#summaries" class="tos-btn tos-btn-secondary">Summaries</a>
+            </div>
         </div>
     </div>
-</div>
 
-<div class="row">
-    <div class="col-12">
+    <!-- SECTION: Daily Execution -->
+    <h4 class="text-muted mb-3 mt-2"><i class="bi bi-calendar-day me-2"></i>Daily Execution</h4>
 
-        <!-- SECTION: Daily Use -->
-        <h4 class="text-muted mb-3 mt-2"><i class="bi bi-calendar-day me-2"></i>Daily Use</h4>
-
-        <!-- Dashboard -->
-        <div id="dashboard" class="card shadow-sm mb-4">
-            <div class="card-header bg-primary text-white">
-                <h5 class="mb-0"><i class="bi bi-speedometer2 me-2"></i>Dashboard</h5>
-            </div>
-            <div class="card-body">
-                <p class="mb-3">Your daily starting point. Shows pipeline health and items needing attention.</p>
-                <ul class="mb-0">
-                    <li><strong>Pipeline Value</strong> — Total value of open opportunities</li>
-                    <li><strong>Stalled Opportunities</strong> — Deals marked with a stalled reason</li>
-                    <li><strong>Follow-ups Needed</strong> — Opportunities past their follow-up date</li>
-                    <li><strong>Upcoming Bids</strong> — Bids due in next 14 days</li>
-                    <li><strong>My Tasks</strong> — Your open tasks by priority</li>
-                </ul>
-            </div>
+    <!-- Dashboard -->
+    <div id="dashboard" class="tos-card mb-3">
+        <div class="tos-section-header">
+            <i class="bi bi-speedometer2 me-2"></i>Dashboard
         </div>
-
-        <!-- Today Page -->
-        <div id="today" class="card shadow-sm mb-4">
-            <div class="card-header" style="background-color: #6f42c1; color: white;">
-                <h5 class="mb-0"><i class="bi bi-calendar-check me-2"></i>Today Page</h5>
-            </div>
-            <div class="card-body">
-                <p class="mb-3">Focused view of what needs action today and this week.</p>
-                <ul class="mb-0">
-                    <li><strong>Follow-ups Due</strong> — Overdue or due today</li>
-                    <li><strong>Tasks Due</strong> — Due within 7 days</li>
-                    <li><strong>Upcoming Bids</strong> — Bids due within 7 days</li>
-                </ul>
-                <p class="mt-3 mb-0 small text-muted">Quick actions: View, Log Contact, Complete Task</p>
-            </div>
+        <div style="padding: 0.75rem;">
+            <p class="mb-3">Your daily starting point for execution. Shows pipeline health and items needing immediate attention.</p>
+            <ul class="mb-0">
+                <li><strong>Pipeline Value</strong> — Total value of open opportunities</li>
+                <li><strong>Stalled Opportunities</strong> — Deals marked with a stalled reason</li>
+                <li><strong>Follow-ups Needed</strong> — Opportunities past their follow-up date</li>
+                <li><strong>Upcoming Bids</strong> — Bids due in next 14 days</li>
+                <li><strong>My Tasks</strong> — Your open tasks by priority</li>
+            </ul>
         </div>
-
-        <!-- SECTION: Core Records -->
-        <h4 class="text-muted mb-3 mt-4"><i class="bi bi-database me-2"></i>Core Records</h4>
-
-        <!-- Accounts -->
-        <div id="accounts" class="card shadow-sm mb-4">
-            <div class="card-header bg-success text-white">
-                <h5 class="mb-0"><i class="bi bi-building me-2"></i>Accounts</h5>
-            </div>
-            <div class="card-body">
-                <p class="mb-3">Customer companies (GCs, developers, owners).</p>
-                <h6>What to do</h6>
-                <ul class="mb-0">
-                    <li>Create one account per company</li>
-                    <li>Add contacts and opportunities under the account</li>
-                    <li>Use consistent naming (avoid abbreviations)</li>
-                </ul>
-            </div>
-        </div>
-
-        <!-- Contacts -->
-        <div id="contacts" class="card shadow-sm mb-4">
-            <div class="card-header bg-info text-white">
-                <h5 class="mb-0"><i class="bi bi-people me-2"></i>Contacts</h5>
-            </div>
-            <div class="card-body">
-                <p class="mb-3">People at customer companies.</p>
-                <h6>What to do</h6>
-                <ul class="mb-3">
-                    <li>Mark one contact as <strong>Primary Contact</strong> per account</li>
-                    <li>Use <strong>Log Contact</strong> after each interaction — this updates follow-up dates</li>
-                </ul>
-                <h6>What to watch for</h6>
-                <ul class="mb-0">
-                    <li>Contacts turn red when overdue for follow-up (30-day cycle)</li>
-                </ul>
-            </div>
-        </div>
-
-        <!-- Opportunities -->
-        <div id="opportunities" class="card shadow-sm mb-4">
-            <div class="card-header bg-warning text-white">
-                <h5 class="mb-0"><i class="bi bi-trophy me-2"></i>Opportunities</h5>
-            </div>
-            <div class="card-body">
-                <p class="mb-3">Bids and projects you're pursuing.</p>
-
-                <h6>Key fields to fill in</h6>
-                <ul class="mb-3">
-                    <li><strong>LV Value / HDD Value</strong> — Estimated dollar amounts</li>
-                    <li><strong>Bid Date</strong> — When bid is due</li>
-                    <li><strong>Primary Contact</strong> — Main person for this deal</li>
-                    <li><strong>GCs</strong> — General contractors (select multiple if needed)</li>
-                    <li><strong>Quick Links</strong> — External URLs (bid portals, folders)</li>
-                </ul>
-
-                <h6>Sales Stages</h6>
-                <table class="table table-sm mb-3">
-                    <tbody>
-                        <tr><td>Prospecting</td><td>10%</td></tr>
-                        <tr><td>Proposal</td><td>40%</td></tr>
-                        <tr><td>Bid Sent</td><td>60%</td></tr>
-                        <tr><td>Negotiation</td><td>80%</td></tr>
-                        <tr><td>Won</td><td>100%</td></tr>
-                        <tr><td>Lost</td><td>0%</td></tr>
-                    </tbody>
-                </table>
-
-                <h6>Stalled Reasons</h6>
-                <p class="mb-2">Set when a deal isn't progressing:</p>
-                <ul class="mb-3">
-                    <li>Waiting on GC</li>
-                    <li>Waiting on bid results</li>
-                    <li>Waiting on drawings</li>
-                    <li>Budget unclear</li>
-                    <li>Internal delay</li>
-                </ul>
-
-                <h6>Follow-up Rules</h6>
-                <table class="table table-sm mb-3">
-                    <tbody>
-                        <tr><td>Prospecting / Proposal / Bid Sent</td><td>14 days from last contact</td></tr>
-                        <tr><td>Negotiation</td><td>7 days from last contact</td></tr>
-                        <tr><td>Past bid date (not closed)</td><td>2 business days</td></tr>
-                        <tr><td>Won / Lost</td><td>No follow-up</td></tr>
-                    </tbody>
-                </table>
-
-                <h6>Follow-up Colors</h6>
-                <ul class="mb-3">
-                    <li><span class="text-danger fw-bold">Red</span> — Overdue</li>
-                    <li><span class="text-warning fw-bold">Yellow</span> — Due within 3 days</li>
-                    <li><span class="text-success fw-bold">Green</span> — Safe (4+ days)</li>
-                </ul>
-
-                <h6>Health Score</h6>
-                <p class="mb-2">Shows deal engagement at a glance. Appears next to opportunity name.</p>
-                <ul class="mb-0">
-                    <li><span class="text-success fw-bold">Green (8–10)</span> — Healthy</li>
-                    <li><span class="text-warning fw-bold">Yellow (5–7)</span> — Needs attention</li>
-                    <li><span class="text-danger fw-bold">Red (0–4)</span> — At risk</li>
-                </ul>
-            </div>
-        </div>
-
-        <!-- SECTION: Work Tracking -->
-        <h4 class="text-muted mb-3 mt-4"><i class="bi bi-clipboard-check me-2"></i>Work Tracking</h4>
-
-        <!-- Activities -->
-        <div id="activities" class="card shadow-sm mb-4">
-            <div class="card-header bg-secondary text-white">
-                <h5 class="mb-0"><i class="bi bi-chat-dots me-2"></i>Activities</h5>
-            </div>
-            <div class="card-body">
-                <p class="mb-3">Log of customer interactions.</p>
-                <h6>Types</h6>
-                <ul class="mb-3">
-                    <li>Call, Email, Meeting, Site Visit, Note</li>
-                </ul>
-                <h6>What to do</h6>
-                <ul class="mb-0">
-                    <li>Log activities after each customer interaction</li>
-                    <li>Link to the relevant opportunity when applicable</li>
-                </ul>
-            </div>
-        </div>
-
-        <!-- Tasks -->
-        <div id="tasks" class="card shadow-sm mb-4">
-            <div class="card-header bg-dark text-white">
-                <h5 class="mb-0"><i class="bi bi-check-square me-2"></i>Tasks</h5>
-            </div>
-            <div class="card-body">
-                <p class="mb-3">Action items, optionally linked to opportunities.</p>
-                <h6>Priority Levels</h6>
-                <ul class="mb-3">
-                    <li><strong>Urgent</strong> — Do immediately</li>
-                    <li><strong>High</strong> — Important, has deadline</li>
-                    <li><strong>Medium</strong> — Important, flexible timing</li>
-                    <li><strong>Low</strong> — When you have time</li>
-                </ul>
-                <h6>What to watch for</h6>
-                <ul class="mb-0">
-                    <li>Tasks due within 7 days appear on Today page</li>
-                    <li>Completed tasks can be reopened if needed</li>
-                </ul>
-            </div>
-        </div>
-
-        <!-- SECTION: Reporting -->
-        <h4 class="text-muted mb-3 mt-4"><i class="bi bi-bar-chart me-2"></i>Reporting</h4>
-
-        <!-- Weekly Summary -->
-        <div id="weekly-summary" class="card shadow-sm mb-4">
-            <div class="card-header" style="background-color: #20c997; color: white;">
-                <h5 class="mb-0"><i class="bi bi-clipboard-data me-2"></i>Weekly Summary</h5>
-            </div>
-            <div class="card-body">
-                <p class="mb-3">Summary of your weekly activity for reporting.</p>
-                <h6>Includes</h6>
-                <ul class="mb-3">
-                    <li>Outreach & follow-ups</li>
-                    <li>Pipeline movement</li>
-                    <li>Tasks completed</li>
-                    <li>New records created</li>
-                    <li>Activity timeline</li>
-                </ul>
-                <h6>What to do</h6>
-                <ul class="mb-0">
-                    <li>Add notes to each section (saved per week)</li>
-                    <li>Use <strong>Copy to Clipboard</strong> to export for emails/reports</li>
-                    <li>Use week navigation to review past weeks</li>
-                </ul>
-            </div>
-        </div>
-
     </div>
+
+    <!-- SECTION: Relationship Management -->
+    <h4 class="text-muted mb-3 mt-4"><i class="bi bi-database me-2"></i>Relationship Management</h4>
+
+    <!-- Accounts -->
+    <div id="accounts" class="tos-card mb-3">
+        <div class="tos-section-header">
+            <i class="bi bi-building me-2"></i>Accounts
+        </div>
+        <div style="padding: 0.75rem;">
+            <p class="mb-3">Customer companies (GCs, developers, owners).</p>
+            <h6>What to do</h6>
+            <ul class="mb-0">
+                <li>Create one account per company</li>
+                <li>Add contacts and opportunities under the account</li>
+                <li>Use consistent naming (avoid abbreviations)</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Contacts -->
+    <div id="contacts" class="tos-card mb-3">
+        <div class="tos-section-header">
+            <i class="bi bi-people me-2"></i>Contacts
+        </div>
+        <div style="padding: 0.75rem;">
+            <p class="mb-3">People at customer companies.</p>
+            <h6>What to do</h6>
+            <ul class="mb-3">
+                <li>Mark one contact as <strong>Primary Contact</strong> per account</li>
+                <li>Use <strong>Log Contact</strong> after each interaction — this updates follow-up dates</li>
+            </ul>
+            <h6>What to watch for</h6>
+            <ul class="mb-0">
+                <li>Contacts turn red when overdue for follow-up (30-day cycle)</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Opportunities -->
+    <div id="opportunities" class="tos-card mb-3">
+        <div class="tos-section-header">
+            <i class="bi bi-trophy me-2"></i>Opportunities
+        </div>
+        <div style="padding: 0.75rem;">
+            <p class="mb-3">Bids and projects you're pursuing.</p>
+
+            <h6>Key fields to fill in</h6>
+            <ul class="mb-3">
+                <li><strong>LV Value / HDD Value</strong> — Estimated dollar amounts</li>
+                <li><strong>Bid Date</strong> — When bid is due</li>
+                <li><strong>Primary Contact</strong> — Main person for this deal</li>
+                <li><strong>GCs</strong> — General contractors (select multiple if needed)</li>
+                <li><strong>Quick Links</strong> — External URLs (bid portals, folders)</li>
+            </ul>
+
+            <h6>Sales Stages</h6>
+            <table class="tos-table mb-3">
+                <tbody>
+                    <tr><td>Prospecting</td><td>10%</td></tr>
+                    <tr><td>Proposal</td><td>40%</td></tr>
+                    <tr><td>Bid Sent</td><td>60%</td></tr>
+                    <tr><td>Negotiation</td><td>80%</td></tr>
+                    <tr><td>Won</td><td>100%</td></tr>
+                    <tr><td>Lost</td><td>0%</td></tr>
+                </tbody>
+            </table>
+
+            <h6>Stalled Reasons</h6>
+            <p class="mb-2">Set when a deal isn't progressing:</p>
+            <ul class="mb-3">
+                <li>Waiting on GC</li>
+                <li>Waiting on bid results</li>
+                <li>Waiting on drawings</li>
+                <li>Budget unclear</li>
+                <li>Internal delay</li>
+            </ul>
+
+            <h6>Follow-up Rules</h6>
+            <table class="tos-table mb-3">
+                <tbody>
+                    <tr><td>Prospecting / Proposal / Bid Sent</td><td>14 days from last contact</td></tr>
+                    <tr><td>Negotiation</td><td>7 days from last contact</td></tr>
+                    <tr><td>Past bid date (not closed)</td><td>2 business days</td></tr>
+                    <tr><td>Won / Lost</td><td>No follow-up</td></tr>
+                </tbody>
+            </table>
+
+            <h6>Follow-up Colors</h6>
+            <ul class="mb-3">
+                <li><span class="text-danger fw-bold">Red</span> — Overdue</li>
+                <li><span class="text-warning fw-bold">Yellow</span> — Due within 3 days</li>
+                <li><span class="text-success fw-bold">Green</span> — Safe (4+ days)</li>
+            </ul>
+
+            <h6>Health Score</h6>
+            <p class="mb-2">Shows deal engagement at a glance. Appears next to opportunity name.</p>
+            <ul class="mb-0">
+                <li><span class="text-success fw-bold">Green (8–10)</span> — Healthy</li>
+                <li><span class="text-warning fw-bold">Yellow (5–7)</span> — Needs attention</li>
+                <li><span class="text-danger fw-bold">Red (0–4)</span> — At risk</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- SECTION: Activity Tracking -->
+    <h4 class="text-muted mb-3 mt-4"><i class="bi bi-clipboard-check me-2"></i>Activity Tracking</h4>
+
+    <!-- Activities -->
+    <div id="activities" class="tos-card mb-3">
+        <div class="tos-section-header">
+            <i class="bi bi-chat-dots me-2"></i>Activities
+        </div>
+        <div style="padding: 0.75rem;">
+            <p class="mb-3">The source of truth for customer interactions. Every call, email, and meeting should be logged here.</p>
+            <h6>Types</h6>
+            <ul class="mb-3">
+                <li>Call, Email, Meeting, Site Visit, Note</li>
+            </ul>
+            <h6>What to do</h6>
+            <ul class="mb-0">
+                <li>Log activities after each customer interaction</li>
+                <li>Link to the relevant opportunity when applicable</li>
+                <li>Activities drive follow-up calculations and summary reports</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Tasks -->
+    <div id="tasks" class="tos-card mb-3">
+        <div class="tos-section-header">
+            <i class="bi bi-check-square me-2"></i>Tasks
+        </div>
+        <div style="padding: 0.75rem;">
+            <p class="mb-3">Action items, optionally linked to opportunities.</p>
+            <h6>Priority Levels</h6>
+            <ul class="mb-3">
+                <li><strong>Urgent</strong> — Do immediately</li>
+                <li><strong>High</strong> — Important, has deadline</li>
+                <li><strong>Medium</strong> — Important, flexible timing</li>
+                <li><strong>Low</strong> — When you have time</li>
+            </ul>
+            <h6>What to watch for</h6>
+            <ul class="mb-0">
+                <li>Tasks due within 7 days appear on Dashboard</li>
+                <li>Completed tasks can be reopened if needed</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- SECTION: Weekly Review -->
+    <h4 class="text-muted mb-3 mt-4"><i class="bi bi-bar-chart me-2"></i>Weekly Review</h4>
+
+    <!-- Summaries -->
+    <div id="summaries" class="tos-card mb-3">
+        <div class="tos-section-header">
+            <i class="bi bi-clipboard-data me-2"></i>Weekly Summaries
+        </div>
+        <div style="padding: 0.75rem;">
+            <p class="mb-3">Review your weekly activity and prepare reports.</p>
+
+            <h6>My Summary</h6>
+            <p class="mb-2">Personal view of your individual activity:</p>
+            <ul class="mb-3">
+                <li>Outreach & follow-ups you've made</li>
+                <li>Pipeline changes on your opportunities</li>
+                <li>Meetings attended</li>
+                <li>Tasks you've completed</li>
+                <li>Records you've created</li>
+            </ul>
+
+            <h6>Weekly Summary (Team)</h6>
+            <p class="mb-2">Aggregated view of all team activity:</p>
+            <ul class="mb-3">
+                <li>All outreach & follow-ups</li>
+                <li>All pipeline movement</li>
+                <li>All tasks completed</li>
+                <li>All new records created</li>
+                <li>Full activity timeline</li>
+            </ul>
+
+            <h6>What to do</h6>
+            <ul class="mb-0">
+                <li>Add notes to each section (saved per week)</li>
+                <li>Use <strong>Copy to Clipboard</strong> to export for emails/reports</li>
+                <li>Use week navigation to review past weeks</li>
+            </ul>
+        </div>
+    </div>
+
 </div>
 {% endblock %}

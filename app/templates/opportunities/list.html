@@ -4,124 +4,111 @@
 
 {% block content %}
 <div class="content-area">
-    <div class="page-header d-flex justify-content-between align-items-center">
+    <div class="tos-page-header d-flex justify-content-between align-items-center">
         <div>
             <h1>Opportunities</h1>
-            <p class="text-muted mb-0">Track and manage your sales pipeline</p>
+            <p>Track and manage your sales pipeline</p>
         </div>
-        <a href="/opportunities/intake" class="btn btn-primary">
-            <i class="bi bi-plus-lg me-1"></i> New Opportunity
+        <a href="/opportunities/intake" class="tos-btn tos-btn-primary">
+            <i class="bi bi-plus-lg"></i> New Opportunity
         </a>
     </div>
-    
+
     <!-- Filters -->
-    <div class="card mb-4">
-        <div class="card-body">
-            <form method="get" class="row g-3 live-search">
-                <div class="col-md-4">
-                    <div class="input-group">
-                        <span class="input-group-text"><i class="bi bi-search"></i></span>
-                        <input type="text" class="form-control" name="search" value="{{ search or '' }}" placeholder="Search opportunities...">
-                    </div>
-                </div>
-                <div class="col-md-2">
-                    <select class="form-select" name="stage">
-                        <option value="">All Stages</option>
-                        {% for s in stages %}
-                        <option value="{{ s }}" {% if stage == s %}selected{% endif %}>{{ s }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <div class="col-md-2">
-                    <select class="form-select" name="estimator_id">
-                        <option value="">All Estimators</option>
-                        {% for u in users %}
-                        <option value="{{ u.id }}" {% if estimator_id == u.id %}selected{% endif %}>{{ u.full_name }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <div class="col-md-2">
-                    <select class="form-select" name="sort" onchange="this.form.submit()">
-                        <option value="">Sort by...</option>
-                        <option value="value" {% if sort == 'value' %}selected{% endif %}>Value (High to Low)</option>
-                        <option value="bid_date" {% if sort == 'bid_date' %}selected{% endif %}>Bid Date (Earliest)</option>
-                        <option value="last_contacted" {% if sort == 'last_contacted' %}selected{% endif %}>Last Contacted (Oldest)</option>
-                        <option value="next_followup" {% if sort == 'next_followup' %}selected{% endif %}>Next Follow-up (Earliest)</option>
-                    </select>
-                </div>
-                {% if stalled %}
-                <input type="hidden" name="stalled" value="1">
-                {% endif %}
-            </form>
-        </div>
+    <div class="tos-controls">
+        <form method="get" class="d-flex flex-wrap gap-3 align-items-center live-search">
+            <div class="input-group tos-search-input">
+                <span class="input-group-text"><i class="bi bi-search"></i></span>
+                <input type="text" class="form-control form-control-sm" name="search" value="{{ search or '' }}" placeholder="Search opportunities...">
+            </div>
+            <select class="form-select form-select-sm" name="stage" style="width: auto;">
+                <option value="">All Stages</option>
+                {% for s in stages %}
+                <option value="{{ s }}" {% if stage == s %}selected{% endif %}>{{ s }}</option>
+                {% endfor %}
+            </select>
+            <select class="form-select form-select-sm" name="estimator_id" style="width: auto;">
+                <option value="">All Estimators</option>
+                {% for u in users %}
+                <option value="{{ u.id }}" {% if estimator_id == u.id %}selected{% endif %}>{{ u.full_name }}</option>
+                {% endfor %}
+            </select>
+            <select class="form-select form-select-sm ms-auto" name="sort" style="width: auto;" onchange="this.form.submit()">
+                <option value="">Sort by...</option>
+                <option value="value" {% if sort == 'value' %}selected{% endif %}>Value (High to Low)</option>
+                <option value="bid_date" {% if sort == 'bid_date' %}selected{% endif %}>Bid Date (Earliest)</option>
+                <option value="last_contacted" {% if sort == 'last_contacted' %}selected{% endif %}>Last Contacted (Oldest)</option>
+                <option value="next_followup" {% if sort == 'next_followup' %}selected{% endif %}>Next Follow-up (Earliest)</option>
+            </select>
+            {% if stalled %}
+            <input type="hidden" name="stalled" value="1">
+            {% endif %}
+        </form>
     </div>
-    
+
     <!-- Opportunities Table -->
-    <div class="card">
-        <div class="card-body p-0">
-            {% if opportunities %}
-            <div class="table-responsive">
-                <table class="table table-hover">
-                    <thead>
-                        <tr>
-                            <th>Opportunity</th>
-                            <th>Stage</th>
-                            <th>Value</th>
-                            <th>Bid Date</th>
-                            <th>Last Contacted</th>
-                            <th>Next Follow-up</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for opp in opportunities %}
-                        <tr data-href="/opportunities/{{ opp.id }}" data-stage="{{ opp.stage }}" data-estimator_id="{{ opp.assigned_estimator_id or '' }}">
-                            <td>
-                                <span class="fw-medium">{{ opp.name }}</span>
-                                <span class="badge bg-{{ opp.health_score_color }} ms-1" title="Health Score">{{ opp.health_score }}</span>
-                                <div class="text-muted small">{{ opp.primary_account.name if opp.primary_account else 'No Account' }}</div>
-                            </td>
-                            <td>
-                                <span class="badge badge-stage badge-{{ opp.stage|lower|replace(' ', '-') }}">
-                                    {{ opp.stage }}
-                                </span>
-                                {% if opp.stalled_reason %}
-                                <div class="text-muted small"><i class="bi bi-pause-circle me-1"></i>{{ opp.stalled_reason }}</div>
-                                {% endif %}
-                            </td>
-                            <td class="currency">{{ opp.value or 0 }}</td>
-                            <td>
-                                {% if opp.bid_date %}
-                                <span class="{% if opp.is_past_bid_date %}text-danger{% elif opp.days_until_bid <= 7 %}text-warning{% endif %}">
-                                    {{ opp.bid_date.strftime('%b %d') }}
-                                </span>
-                                {% else %}—{% endif %}
-                            </td>
-                            <td>{{ opp.last_contacted.strftime('%b %d') if opp.last_contacted else '—' }}</td>
-                            <td>
-                                {% if opp.next_followup %}
-                                <span class="{{ opp.followup_status.css_class }}">
-                                    {{ opp.next_followup.strftime('%b %d') }}
-                                </span>
-                                {% else %}—{% endif %}
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-            {% else %}
-            <div class="empty-state py-5">
-                <i class="bi bi-bullseye"></i>
-                <h5>No opportunities found</h5>
-                <p>{% if search or stage or owner_id %}Try adjusting your filters{% else %}Create your first opportunity{% endif %}</p>
-                {% if not search and not stage %}
-                <a href="/opportunities/intake" class="btn btn-primary">
-                    <i class="bi bi-plus-lg me-1"></i> New Opportunity
-                </a>
-                {% endif %}
-            </div>
+    <div class="tos-card">
+        {% if opportunities %}
+        <div class="table-responsive">
+            <table class="tos-table">
+                <thead>
+                    <tr>
+                        <th>Opportunity</th>
+                        <th>Stage</th>
+                        <th>Value</th>
+                        <th>Bid Date</th>
+                        <th>Last Contacted</th>
+                        <th>Next Follow-up</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for opp in opportunities %}
+                    <tr data-href="/opportunities/{{ opp.id }}" data-stage="{{ opp.stage }}" data-estimator_id="{{ opp.assigned_estimator_id or '' }}">
+                        <td>
+                            <span class="tos-entity-name">{{ opp.name }}</span>
+                            <span class="badge bg-{{ opp.health_score_color }} ms-1" title="Health Score">{{ opp.health_score }}</span>
+                            <div class="tos-entity-sub">{{ opp.primary_account.name if opp.primary_account else 'No Account' }}</div>
+                        </td>
+                        <td>
+                            <span class="badge badge-stage badge-{{ opp.stage|lower|replace(' ', '-') }}">
+                                {{ opp.stage }}
+                            </span>
+                            {% if opp.stalled_reason %}
+                            <div class="tos-entity-sub"><i class="bi bi-pause-circle me-1"></i>{{ opp.stalled_reason }}</div>
+                            {% endif %}
+                        </td>
+                        <td class="currency">{{ opp.value or 0 }}</td>
+                        <td>
+                            {% if opp.bid_date %}
+                            <span class="{% if opp.is_past_bid_date %}tos-badge-overdue{% elif opp.days_until_bid <= 7 %}tos-badge-today{% endif %}">
+                                {{ opp.bid_date.strftime('%b %d') }}
+                            </span>
+                            {% else %}<span class="tos-entity-sub">—</span>{% endif %}
+                        </td>
+                        <td class="tos-entity-sub">{{ opp.last_contacted.strftime('%b %d') if opp.last_contacted else '—' }}</td>
+                        <td>
+                            {% if opp.next_followup %}
+                            <span class="{{ opp.followup_status.css_class }}">
+                                {{ opp.next_followup.strftime('%b %d') }}
+                            </span>
+                            {% else %}<span class="tos-entity-sub">—</span>{% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="tos-empty-state">
+            <i class="bi bi-bullseye"></i>
+            <p>{% if search or stage or owner_id %}No opportunities match your filters{% else %}No opportunities found{% endif %}</p>
+            {% if not search and not stage %}
+            <a href="/opportunities/intake" class="tos-btn tos-btn-primary">
+                <i class="bi bi-plus-lg"></i> New Opportunity
+            </a>
             {% endif %}
         </div>
+        {% endif %}
     </div>
 </div>
 {% endblock %}

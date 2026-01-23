@@ -4,16 +4,16 @@
 
 {% block content %}
 <div class="content-area">
-    <div class="page-header">
+    <div class="tos-page-header">
         {% if return_to %}
         <div class="mb-2">
-            <a href="{{ return_to }}" class="btn btn-sm btn-outline-secondary">
+            <a href="{{ return_to }}" class="tos-btn tos-btn-secondary">
                 <i class="bi bi-arrow-left me-1"></i> Back
             </a>
         </div>
         {% endif %}
         <nav aria-label="breadcrumb">
-            <ol class="breadcrumb">
+            <ol class="breadcrumb mb-1">
                 <li class="breadcrumb-item"><a href="/accounts">Accounts</a></li>
                 <li class="breadcrumb-item active">{{ account.name }}</li>
             </ol>
@@ -21,17 +21,20 @@
         <div class="d-flex justify-content-between align-items-center">
             <div>
                 <h1 class="mb-1">{{ account.name }}</h1>
-                <span class="text-muted small">{{ account.account_type_display }}</span>
+                <span class="tos-entity-sub">{{ account.account_type_display }}</span>
             </div>
             <div class="d-flex gap-2">
-                <a href="/accounts/{{ account.id }}/edit" class="btn btn-outline-primary">
+                <a href="/accounts/{{ account.id }}/edit" class="tos-btn tos-btn-secondary">
                     <i class="bi bi-pencil me-1"></i> Edit
                 </a>
-                <a href="/opportunities/intake?account_id={{ account.id }}" class="btn btn-primary">
+                <button type="button" class="tos-btn tos-btn-primary" data-bs-toggle="modal" data-bs-target="#logSiteVisitModal">
+                    <i class="bi bi-geo-alt me-1"></i> Site Visit
+                </button>
+                <a href="/opportunities/intake?account_id={{ account.id }}" class="tos-btn tos-btn-primary">
                     <i class="bi bi-plus-lg me-1"></i> New Opportunity
                 </a>
                 <form method="post" action="/accounts/{{ account.id }}/delete" class="d-inline" onsubmit="return confirm('Delete this account and all its contacts? This cannot be undone.');">
-                    <button type="submit" class="btn btn-outline-danger">
+                    <button type="submit" class="tos-btn" style="background: #fef2f2; color: #991b1b; border: 1px solid #fecaca;">
                         <i class="bi bi-trash me-1"></i> Delete
                     </button>
                 </form>
@@ -39,57 +42,57 @@
         </div>
     </div>
     
-    <div class="row g-4">
+    <div class="row g-3">
         <!-- Account Details -->
         <div class="col-lg-4">
-            <div class="card">
-                <div class="card-header">
-                    <i class="bi bi-building me-2"></i>Account Details
+            <div class="tos-card">
+                <div class="tos-section-header">
+                    <i class="bi bi-building me-1"></i>Account Details
                 </div>
-                <div class="card-body">
-                    <dl class="mb-0">
+                <div class="p-3">
+                    <dl class="mb-0" style="font-size: 0.85rem;">
                         {% if account.industry %}
-                        <dt class="text-muted small">Industry</dt>
-                        <dd>{{ account.industry }}</dd>
+                        <dt class="tos-entity-sub">Industry</dt>
+                        <dd class="mb-2">{{ account.industry }}</dd>
                         {% endif %}
-                        
+
                         {% if account.phone %}
-                        <dt class="text-muted small">Phone</dt>
-                        <dd><a href="tel:{{ account.phone }}">{{ account.phone }}</a></dd>
+                        <dt class="tos-entity-sub">Phone</dt>
+                        <dd class="mb-2"><a href="tel:{{ account.phone }}" class="tos-row-link">{{ account.phone }}</a></dd>
                         {% endif %}
-                        
+
                         {% if account.website %}
-                        <dt class="text-muted small">Website</dt>
-                        <dd><a href="{{ account.website }}" target="_blank">{{ account.website }}</a></dd>
+                        <dt class="tos-entity-sub">Website</dt>
+                        <dd class="mb-2"><a href="{{ account.website }}" target="_blank" class="tos-row-link">{{ account.website }}</a></dd>
                         {% endif %}
-                        
+
                         {% if account.full_address %}
-                        <dt class="text-muted small">Address</dt>
-                        <dd style="white-space: pre-line;">{{ account.full_address }}</dd>
+                        <dt class="tos-entity-sub">Address</dt>
+                        <dd class="mb-2" style="white-space: pre-line;">{{ account.full_address }}</dd>
                         {% endif %}
-                        
+
                         {% if account.notes %}
-                        <dt class="text-muted small">Notes</dt>
-                        <dd>{{ account.notes }}</dd>
+                        <dt class="tos-entity-sub">Notes</dt>
+                        <dd class="mb-0">{{ account.notes }}</dd>
                         {% endif %}
                     </dl>
                 </div>
             </div>
-            
+
             <!-- Pipeline Stats -->
-            <div class="card mt-4">
-                <div class="card-header">
-                    <i class="bi bi-graph-up me-2"></i>Pipeline
+            <div class="tos-card mt-3">
+                <div class="tos-section-header">
+                    <i class="bi bi-graph-up me-1"></i>Pipeline
                 </div>
-                <div class="card-body">
-                    <div class="row g-3">
-                        <div class="col-6">
-                            <div class="text-muted small">Open Opportunities</div>
-                            <div class="h4 mb-0">{{ account.open_opportunities_count }}</div>
+                <div class="p-3">
+                    <div class="tos-quick-stats">
+                        <div class="tos-quick-stat">
+                            <div class="tos-entity-sub">Open Opportunities</div>
+                            <div style="font-size: 1.25rem; font-weight: 600;">{{ account.open_opportunities_count }}</div>
                         </div>
-                        <div class="col-6">
-                            <div class="text-muted small">Pipeline Value</div>
-                            <div class="h4 mb-0 currency">{{ account.total_pipeline_value }}</div>
+                        <div class="tos-quick-stat">
+                            <div class="tos-entity-sub">Pipeline Value</div>
+                            <div class="currency" style="font-size: 1.25rem; font-weight: 600;">{{ account.total_pipeline_value }}</div>
                         </div>
                     </div>
                 </div>
@@ -98,128 +101,124 @@
         
         <!-- Contacts -->
         <div class="col-lg-8">
-            <div class="card">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <span><i class="bi bi-people me-2"></i>Contacts</span>
-                    <a href="/contacts/new?account_id={{ account.id }}" class="btn btn-sm btn-outline-primary">
-                        <i class="bi bi-plus-lg me-1"></i> Add Contact
+            <div class="tos-card">
+                <div class="tos-section-header">
+                    <i class="bi bi-people me-1"></i>Contacts
+                    <a href="/contacts/new?account_id={{ account.id }}" class="tos-btn tos-btn-secondary ms-2" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">
+                        <i class="bi bi-plus-lg me-1"></i> Add
                     </a>
                 </div>
-                <div class="card-body p-0">
-                    {% if sorted_contacts %}
-                    <div class="table-responsive">
-                        <table class="table table-hover mb-0">
-                            <thead>
-                                <tr>
-                                    <th>Name</th>
-                                    <th>Title</th>
-                                    <th>Last Contacted</th>
-                                    <th>Email</th>
-                                    <th>Phone</th>
-                                    <th></th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for contact in sorted_contacts %}
-                                <tr>
-                                    <td>
-                                        <a href="/contacts/{{ contact.id }}" class="text-decoration-none fw-medium">
-                                            {{ contact.full_name }}
-                                        </a>
-                                        {% if contact.is_primary %}
-                                        <span class="badge bg-primary ms-1">Primary</span>
-                                        {% endif %}
-                                    </td>
-                                    <td>{{ contact.title or '—' }}</td>
-                                    <td>{{ contact.last_contacted.strftime('%b %d, %Y') if contact.last_contacted else '—' }}</td>
-                                    <td>
-                                        {% if contact.email %}
-                                        <a href="mailto:{{ contact.email }}">{{ contact.email }}</a>
-                                        {% else %}—{% endif %}
-                                    </td>
-                                    <td>{{ contact.best_phone or '—' }}</td>
-                                    <td class="text-end">
-                                        <button type="button" class="btn btn-sm btn-outline-success me-1"
-                                            data-bs-toggle="modal"
-                                            data-bs-target="#logContactModal"
-                                            data-contact-id="{{ contact.id }}"
-                                            data-contact-name="{{ contact.full_name }}"
-                                            title="Log Contact">
-                                            <i class="bi bi-telephone"></i>
-                                        </button>
-                                        <a href="/contacts/{{ contact.id }}/edit" class="btn btn-sm btn-outline-secondary" title="Edit">
-                                            <i class="bi bi-pencil"></i>
-                                        </a>
-                                    </td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                    {% else %}
-                    <div class="empty-state py-4">
-                        <i class="bi bi-person-plus"></i>
-                        <p>No contacts yet</p>
-                        <a href="/contacts/new?account_id={{ account.id }}" class="btn btn-sm btn-primary">Add First Contact</a>
-                    </div>
-                    {% endif %}
+                {% if sorted_contacts %}
+                <div class="table-responsive">
+                    <table class="tos-table">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Title</th>
+                                <th>Last Contacted</th>
+                                <th>Email</th>
+                                <th>Phone</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for contact in sorted_contacts %}
+                            <tr>
+                                <td>
+                                    <a href="/contacts/{{ contact.id }}" class="tos-row-link tos-entity-name">
+                                        {{ contact.full_name }}
+                                    </a>
+                                    {% if contact.is_primary %}
+                                    <span class="tos-badge-pending ms-1">Primary</span>
+                                    {% endif %}
+                                </td>
+                                <td class="tos-entity-sub">{{ contact.title or '—' }}</td>
+                                <td class="tos-entity-sub">{{ contact.last_contacted.strftime('%b %d, %Y') if contact.last_contacted else '—' }}</td>
+                                <td>
+                                    {% if contact.email %}
+                                    <a href="mailto:{{ contact.email }}" class="tos-row-link">{{ contact.email }}</a>
+                                    {% else %}<span class="tos-entity-sub">—</span>{% endif %}
+                                </td>
+                                <td class="tos-entity-sub">{{ contact.best_phone or '—' }}</td>
+                                <td class="text-end" style="white-space: nowrap;">
+                                    <button type="button" class="tos-btn tos-btn-primary"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#logContactModal"
+                                        data-contact-id="{{ contact.id }}"
+                                        data-contact-name="{{ contact.full_name }}"
+                                        title="Log Contact">
+                                        <i class="bi bi-telephone"></i>
+                                    </button>
+                                    <a href="/contacts/{{ contact.id }}/edit" class="tos-btn tos-btn-secondary" title="Edit">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
                 </div>
+                {% else %}
+                <div class="tos-empty-state">
+                    <i class="bi bi-person-plus"></i>
+                    <p>No contacts yet</p>
+                    <a href="/contacts/new?account_id={{ account.id }}" class="tos-btn tos-btn-primary">Add First Contact</a>
+                </div>
+                {% endif %}
             </div>
 
             <!-- Opportunities -->
-            <div class="card mt-4">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <span><i class="bi bi-bullseye me-2"></i>Opportunities</span>
-                    <a href="/opportunities/intake?account_id={{ account.id }}" class="btn btn-sm btn-outline-primary">
-                        <i class="bi bi-plus-lg me-1"></i> New Opportunity
+            <div class="tos-card mt-3">
+                <div class="tos-section-header">
+                    <i class="bi bi-bullseye me-1"></i>Opportunities
+                    <a href="/opportunities/intake?account_id={{ account.id }}" class="tos-btn tos-btn-secondary ms-2" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">
+                        <i class="bi bi-plus-lg me-1"></i> Add
                     </a>
                 </div>
-                <div class="card-body p-0">
-                    {% if account.opportunities %}
-                    <div class="table-responsive">
-                        <table class="table table-hover mb-0">
-                            <thead>
-                                <tr>
-                                    <th>Opportunity</th>
-                                    <th>Stage</th>
-                                    <th>Value</th>
-                                    <th>Bid Date</th>
-                                    <th></th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for opp in account.opportunities %}
-                                <tr>
-                                    <td>
-                                        <a href="/opportunities/{{ opp.id }}" class="text-decoration-none fw-medium">
-                                            {{ opp.name }}
-                                        </a>
-                                    </td>
-                                    <td>
-                                        <span class="badge badge-stage badge-{{ opp.stage|lower|replace(' ', '-') }}">
-                                            {{ opp.stage }}
-                                        </span>
-                                    </td>
-                                    <td class="currency">{{ opp.value or 0 }}</td>
-                                    <td>{{ opp.bid_date.strftime('%b %d, %Y') if opp.bid_date else '—' }}</td>
-                                    <td class="text-end">
-                                        <a href="/opportunities/{{ opp.id }}" class="btn btn-sm btn-outline-secondary">
-                                            <i class="bi bi-eye"></i>
-                                        </a>
-                                    </td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                    {% else %}
-                    <div class="empty-state py-4">
-                        <i class="bi bi-bullseye"></i>
-                        <p>No opportunities yet</p>
-                        <a href="/opportunities/intake?account_id={{ account.id }}" class="btn btn-sm btn-primary">Create First Opportunity</a>
-                    </div>
-                    {% endif %}
+                {% if account.opportunities %}
+                <div class="table-responsive">
+                    <table class="tos-table">
+                        <thead>
+                            <tr>
+                                <th>Opportunity</th>
+                                <th>Stage</th>
+                                <th>Value</th>
+                                <th>Bid Date</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for opp in account.opportunities %}
+                            <tr>
+                                <td>
+                                    <a href="/opportunities/{{ opp.id }}" class="tos-row-link tos-entity-name">
+                                        {{ opp.name }}
+                                    </a>
+                                </td>
+                                <td>
+                                    <span class="badge badge-stage badge-{{ opp.stage|lower|replace(' ', '-') }}">
+                                        {{ opp.stage }}
+                                    </span>
+                                </td>
+                                <td class="currency">{{ opp.value or 0 }}</td>
+                                <td class="tos-entity-sub">{{ opp.bid_date.strftime('%b %d, %Y') if opp.bid_date else '—' }}</td>
+                                <td class="text-end">
+                                    <a href="/opportunities/{{ opp.id }}" class="tos-btn tos-btn-secondary">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
                 </div>
+                {% else %}
+                <div class="tos-empty-state">
+                    <i class="bi bi-bullseye"></i>
+                    <p>No opportunities yet</p>
+                    <a href="/opportunities/intake?account_id={{ account.id }}" class="tos-btn tos-btn-primary">Create First Opportunity</a>
+                </div>
+                {% endif %}
             </div>
         </div>
     </div>
@@ -262,6 +261,66 @@
         </div>
     </div>
 </div>
+
+<!-- Log Site Visit Modal -->
+<div class="modal fade" id="logSiteVisitModal" tabindex="-1" aria-labelledby="logSiteVisitModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="post" id="siteVisitForm" action="/activities/add?from=/accounts/{{ account.id }}">
+                <input type="hidden" name="activity_type" value="site_visit">
+                <input type="hidden" name="update_last_contacted" value="">
+                <div class="modal-header py-2">
+                    <h6 class="modal-title" id="logSiteVisitModalLabel"><i class="bi bi-geo-alt me-2"></i>Log Site Visit - {{ account.name }}</h6>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body py-2">
+                    <div class="mb-2">
+                        <label for="siteVisitDate" class="form-label small mb-1">Date & Time <span class="text-danger">*</span></label>
+                        <input type="datetime-local" class="form-control form-control-sm" id="siteVisitDate" name="activity_date" required>
+                    </div>
+                    <div class="mb-2">
+                        <label for="siteVisitOpportunity" class="form-label small mb-1">Opportunity</label>
+                        <select class="form-select form-select-sm" id="siteVisitOpportunity" name="opportunity_id">
+                            <option value="">-- Select Opportunity --</option>
+                            {% for opp in account.opportunities %}
+                            {% if opp.stage not in ['Won', 'Lost'] %}
+                            <option value="{{ opp.id }}">{{ opp.name }}</option>
+                            {% endif %}
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-2">
+                        <label for="siteVisitSubject" class="form-label small mb-1">Purpose <span class="text-danger">*</span></label>
+                        <select class="form-select form-select-sm" id="siteVisitSubject" name="subject" required>
+                            <option value="Pre-bid walkthrough">Pre-bid walkthrough</option>
+                            <option value="Existing site evaluation">Existing site evaluation</option>
+                            <option value="Post-install check">Post-install check</option>
+                            <option value="Relationship visit">Relationship visit</option>
+                            <option value="Site Visit">Other</option>
+                        </select>
+                    </div>
+                    <div class="mb-2">
+                        <label for="siteVisitContact" class="form-label small mb-1">Contact</label>
+                        <select class="form-select form-select-sm" id="siteVisitContact" name="contact_id">
+                            <option value="">-- Select Contact --</option>
+                            {% for contact in sorted_contacts %}
+                            <option value="{{ contact.id }}">{{ contact.full_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-0">
+                        <label for="siteVisitNotes" class="form-label small mb-1">Notes</label>
+                        <textarea class="form-control form-control-sm" id="siteVisitNotes" name="description" rows="2" placeholder="Optional notes..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer py-2">
+                    <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-sm btn-primary"><i class="bi bi-geo-alt me-1"></i>Log Site Visit</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block extra_js %}
@@ -286,6 +345,21 @@
         document.getElementById('contact_notes').value = '';
         document.getElementById('activity_type').value = 'call';
     });
+
+    // Site Visit Modal: set default date/time when modal opens
+    const siteVisitModal = document.getElementById('logSiteVisitModal');
+
+    if (siteVisitModal) {
+        siteVisitModal.addEventListener('show.bs.modal', function() {
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            document.getElementById('siteVisitDate').value = `${year}-${month}-${day}T${hours}:${minutes}`;
+        });
+    }
 })();
 </script>
 {% endblock %}

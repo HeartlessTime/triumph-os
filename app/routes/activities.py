@@ -91,6 +91,50 @@ async def add_activity(
     return RedirectResponse(url=f"/opportunities/{opp_id}", status_code=303)
 
 
+@router.post("/add")
+async def add_standalone_activity(
+    request: Request,
+    activity_type: str = Form(...),
+    subject: str = Form(...),
+    description: str = Form(None),
+    activity_date: str = Form(None),
+    contact_id: int = Form(None),
+    opportunity_id: int = Form(None),
+    db: Session = Depends(get_db),
+):
+    """Add a standalone activity (not necessarily linked to an opportunity).
+
+    Used for site visits and other activities that may or may not be
+    linked to an opportunity, contact, or account.
+    """
+    current_user = request.state.current_user
+    if not current_user:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+
+    # Parse activity date
+    if activity_date:
+        activity_dt = datetime.strptime(activity_date, "%Y-%m-%dT%H:%M")
+    else:
+        activity_dt = utc_now()
+
+    activity = Activity(
+        activity_type=activity_type,
+        subject=subject,
+        description=description or None,
+        activity_date=activity_dt,
+        contact_id=contact_id if contact_id else None,
+        opportunity_id=opportunity_id if opportunity_id else None,
+        created_by_id=current_user.id,
+    )
+
+    db.add(activity)
+    db.commit()
+
+    # Redirect based on context
+    redirect_to = request.query_params.get("from", "/")
+    return RedirectResponse(url=redirect_to, status_code=303)
+
+
 @router.get("/{activity_id}/edit", response_class=HTMLResponse)
 async def edit_activity_form(
     request: Request, activity_id: int, db: Session = Depends(get_db)

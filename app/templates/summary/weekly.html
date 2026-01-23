@@ -47,270 +47,245 @@
 
 {% block content %}
 <div class="content-area">
-    <div class="page-header d-flex justify-content-between align-items-center">
+    <div class="tos-page-header d-flex justify-content-between align-items-center flex-wrap gap-2">
         <div>
             <h1><i class="bi bi-clipboard-data me-2"></i>Weekly Summary</h1>
-            <p class="text-muted mb-0">
+            <p>
                 Week of {{ start_date.strftime('%B %d') }} – {{ end_date.strftime('%B %d, %Y') }}
-                {% if is_current_week %}<span class="badge bg-primary ms-2">Current Week</span>{% endif %}
+                {% if is_current_week %}<span class="tos-badge-pending ms-2">Current Week</span>{% endif %}
             </p>
         </div>
-        <div class="d-flex gap-2 align-items-center">
-            <button type="button" class="btn btn-success" id="copyToClipboard">
-                <i class="bi bi-clipboard me-1"></i> Copy Summary to Clipboard
+        <div class="d-flex gap-2 align-items-center flex-wrap">
+            <button type="button" class="tos-btn tos-btn-success" id="copyToClipboard">
+                <i class="bi bi-clipboard"></i> Copy to Clipboard
             </button>
-            <a href="/summary/weekly?week_start={{ prev_week }}" class="btn btn-outline-secondary">
-                <i class="bi bi-chevron-left"></i> Previous Week
+            <a href="/summary/weekly?week_start={{ prev_week }}" class="tos-btn tos-btn-secondary">
+                <i class="bi bi-chevron-left"></i> Prev
             </a>
             {% if not is_current_week %}
-            <a href="/summary/weekly" class="btn btn-outline-primary">
+            <a href="/summary/weekly" class="tos-btn tos-btn-primary">
                 <i class="bi bi-calendar-check"></i> Today
             </a>
             {% endif %}
-            <a href="/summary/weekly?week_start={{ next_week }}" class="btn btn-outline-secondary">
-                Next Week <i class="bi bi-chevron-right"></i>
+            <a href="/summary/weekly?week_start={{ next_week }}" class="tos-btn tos-btn-secondary">
+                Next <i class="bi bi-chevron-right"></i>
             </a>
         </div>
     </div>
 
     <!-- Executive Summary -->
-    <div class="card mb-4">
-        <div class="card-header bg-primary text-white">
-            <h5 class="mb-0"><i class="bi bi-bar-chart-line me-2"></i>Executive Summary</h5>
+    <div class="tos-card mb-3 section--summary">
+        <div class="tos-section-header">
+            <i class="bi bi-bar-chart-line me-2"></i>Executive Summary
         </div>
-        <div class="card-body">
-            <p class="lead mb-4">{{ summary_sentence }}</p>
+        <div style="padding: 1rem;">
+            <p class="mb-3" style="font-size: 0.95rem;">{{ summary_sentence }}</p>
 
-            <div class="row g-3">
-                <div class="col-md-4 col-lg-2">
-                    <div class="text-center p-3 border rounded">
-                        <div class="h2 mb-0 text-primary">{{ contacts_logged_count }}</div>
-                        <div class="text-muted small">Contacts Logged</div>
-                    </div>
+            <div class="tos-quick-stats">
+                <div class="tos-quick-stat">
+                    <strong>{{ contacts_logged_count }}</strong>
+                    <span>Contacts Logged</span>
                 </div>
-                <div class="col-md-4 col-lg-2">
-                    <div class="text-center p-3 border rounded">
-                        <div class="h2 mb-0 text-success">{{ new_contacts_count }}</div>
-                        <div class="text-muted small">New Contacts</div>
-                    </div>
+                <div class="tos-quick-stat">
+                    <strong>{{ new_contacts_count }}</strong>
+                    <span>New Contacts</span>
                 </div>
-                <div class="col-md-4 col-lg-2">
-                    <div class="text-center p-3 border rounded">
-                        <div class="h2 mb-0 text-info">{{ new_accounts_count }}</div>
-                        <div class="text-muted small">New Accounts</div>
-                    </div>
+                <div class="tos-quick-stat">
+                    <strong>{{ new_accounts_count }}</strong>
+                    <span>New Accounts</span>
                 </div>
-                <div class="col-md-4 col-lg-2">
-                    <div class="text-center p-3 border rounded">
-                        <div class="h2 mb-0 text-warning">{{ opportunities_touched_count }}</div>
-                        <div class="text-muted small">Opps Touched</div>
-                    </div>
+                <div class="tos-quick-stat">
+                    <strong>{{ opportunities_touched_count }}</strong>
+                    <span>Opps Touched</span>
                 </div>
-                <div class="col-md-4 col-lg-2">
-                    <div class="text-center p-3 border rounded">
-                        <div class="h2 mb-0 text-danger">{{ tasks_completed_count }}</div>
-                        <div class="text-muted small">Tasks Done</div>
-                    </div>
+                <div class="tos-quick-stat">
+                    <strong>{{ tasks_completed_count }}</strong>
+                    <span>Tasks Done</span>
                 </div>
-                <div class="col-md-4 col-lg-2">
-                    <div class="text-center p-3 border rounded">
-                        <div class="h2 mb-0 text-secondary">{{ activities_logged_count }}</div>
-                        <div class="text-muted small">Activities</div>
-                    </div>
+                <div class="tos-quick-stat">
+                    <strong>{{ activities_logged_count }}</strong>
+                    <span>Activities</span>
                 </div>
             </div>
         </div>
     </div>
 
-    <div class="row g-4">
+    <div class="row g-3">
         <!-- Outreach & Follow-ups -->
         <div class="col-lg-6">
-            <div class="card h-100">
-                <div class="card-header bg-success text-white d-flex justify-content-between align-items-center" data-expand-section="team-outreach">
-                    <h5 class="mb-0"><i class="bi bi-telephone me-2"></i>Outreach & Follow-ups ({{ outreach_count }})</h5>
-                    <i class="bi bi-chevron-down expand-chevron"></i>
+            <div class="tos-card h-100 d-flex flex-column section--outreach">
+                <div class="tos-section-header">
+                    <i class="bi bi-telephone me-2"></i>Outreach & Follow-ups ({{ outreach_count }})
                 </div>
-                <div class="card-body p-0 expandable-body">
+                <div class="expandable-body flex-grow-1" style="overflow-y: auto;">
                     {% if outreach_activities %}
-                    <div class="table-responsive">
-                        <table class="table table-hover mb-0">
-                            <thead class="table-light" style="position: sticky; top: 0;">
-                                <tr>
-                                    <th>Contact</th>
-                                    <th>Account</th>
-                                    <th>Date</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for activity in outreach_activities %}
-                                <tr data-href="/activities/{{ activity.id }}/edit?from=/summary/weekly">
-                                    <td>
-                                        <span class="me-1">{{ activity.icon }}</span>
-                                        {% if activity.contact %}
-                                        <a href="/contacts/{{ activity.contact.id }}" class="text-decoration-none">
-                                            {{ activity.contact.full_name }}
-                                        </a>
-                                        {% if activity.contact.title %}
-                                        <div class="text-muted small">{{ activity.contact.title }}</div>
-                                        {% endif %}
-                                        {% else %}
-                                        <span class="text-muted">{{ activity.subject }}</span>
-                                        {% endif %}
-                                    </td>
-                                    <td>
-                                        {% if activity.contact and activity.contact.account %}
-                                        <a href="/accounts/{{ activity.contact.account.id }}" class="text-decoration-none text-muted">
-                                            {{ activity.contact.account.name }}
-                                        </a>
-                                        {% else %}
-                                        <span class="text-muted">-</span>
-                                        {% endif %}
-                                    </td>
-                                    <td class="text-muted small">{{ activity.activity_date.strftime('%b %d') }}</td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
+                    <table class="tos-table">
+                        <thead>
+                            <tr>
+                                <th>Contact</th>
+                                <th>Account</th>
+                                <th>Date</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for activity in outreach_activities %}
+                            <tr data-href="/activities/{{ activity.id }}/edit?from=/summary/weekly">
+                                <td>
+                                    <span class="me-1">{{ activity.icon }}</span>
+                                    {% if activity.contact %}
+                                    <a href="/contacts/{{ activity.contact.id }}" class="tos-row-link tos-entity-name">
+                                        {{ activity.contact.full_name }}
+                                    </a>
+                                    {% if activity.contact.title %}
+                                    <div class="tos-entity-sub">{{ activity.contact.title }}</div>
+                                    {% endif %}
+                                    {% else %}
+                                    <span class="tos-entity-sub">{{ activity.subject }}</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if activity.contact and activity.contact.account %}
+                                    <a href="/accounts/{{ activity.contact.account.id }}" class="tos-row-link tos-entity-sub">
+                                        {{ activity.contact.account.name }}
+                                    </a>
+                                    {% else %}
+                                    <span class="tos-entity-sub">-</span>
+                                    {% endif %}
+                                </td>
+                                <td class="tos-entity-sub">{{ activity.activity_date.strftime('%b %d') }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
                     {% else %}
-                    <div class="text-center text-muted py-4">
-                        <i class="bi bi-telephone-x h1"></i>
-                        <p class="mb-0">No outreach logged this period</p>
+                    <div class="tos-empty-state">
+                        <i class="bi bi-telephone-x"></i>
+                        <p>No outreach logged this period</p>
                     </div>
                     {% endif %}
                 </div>
-                <div class="card-footer bg-light">
-                    <div class="mb-0">
-                        <label class="form-label small text-muted mb-1"><i class="bi bi-pencil me-1"></i>Notes</label>
-                        <textarea class="form-control form-control-sm auto-save-note" rows="2"
-                            data-section="outreach" data-note-type="team"
-                            placeholder="Add notes about outreach...">{{ section_notes.get('outreach', '') }}</textarea>
-                    </div>
+                <div style="padding: 0.5rem 0.75rem; background: #f8fafc; border-top: 1px solid #e2e8f0;">
+                    <label class="form-label small text-muted mb-1"><i class="bi bi-pencil me-1"></i>Notes</label>
+                    <textarea class="form-control form-control-sm auto-save-note" rows="2"
+                        data-section="outreach" data-note-type="team"
+                        placeholder="Add notes about outreach...">{{ section_notes.get('outreach', '') }}</textarea>
                 </div>
             </div>
         </div>
 
         <!-- Pipeline Movement -->
         <div class="col-lg-6">
-            <div class="card h-100">
-                <div class="card-header bg-warning text-dark">
-                    <h5 class="mb-0"><i class="bi bi-arrow-left-right me-2"></i>Pipeline Movement</h5>
+            <div class="tos-card h-100 d-flex flex-column section--pipeline">
+                <div class="tos-section-header">
+                    <i class="bi bi-arrow-left-right me-2"></i>Pipeline Movement
                 </div>
-                <div class="card-body p-0 summary-card-body">
+                <div class="summary-card-body flex-grow-1" style="overflow-y: auto;">
                     {% if pipeline_changes %}
-                    <div class="table-responsive">
-                        <table class="table table-hover mb-0">
-                            <thead class="table-light" style="position: sticky; top: 0;">
-                                <tr>
-                                    <th>Opportunity</th>
-                                    <th>Stage</th>
-                                    <th>Updated</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for opp in pipeline_changes %}
-                                <tr>
-                                    <td>
-                                        <a href="/opportunities/{{ opp.id }}" class="text-decoration-none">
-                                            {{ opp.name }}
-                                        </a>
-                                        <div class="text-muted small">{{ opp.primary_account.name if opp.primary_account else 'No Account' }}</div>
-                                    </td>
-                                    <td>
-                                        <span class="badge badge-stage badge-{{ opp.stage|lower|replace(' ', '-') }}">
-                                            {{ opp.stage }}
-                                        </span>
-                                    </td>
-                                    <td class="text-muted small">{{ opp.updated_at.strftime('%b %d') }}</td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
+                    <table class="tos-table">
+                        <thead>
+                            <tr>
+                                <th>Opportunity</th>
+                                <th>Stage</th>
+                                <th>Updated</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for opp in pipeline_changes %}
+                            <tr>
+                                <td>
+                                    <a href="/opportunities/{{ opp.id }}" class="tos-row-link tos-entity-name">
+                                        {{ opp.name }}
+                                    </a>
+                                    <div class="tos-entity-sub">{{ opp.primary_account.name if opp.primary_account else 'No Account' }}</div>
+                                </td>
+                                <td>
+                                    <span class="badge badge-stage badge-{{ opp.stage|lower|replace(' ', '-') }}">
+                                        {{ opp.stage }}
+                                    </span>
+                                </td>
+                                <td class="tos-entity-sub">{{ opp.updated_at.strftime('%b %d') }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
                     {% else %}
-                    <div class="text-center text-muted py-4">
-                        <i class="bi bi-inbox h1"></i>
-                        <p class="mb-0">No pipeline changes this period</p>
+                    <div class="tos-empty-state">
+                        <i class="bi bi-inbox"></i>
+                        <p>No pipeline changes this period</p>
                     </div>
                     {% endif %}
                 </div>
-                <div class="card-footer bg-light">
-                    <div class="mb-0">
-                        <label class="form-label small text-muted mb-1"><i class="bi bi-pencil me-1"></i>Notes</label>
-                        <textarea class="form-control form-control-sm auto-save-note" rows="2"
-                            data-section="pipeline" data-note-type="team"
-                            placeholder="Add notes about pipeline...">{{ section_notes.get('pipeline', '') }}</textarea>
-                    </div>
+                <div style="padding: 0.5rem 0.75rem; background: #f8fafc; border-top: 1px solid #e2e8f0;">
+                    <label class="form-label small text-muted mb-1"><i class="bi bi-pencil me-1"></i>Notes</label>
+                    <textarea class="form-control form-control-sm auto-save-note" rows="2"
+                        data-section="pipeline" data-note-type="team"
+                        placeholder="Add notes about pipeline...">{{ section_notes.get('pipeline', '') }}</textarea>
                 </div>
             </div>
         </div>
 
         <!-- Tasks Completed -->
         <div class="col-lg-6">
-            <div class="card h-100">
-                <div class="card-header bg-danger text-white">
-                    <h5 class="mb-0"><i class="bi bi-check2-square me-2"></i>Tasks Completed</h5>
+            <div class="tos-card h-100 d-flex flex-column section--tasks">
+                <div class="tos-section-header">
+                    <i class="bi bi-check2-square me-2"></i>Tasks Completed
                 </div>
-                <div class="card-body p-0 summary-card-body">
+                <div class="summary-card-body flex-grow-1" style="overflow-y: auto;">
                     {% if tasks_completed %}
-                    <div class="table-responsive">
-                        <table class="table table-hover mb-0">
-                            <thead class="table-light" style="position: sticky; top: 0;">
-                                <tr>
-                                    <th>Task</th>
-                                    <th>Opportunity</th>
-                                    <th>Completed</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for task in tasks_completed %}
-                                <tr data-href="/tasks/{{ task.id }}/edit?from=/summary/weekly">
-                                    <td>
-                                        {{ task.title }}
-                                        {% if task.description %}
-                                        <div class="text-muted small text-truncate" style="max-width: 200px;">{{ task.description }}</div>
-                                        {% endif %}
-                                    </td>
-                                    <td>
-                                        {% if task.opportunity %}
-                                        <a href="/opportunities/{{ task.opportunity.id }}" class="text-decoration-none text-muted">
-                                            {{ task.opportunity.name }}
-                                        </a>
-                                        {% else %}
-                                        <span class="text-muted">-</span>
-                                        {% endif %}
-                                    </td>
-                                    <td class="text-muted small">{{ task.updated_at.strftime('%b %d') }}</td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
+                    <table class="tos-table">
+                        <thead>
+                            <tr>
+                                <th>Task</th>
+                                <th>Opportunity</th>
+                                <th>Completed</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for task in tasks_completed %}
+                            <tr data-href="/tasks/{{ task.id }}/edit?from=/summary/weekly">
+                                <td>
+                                    <span class="tos-entity-name">{{ task.title }}</span>
+                                    {% if task.description %}
+                                    <div class="tos-entity-sub text-truncate" style="max-width: 200px;">{{ task.description }}</div>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if task.opportunity %}
+                                    <a href="/opportunities/{{ task.opportunity.id }}" class="tos-row-link tos-entity-sub">
+                                        {{ task.opportunity.name }}
+                                    </a>
+                                    {% else %}
+                                    <span class="tos-entity-sub">-</span>
+                                    {% endif %}
+                                </td>
+                                <td class="tos-entity-sub">{{ task.updated_at.strftime('%b %d') }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
                     {% else %}
-                    <div class="text-center text-muted py-4">
-                        <i class="bi bi-list-task h1"></i>
-                        <p class="mb-0">No tasks completed this period</p>
+                    <div class="tos-empty-state">
+                        <i class="bi bi-list-task"></i>
+                        <p>No tasks completed this period</p>
                     </div>
                     {% endif %}
                 </div>
-                <div class="card-footer bg-light">
-                    <div class="mb-0">
-                        <label class="form-label small text-muted mb-1"><i class="bi bi-pencil me-1"></i>Notes</label>
-                        <textarea class="form-control form-control-sm auto-save-note" rows="2"
-                            data-section="tasks" data-note-type="team"
-                            placeholder="Add notes about tasks...">{{ section_notes.get('tasks', '') }}</textarea>
-                    </div>
+                <div style="padding: 0.5rem 0.75rem; background: #f8fafc; border-top: 1px solid #e2e8f0;">
+                    <label class="form-label small text-muted mb-1"><i class="bi bi-pencil me-1"></i>Notes</label>
+                    <textarea class="form-control form-control-sm auto-save-note" rows="2"
+                        data-section="tasks" data-note-type="team"
+                        placeholder="Add notes about tasks...">{{ section_notes.get('tasks', '') }}</textarea>
                 </div>
             </div>
         </div>
 
         <!-- New Records Created -->
         <div class="col-lg-6">
-            <div class="card h-100">
-                <div class="card-header bg-info text-white">
-                    <h5 class="mb-0"><i class="bi bi-plus-circle me-2"></i>New Records Created</h5>
+            <div class="tos-card h-100 d-flex flex-column section--activity">
+                <div class="tos-section-header">
+                    <i class="bi bi-plus-circle me-2"></i>New Records Created
                 </div>
-                <div class="card-body summary-card-body">
+                <div class="summary-card-body flex-grow-1" style="padding: 0.75rem; overflow-y: auto;">
                     <!-- New Accounts -->
                     <h6 class="text-muted mb-2">
                         <i class="bi bi-building me-1"></i> Accounts ({{ new_accounts|length }})
@@ -362,27 +337,25 @@
                         {% endfor %}
                     </ul>
                     {% else %}
-                    <p class="text-muted small mb-0">None</p>
+                    <p class="tos-entity-sub mb-0">None</p>
                     {% endif %}
                 </div>
-                <div class="card-footer bg-light">
-                    <div class="mb-0">
-                        <label class="form-label small text-muted mb-1"><i class="bi bi-pencil me-1"></i>Notes</label>
-                        <textarea class="form-control form-control-sm auto-save-note" rows="2"
-                            data-section="new_records" data-note-type="team"
-                            placeholder="Add notes about new records...">{{ section_notes.get('new_records', '') }}</textarea>
-                    </div>
+                <div style="padding: 0.5rem 0.75rem; background: #f8fafc; border-top: 1px solid #e2e8f0;">
+                    <label class="form-label small text-muted mb-1"><i class="bi bi-pencil me-1"></i>Notes</label>
+                    <textarea class="form-control form-control-sm auto-save-note" rows="2"
+                        data-section="new_records" data-note-type="team"
+                        placeholder="Add notes about new records...">{{ section_notes.get('new_records', '') }}</textarea>
                 </div>
             </div>
         </div>
 
         <!-- Recent Activity Timeline -->
         <div class="col-12">
-            <div class="card">
-                <div class="card-header bg-secondary text-white">
-                    <h5 class="mb-0"><i class="bi bi-clock-history me-2"></i>Recent Activity Timeline</h5>
+            <div class="tos-card section--activity">
+                <div class="tos-section-header">
+                    <i class="bi bi-clock-history me-2"></i>Recent Activity Timeline
                 </div>
-                <div class="card-body summary-card-body" style="max-height: 320px;">
+                <div class="summary-card-body" style="max-height: 320px; padding: 0.75rem; overflow-y: auto;">
                     {% if activities_logged %}
                     <div class="activity-timeline">
                         {% for activity in activities_logged %}
@@ -415,9 +388,9 @@
                         {% endfor %}
                     </div>
                     {% else %}
-                    <div class="text-center text-muted py-4">
-                        <i class="bi bi-journal-x h1"></i>
-                        <p class="mb-0">No activities logged this period</p>
+                    <div class="tos-empty-state">
+                        <i class="bi bi-journal-x"></i>
+                        <p>No activities logged this period</p>
                     </div>
                     {% endif %}
                 </div>
@@ -426,12 +399,12 @@
 
         <!-- Other Notes -->
         <div class="col-12">
-            <div class="card">
-                <div class="card-header bg-dark text-white">
-                    <h5 class="mb-0"><i class="bi bi-journal-text me-2"></i>Other Notes</h5>
+            <div class="tos-card section--notes">
+                <div class="tos-section-header">
+                    <i class="bi bi-journal-text me-2"></i>Other Notes
                 </div>
-                <div class="card-body">
-                    <textarea class="form-control auto-save-note" rows="4"
+                <div style="padding: 0.75rem;">
+                    <textarea class="form-control form-control-sm auto-save-note" rows="3"
                         data-section="other" data-note-type="team"
                         placeholder="Add any other notes, observations, or highlights for this week...">{{ section_notes.get('other', '') }}</textarea>
                 </div>
