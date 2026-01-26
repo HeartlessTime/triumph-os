@@ -1804,55 +1804,103 @@
     })();
     </script>
 
-    <!-- Minimal Account Back-Navigation (scroll restore on "Back to Account" only) -->
+    <!-- Account-Centric Navigation State -->
     <script>
     (function() {
-        const SCROLL_KEY = 'accountViewScroll';
-        const RESTORE_KEY = 'accountViewRestore';
+        // Storage keys
+        const ACCOUNT_SCROLL_KEY = 'accountViewScroll';
+        const ACCOUNT_RESTORE_KEY = 'accountViewRestore';
+        const LIST_SCROLL_KEY = 'accountsListScroll';
+        const LIST_RESTORE_KEY = 'accountsListRestore';
 
-        // Check if we should restore scroll on an account view page
-        const accountMatch = window.location.pathname.match(/^\/accounts\/(\d+)$/);
-        if (accountMatch) {
-            const accountId = accountMatch[1];
-            const restoreFor = localStorage.getItem(RESTORE_KEY);
-            if (restoreFor === accountId) {
-                // Clear restore flag immediately (one-time)
-                localStorage.removeItem(RESTORE_KEY);
-                const saved = localStorage.getItem(SCROLL_KEY);
-                if (saved) {
-                    localStorage.removeItem(SCROLL_KEY);
-                    const scrollY = parseInt(saved, 10);
+        function clearAllNavState() {
+            localStorage.removeItem(ACCOUNT_SCROLL_KEY);
+            localStorage.removeItem(ACCOUNT_RESTORE_KEY);
+            localStorage.removeItem(LIST_SCROLL_KEY);
+            localStorage.removeItem(LIST_RESTORE_KEY);
+        }
+
+        // === ACCOUNTS LIST PAGE: Restore scroll if coming back from account detail ===
+        if (window.location.pathname === '/accounts') {
+            const shouldRestore = localStorage.getItem(LIST_RESTORE_KEY);
+            if (shouldRestore === 'true') {
+                localStorage.removeItem(LIST_RESTORE_KEY);
+                const savedScroll = localStorage.getItem(LIST_SCROLL_KEY);
+                if (savedScroll) {
+                    localStorage.removeItem(LIST_SCROLL_KEY);
+                    const scrollY = parseInt(savedScroll, 10);
                     if (!isNaN(scrollY) && scrollY > 0) {
-                        requestAnimationFrame(() => window.scrollTo(0, scrollY));
+                        // Use double RAF for more reliable timing after DOM render
+                        requestAnimationFrame(() => {
+                            requestAnimationFrame(() => {
+                                window.scrollTo(0, scrollY);
+                            });
+                        });
                     }
                 }
             }
         }
 
-        // Sidebar clicks: clear saved scroll state
+        // === ACCOUNT DETAIL PAGE: Restore scroll if coming back from contact ===
+        const accountMatch = window.location.pathname.match(/^\/accounts\/(\d+)$/);
+        if (accountMatch) {
+            const accountId = accountMatch[1];
+            const restoreFor = localStorage.getItem(ACCOUNT_RESTORE_KEY);
+            if (restoreFor === accountId) {
+                localStorage.removeItem(ACCOUNT_RESTORE_KEY);
+                const saved = localStorage.getItem(ACCOUNT_SCROLL_KEY);
+                if (saved) {
+                    localStorage.removeItem(ACCOUNT_SCROLL_KEY);
+                    const scrollY = parseInt(saved, 10);
+                    if (!isNaN(scrollY) && scrollY > 0) {
+                        requestAnimationFrame(() => {
+                            requestAnimationFrame(() => {
+                                window.scrollTo(0, scrollY);
+                            });
+                        });
+                    }
+                }
+            }
+        }
+
+        // === SIDEBAR CLICKS: Clear ALL nav state ===
         document.querySelectorAll('.sidebar-nav a.nav-link').forEach(link => {
             link.addEventListener('click', function() {
-                localStorage.removeItem(SCROLL_KEY);
-                localStorage.removeItem(RESTORE_KEY);
+                clearAllNavState();
             });
         });
 
-        // Contact links from account view: save scroll position
+        // === ACCOUNTS LIST: Save scroll when clicking account row ===
         document.addEventListener('click', function(e) {
-            const link = e.target.closest('a[data-save-account-scroll]');
-            if (link) {
-                localStorage.setItem(SCROLL_KEY, window.scrollY.toString());
+            const row = e.target.closest('tr.account-row');
+            if (row && !e.target.closest('a, button')) {
+                localStorage.setItem(LIST_SCROLL_KEY, window.scrollY.toString());
             }
         });
 
-        // "Back to Account" links: set restore flag
+        // === ACCOUNT DETAIL: Save scroll when clicking contact link ===
         document.addEventListener('click', function(e) {
-            const backLink = e.target.closest('a[data-restore-account-scroll]');
-            if (backLink) {
-                const accountId = backLink.getAttribute('data-restore-account-scroll');
+            const link = e.target.closest('a[data-save-account-scroll]');
+            if (link) {
+                localStorage.setItem(ACCOUNT_SCROLL_KEY, window.scrollY.toString());
+            }
+        });
+
+        // === BACK LINKS: Set restore flags ===
+        document.addEventListener('click', function(e) {
+            // "Back to Account" from contact view
+            const backToAccount = e.target.closest('a[data-restore-account-scroll]');
+            if (backToAccount) {
+                const accountId = backToAccount.getAttribute('data-restore-account-scroll');
                 if (accountId) {
-                    localStorage.setItem(RESTORE_KEY, accountId);
+                    localStorage.setItem(ACCOUNT_RESTORE_KEY, accountId);
                 }
+                return;
+            }
+            // "Back to Accounts" from account detail
+            const backToList = e.target.closest('a[data-restore-accounts-list]');
+            if (backToList) {
+                localStorage.setItem(LIST_RESTORE_KEY, 'true');
             }
         });
     })();

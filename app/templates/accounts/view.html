@@ -3,9 +3,16 @@
 {% block title %}{{ account.name }} - Triumph OS{% endblock %}
 
 {% block content %}
+{% set from_list = request.query_params.get('from') %}
 <div class="content-area">
     <div class="tos-page-header">
-        {% if return_to %}
+        {% if from_list and from_list.startswith('/accounts') %}
+        <div class="mb-2">
+            <a href="{{ from_list }}" class="tos-btn tos-btn-secondary" data-restore-accounts-list>
+                <i class="bi bi-arrow-left me-1"></i> Back to Accounts
+            </a>
+        </div>
+        {% elif return_to %}
         <div class="mb-2">
             <a href="{{ return_to }}" class="tos-btn tos-btn-secondary">
                 <i class="bi bi-arrow-left me-1"></i> Back
