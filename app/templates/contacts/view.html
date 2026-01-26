@@ -1,14 +1,23 @@
 {% extends "base.html" %}
 
 {% set return_to = request.query_params.get('from') %}
+{% set from_account_id = request.query_params.get('from_account') %}
 
 {% block title %}{{ contact.full_name }} - Triumph OS{% endblock %}
 
 {% block content %}
 <div class="content-area">
     <div class="tos-page-header">
-        <!-- Back button when navigating from another page -->
-        {% if return_to %}
+        <!-- Back link: context-aware for account-centric navigation -->
+        {% if from_account_id and contact.account and contact.account.id|string == from_account_id %}
+        <div class="mb-2">
+            <a href="/accounts/{{ from_account_id }}"
+               class="tos-btn tos-btn-secondary"
+               data-restore-account-scroll="{{ from_account_id }}">
+                <i class="bi bi-arrow-left me-1"></i> Back to Account: {{ contact.account.name }}
+            </a>
+        </div>
+        {% elif return_to %}
         <div class="mb-2">
             <a href="{{ return_to }}" class="tos-btn tos-btn-secondary">
                 <i class="bi bi-arrow-left me-1"></i> Back
@@ -18,8 +27,14 @@
 
         <nav aria-label="breadcrumb">
             <ol class="breadcrumb mb-1">
+                {% if from_account_id and contact.account and contact.account.id|string == from_account_id %}
+                <li class="breadcrumb-item"><a href="/accounts">Accounts</a></li>
+                <li class="breadcrumb-item"><a href="/accounts/{{ from_account_id }}">{{ contact.account.name }}</a></li>
+                <li class="breadcrumb-item active">{{ contact.full_name }}</li>
+                {% else %}
                 <li class="breadcrumb-item"><a href="/contacts">Contacts</a></li>
                 <li class="breadcrumb-item active">{{ contact.full_name }}</li>
+                {% endif %}
             </ol>
         </nav>
         <div class="d-flex justify-content-between align-items-center">

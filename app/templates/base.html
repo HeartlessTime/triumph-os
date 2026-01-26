@@ -1039,11 +1039,14 @@
             </a>
 
             <div class="nav-section mt-3">Sales</div>
-            <a href="/accounts" class="nav-link {% if '/accounts' in request.url.path %}active{% endif %}">
+            {# Account-centric navigation: highlight Accounts when viewing contact from account context #}
+            {% set from_account_context = request.query_params.get('from_account') %}
+            {% set is_contact_from_account = '/contacts' in request.url.path and from_account_context %}
+            <a href="/accounts" class="nav-link {% if '/accounts' in request.url.path or is_contact_from_account %}active{% endif %}">
                 <i class="bi bi-building"></i>
                 Accounts
             </a>
-            <a href="/contacts" class="nav-link {% if '/contacts' in request.url.path %}active{% endif %}">
+            <a href="/contacts" class="nav-link {% if '/contacts' in request.url.path and not is_contact_from_account %}active{% endif %}">
                 <i class="bi bi-people"></i>
                 Contacts
             </a>
@@ -1801,52 +1804,57 @@
     })();
     </script>
 
-    <!-- Global Scroll Position Preservation -->
+    <!-- Minimal Account Back-Navigation (scroll restore on "Back to Account" only) -->
     <script>
     (function() {
-        const SCROLL_PREFIX = 'scroll:';
+        const SCROLL_KEY = 'accountViewScroll';
+        const RESTORE_KEY = 'accountViewRestore';
 
-        function getScrollKey() {
-            return SCROLL_PREFIX + window.location.pathname;
-        }
-
-        function saveScrollPosition() {
-            sessionStorage.setItem(getScrollKey(), window.scrollY.toString());
-        }
-
-        function restoreScrollPosition() {
-            const saved = sessionStorage.getItem(getScrollKey());
-            if (saved) {
-                const scrollY = parseInt(saved, 10);
-                if (!isNaN(scrollY) && scrollY > 0) {
-                    window.scrollTo(0, scrollY);
+        // Check if we should restore scroll on an account view page
+        const accountMatch = window.location.pathname.match(/^\/accounts\/(\d+)$/);
+        if (accountMatch) {
+            const accountId = accountMatch[1];
+            const restoreFor = localStorage.getItem(RESTORE_KEY);
+            if (restoreFor === accountId) {
+                // Clear restore flag immediately (one-time)
+                localStorage.removeItem(RESTORE_KEY);
+                const saved = localStorage.getItem(SCROLL_KEY);
+                if (saved) {
+                    localStorage.removeItem(SCROLL_KEY);
+                    const scrollY = parseInt(saved, 10);
+                    if (!isNaN(scrollY) && scrollY > 0) {
+                        requestAnimationFrame(() => window.scrollTo(0, scrollY));
+                    }
                 }
             }
         }
 
-        // Restore scroll position on page load
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', restoreScrollPosition);
-        } else {
-            restoreScrollPosition();
-        }
+        // Sidebar clicks: clear saved scroll state
+        document.querySelectorAll('.sidebar-nav a.nav-link').forEach(link => {
+            link.addEventListener('click', function() {
+                localStorage.removeItem(SCROLL_KEY);
+                localStorage.removeItem(RESTORE_KEY);
+            });
+        });
 
-        // Save scroll position before navigating away
-        // Capture link clicks
+        // Contact links from account view: save scroll position
         document.addEventListener('click', function(e) {
-            const link = e.target.closest('a[href]');
-            if (link && !link.getAttribute('href').startsWith('#')) {
-                saveScrollPosition();
+            const link = e.target.closest('a[data-save-account-scroll]');
+            if (link) {
+                localStorage.setItem(SCROLL_KEY, window.scrollY.toString());
             }
         });
 
-        // Capture form submissions
-        document.addEventListener('submit', function(e) {
-            saveScrollPosition();
+        // "Back to Account" links: set restore flag
+        document.addEventListener('click', function(e) {
+            const backLink = e.target.closest('a[data-restore-account-scroll]');
+            if (backLink) {
+                const accountId = backLink.getAttribute('data-restore-account-scroll');
+                if (accountId) {
+                    localStorage.setItem(RESTORE_KEY, accountId);
+                }
+            }
         });
-
-        // Capture beforeunload as fallback
-        window.addEventListener('beforeunload', saveScrollPosition);
     })();
     </script>
 

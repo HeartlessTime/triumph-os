@@ -125,7 +125,9 @@
                             {% for contact in sorted_contacts %}
                             <tr>
                                 <td>
-                                    <a href="/contacts/{{ contact.id }}" class="tos-row-link tos-entity-name">
+                                    <a href="/contacts/{{ contact.id }}?from_account={{ account.id }}"
+                                       class="tos-row-link tos-entity-name"
+                                       data-save-account-scroll>
                                         {{ contact.full_name }}
                                     </a>
                                     {% if contact.is_primary %}
@@ -149,7 +151,7 @@
                                         title="Log Contact">
                                         <i class="bi bi-telephone"></i>
                                     </button>
-                                    <a href="/contacts/{{ contact.id }}/edit" class="tos-btn tos-btn-secondary" title="Edit">
+                                    <a href="/contacts/{{ contact.id }}/edit?from=/accounts/{{ account.id }}" class="tos-btn tos-btn-secondary" title="Edit">
                                         <i class="bi bi-pencil"></i>
                                     </a>
                                 </td>
