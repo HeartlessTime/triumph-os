@@ -10,6 +10,11 @@
     .no-results-row.show {
         display: table-row;
     }
+    .account-row.removing {
+        transition: opacity 0.3s ease-out, transform 0.3s ease-out;
+        opacity: 0;
+        transform: translateX(-20px);
+    }
 </style>
 {% endblock %}
 
@@ -38,7 +43,7 @@
             <div class="d-flex gap-2 align-items-center">
                 <span class="text-muted small me-1">Type:</span>
                 <a href="/accounts{% if sort %}?sort={{ sort }}{% if dir %}&dir={{ dir }}{% endif %}{% endif %}"
-                   class="tos-filter-pill {% if not account_type %}active{% endif %}">
+                   class="tos-filter-pill {% if not account_type and not view %}active{% endif %}">
                     All
                 </a>
                 <a href="/accounts?account_type=end_user{% if sort %}&sort={{ sort }}{% if dir %}&dir={{ dir }}{% endif %}{% endif %}"
@@ -51,17 +56,27 @@
                 </a>
             </div>
 
+            <!-- Saved Views -->
+            <div class="d-flex gap-2 align-items-center">
+                <span class="text-muted small me-1">View:</span>
+                <a href="/accounts?view=waiting"
+                   class="tos-filter-pill {% if view == 'waiting' %}active{% endif %}"
+                   style="{% if view == 'waiting' %}background: #fef3c7; color: #92400e; border-color: #fcd34d;{% endif %}">
+                    <i class="bi bi-hourglass-split me-1"></i>Waiting on Response
+                </a>
+            </div>
+
             <!-- Sort Controls (URL-driven) -->
             <div class="d-flex gap-2 align-items-center ms-auto">
                 <span class="text-muted small me-1">Sort:</span>
                 {% set name_dir = 'desc' if sort == 'name' and dir == 'asc' else 'asc' %}
-                <a href="/accounts?sort=name&dir={{ name_dir }}{% if account_type %}&account_type={{ account_type }}{% endif %}"
-                   class="tos-sort-btn {% if sort == 'name' or not sort %}active{% endif %}">
+                <a href="/accounts?sort=name&dir={{ name_dir }}{% if account_type %}&account_type={{ account_type }}{% endif %}{% if view %}&view={{ view }}{% endif %}"
+                   class="tos-sort-btn {% if sort == 'name' or (not sort and not view) %}active{% endif %}">
                     Name <i class="bi {% if sort == 'name' and dir == 'desc' %}bi-sort-alpha-up{% else %}bi-sort-alpha-down{% endif %} sort-icon"></i>
                 </a>
                 {% set activity_dir = 'asc' if sort == 'last_activity' and dir == 'desc' else 'desc' %}
-                <a href="/accounts?sort=last_activity&dir={{ activity_dir }}{% if account_type %}&account_type={{ account_type }}{% endif %}"
-                   class="tos-sort-btn {% if sort == 'last_activity' %}active{% endif %}">
+                <a href="/accounts?sort=last_activity&dir={{ activity_dir }}{% if account_type %}&account_type={{ account_type }}{% endif %}{% if view %}&view={{ view }}{% endif %}"
+                   class="tos-sort-btn {% if sort == 'last_activity' or view == 'waiting' %}active{% endif %}">
                     Last Activity <i class="bi {% if sort == 'last_activity' and dir == 'asc' %}bi-sort-up{% else %}bi-sort-down{% endif %} sort-icon"></i>
                 </a>
             </div>
@@ -90,10 +105,12 @@
                     {% for account in accounts %}
                     <tr class="account-row"
                         data-href="/accounts/{{ account.id }}{% if list_query_string %}?from=/accounts?{{ list_query_string }}{% endif %}"
+                        data-account-id="{{ account.id }}"
                         data-name="{{ account.name|lower }}"
                         data-last-activity="{{ account.last_contacted.strftime('%Y-%m-%d') if account.last_contacted else '0000-00-00' }}">
                         <td>
                             <span class="tos-entity-name">{{ account.name }}</span>
+                            <i class="bi bi-hourglass-split ms-1 awaiting-indicator" style="color: #92400e; {% if not account.awaiting_response %}display: none;{% endif %}" title="Awaiting Response"></i>
                         </td>
                         <td>
                             {% if account.account_type == 'gc' %}
@@ -117,7 +134,17 @@
                             {% endif %}
                         </td>
                         <td>{{ account.contacts|length }}</td>
-                        <td class="tos-entity-sub">{{ account.last_contacted.strftime('%b %d') if account.last_contacted else '—' }}</td>
+                        <td class="tos-entity-sub">
+                            {% if view == 'waiting' and account.days_since_last_activity is not none %}
+                            <span style="color: {% if account.days_since_last_activity >= 30 %}#dc2626{% elif account.days_since_last_activity >= 14 %}#d97706{% else %}#059669{% endif %};">
+                                {{ account.days_since_last_activity }}d ago
+                            </span>
+                            {% elif view == 'waiting' %}
+                            <span style="color: #dc2626;">Never</span>
+                            {% else %}
+                            {{ account.last_contacted.strftime('%b %d') if account.last_contacted else '—' }}
+                            {% endif %}
+                        </td>
                         <td>
                             {% if account.open_opportunities_count > 0 %}
                             <span class="tos-badge-pending">{{ account.open_opportunities_count }}</span>
@@ -128,7 +155,14 @@
                         <td>
                             <span class="currency">{{ account.total_pipeline_value }}</span>
                         </td>
-                        <td class="text-end">
+                        <td class="text-end" style="white-space: nowrap;">
+                            <button type="button"
+                                    class="tos-btn toggle-awaiting-btn"
+                                    style="background: #d1fae5; color: #065f46; border: 1px solid #6ee7b7; {% if not account.awaiting_response %}display: none;{% endif %}"
+                                    title="Mark as Responded"
+                                    data-account-id="{{ account.id }}">
+                                <i class="bi bi-check-lg"></i>
+                            </button>
                             <a href="/accounts/{{ account.id }}/edit" class="tos-btn tos-btn-secondary" title="Edit">
                                 <i class="bi bi-pencil"></i>
                             </a>
@@ -162,8 +196,9 @@
     const searchInput = document.getElementById('accountsSearch');
     const tbody = document.getElementById('accountsTableBody');
     const noResultsRow = document.querySelector('.no-results-row');
+    const isWaitingView = {{ 'true' if view == 'waiting' else 'false' }};
 
-    if (!tbody || !searchInput) return;
+    if (!tbody) return;
 
     const rows = Array.from(tbody.querySelectorAll('.account-row'));
 
@@ -173,6 +208,7 @@
         let visibleCount = 0;
 
         rows.forEach(function(row) {
+            if (row.classList.contains('removing')) return;
             const name = row.dataset.name || '';
             const matches = !term || name.includes(term);
 
@@ -187,17 +223,19 @@
     }
 
     // Search input handler
-    searchInput.addEventListener('input', function() {
-        filterRows(this.value);
-    });
+    if (searchInput) {
+        searchInput.addEventListener('input', function() {
+            filterRows(this.value);
+        });
 
-    // Escape key clears search
-    searchInput.addEventListener('keydown', function(e) {
-        if (e.key === 'Escape') {
-            this.value = '';
-            filterRows('');
-        }
-    });
+        // Escape key clears search
+        searchInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                this.value = '';
+                filterRows('');
+            }
+        });
+    }
 
     // Row click navigation
     rows.forEach(function(row) {
@@ -206,6 +244,59 @@
             // Don't navigate if clicking a link or button
             if (e.target.closest('a, button')) return;
             window.location.href = row.dataset.href;
+        });
+    });
+
+    // Toggle awaiting response via fetch (no page reload)
+    document.querySelectorAll('.toggle-awaiting-btn').forEach(function(btn) {
+        btn.addEventListener('click', async function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+
+            const accountId = this.dataset.accountId;
+            const row = this.closest('.account-row');
+            const indicator = row.querySelector('.awaiting-indicator');
+
+            // Disable button during request
+            this.disabled = true;
+
+            try {
+                const response = await fetch(`/accounts/${accountId}/toggle-awaiting-response`, {
+                    method: 'POST',
+                    headers: {
+                        'Accept': 'application/json'
+                    }
+                });
+
+                if (!response.ok) throw new Error('Toggle failed');
+
+                const data = await response.json();
+
+                if (data.awaiting_response) {
+                    // Turned ON - show button and indicator
+                    this.style.display = '';
+                    if (indicator) indicator.style.display = '';
+                } else {
+                    // Turned OFF
+                    if (isWaitingView) {
+                        // In waiting view, smoothly remove the row
+                        row.classList.add('removing');
+                        setTimeout(function() {
+                            row.style.display = 'none';
+                            // Re-check if we should show "no results"
+                            if (searchInput) filterRows(searchInput.value);
+                        }, 300);
+                    } else {
+                        // In regular view, just hide button and indicator
+                        this.style.display = 'none';
+                        if (indicator) indicator.style.display = 'none';
+                    }
+                }
+            } catch (err) {
+                console.error('Error toggling awaiting response:', err);
+                // Re-enable button on error
+                this.disabled = false;
+            }
         });
     });
 })();

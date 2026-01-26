@@ -84,6 +84,20 @@
                             <span class="tos-entity-sub">—</span>
                             {% endif %}
                         </div>
+                        <div class="tos-quick-stat">
+                            <div class="tos-entity-sub">Response</div>
+                            <form method="post" action="/contacts/{{ contact.id }}/toggle-has-responded?from=/contacts/{{ contact.id }}" class="d-inline">
+                                {% if contact.has_responded %}
+                                <button type="submit" style="background: #d1fae5; color: #065f46; border: 1px solid #6ee7b7; border-radius: 4px; padding: 0.15rem 0.5rem; font-size: 0.85rem; cursor: pointer;">
+                                    <i class="bi bi-check-circle-fill me-1"></i>Responded
+                                </button>
+                                {% else %}
+                                <button type="submit" style="background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; border-radius: 4px; padding: 0.15rem 0.5rem; font-size: 0.85rem; cursor: pointer;">
+                                    <i class="bi bi-x-circle me-1"></i>No Response
+                                </button>
+                                {% endif %}
+                            </form>
+                        </div>
                     </div>
                 </div>
             </div>

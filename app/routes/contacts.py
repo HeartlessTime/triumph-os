@@ -602,8 +602,27 @@ async def log_contact(
 # Column names for Contact model (only these can be set)
 CONTACT_COLUMNS = {
     "account_id", "first_name", "last_name", "title", "email",
-    "phone", "mobile", "is_primary", "notes", "last_contacted", "next_followup",
+    "phone", "mobile", "is_primary", "has_responded", "notes", "last_contacted", "next_followup",
 }
+
+
+@router.post("/{contact_id}/toggle-has-responded")
+async def toggle_has_responded(
+    contact_id: int,
+    request: Request,
+    db: Session = Depends(get_db),
+):
+    """Toggle the has_responded flag on a contact."""
+    contact = db.query(Contact).filter(Contact.id == contact_id).first()
+    if not contact:
+        raise HTTPException(status_code=404, detail="Contact not found")
+
+    contact.has_responded = not contact.has_responded
+    db.commit()
+
+    # Redirect back to referring page or contact detail
+    redirect_url = request.query_params.get("from") or f"/contacts/{contact_id}"
+    return RedirectResponse(url=redirect_url, status_code=303)
 
 
 @router.post("/{contact_id}/auto-save")

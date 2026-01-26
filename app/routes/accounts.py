@@ -30,6 +30,7 @@ async def list_accounts(
     search: str = None,
     industry: str = None,
     account_type: str = None,
+    view: str = None,
     sort: str = None,
     dir: str = None,
     db: Session = Depends(get_db),
@@ -58,6 +59,10 @@ async def list_accounts(
     if account_type:
         query = query.filter(Account.account_type == account_type)
 
+    # Handle "waiting" view - accounts awaiting response for 14+ days
+    if view == "waiting":
+        query = query.filter(Account.awaiting_response == True)
+
     # Normalize direction
     direction = dir if dir in ("asc", "desc") else None
 
@@ -83,8 +88,8 @@ async def list_accounts(
         query = query.outerjoin(
             pipeline_subq, Account.id == pipeline_subq.c.account_id
         ).order_by(pipeline_subq.c.total_value.desc().nullslast())
-    elif sort != "last_activity":
-        # Default sort (skip if last_activity - handled in Python below)
+    elif sort != "last_activity" and view != "waiting":
+        # Default sort (skip if last_activity or waiting view - handled in Python below)
         query = query.order_by(Account.name.asc())
 
     accounts = query.all()
@@ -95,6 +100,14 @@ async def list_accounts(
         accounts.sort(
             key=lambda a: a.last_contacted or date.min,
             reverse=reverse_sort,
+        )
+
+    # For "waiting" view: sort by days_since_last_activity desc (no additional filtering)
+    if view == "waiting":
+        # Sort: accounts with no activity at top, then by days_since_last_activity descending
+        accounts.sort(
+            key=lambda a: a.days_since_last_activity if a.days_since_last_activity is not None else 9999,
+            reverse=True,
         )
 
     # Build query string for preserving state in navigation
@@ -110,6 +123,7 @@ async def list_accounts(
             "industries": Account.INDUSTRIES,
             "account_type": account_type,
             "account_types": Account.ACCOUNT_TYPES,
+            "view": view,
             "sort": sort,
             "dir": direction or ("asc" if sort == "name" else "desc"),
             "list_query_string": query_string,
@@ -514,8 +528,32 @@ async def api_quick_create_account(
 # Column names for Account model (only these can be set)
 ACCOUNT_COLUMNS = {
     "name", "account_type", "industry", "website", "phone",
-    "address", "city", "state", "zip_code", "notes",
+    "address", "city", "state", "zip_code", "notes", "awaiting_response",
 }
+
+
+@router.post("/{account_id}/toggle-awaiting-response")
+async def toggle_awaiting_response(
+    account_id: int,
+    request: Request,
+    db: Session = Depends(get_db),
+):
+    """Toggle the awaiting_response flag on an account."""
+    account = db.query(Account).filter(Account.id == account_id).first()
+    if not account:
+        raise HTTPException(status_code=404, detail="Account not found")
+
+    account.awaiting_response = not account.awaiting_response
+    db.commit()
+
+    # Return JSON for AJAX requests
+    accept_header = request.headers.get("accept", "")
+    if "application/json" in accept_header:
+        return {"success": True, "awaiting_response": account.awaiting_response}
+
+    # Redirect back to referring page or account detail for form submissions
+    redirect_url = request.query_params.get("from") or f"/accounts/{account_id}"
+    return RedirectResponse(url=redirect_url, status_code=303)
 
 
 @router.post("/{account_id}/auto-save")

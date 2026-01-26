@@ -1,5 +1,5 @@
-from datetime import datetime
-from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey
+from datetime import datetime, date
+from sqlalchemy import Column, Integer, String, Text, DateTime, Boolean, ForeignKey
 from sqlalchemy.orm import relationship
 from app.database import Base
 
@@ -18,6 +18,7 @@ class Account(Base):
     state = Column(String(100), nullable=True)
     zip_code = Column(String(20), nullable=True)
     notes = Column(Text, nullable=True)
+    awaiting_response = Column(Boolean, nullable=False, default=False, index=True)
     created_by_id = Column(Integer, ForeignKey("users.id"), nullable=True)
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
     updated_at = Column(
@@ -123,6 +124,13 @@ class Account(Base):
         """Get the most recent last_contacted date from all contacts."""
         dates = [c.last_contacted for c in self.contacts if c.last_contacted]
         return max(dates) if dates else None
+
+    @property
+    def days_since_last_activity(self):
+        """Days since last contact with any contact at this account."""
+        if self.last_contacted:
+            return (date.today() - self.last_contacted).days
+        return None
 
     def __repr__(self):
         return f"<Account {self.name}>"

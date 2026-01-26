@@ -6,19 +6,21 @@
 {% set from_list = request.query_params.get('from') %}
 <div class="content-area">
     <div class="tos-page-header">
-        {% if from_list and from_list.startswith('/accounts') %}
         <div class="mb-2">
+            {% if from_list and from_list.startswith('/accounts') %}
             <a href="{{ from_list }}" class="tos-btn tos-btn-secondary" data-restore-accounts-list>
                 <i class="bi bi-arrow-left me-1"></i> Back to Accounts
             </a>
-        </div>
-        {% elif return_to %}
-        <div class="mb-2">
+            {% elif return_to %}
             <a href="{{ return_to }}" class="tos-btn tos-btn-secondary">
                 <i class="bi bi-arrow-left me-1"></i> Back
             </a>
+            {% else %}
+            <a href="/accounts" class="tos-btn tos-btn-secondary" data-restore-accounts-list>
+                <i class="bi bi-arrow-left me-1"></i> Back to Accounts
+            </a>
+            {% endif %}
         </div>
-        {% endif %}
         <nav aria-label="breadcrumb">
             <ol class="breadcrumb mb-1">
                 <li class="breadcrumb-item"><a href="/accounts">Accounts</a></li>
@@ -27,7 +29,12 @@
         </nav>
         <div class="d-flex justify-content-between align-items-center">
             <div>
-                <h1 class="mb-1">{{ account.name }}</h1>
+                <h1 class="mb-1">
+                    {{ account.name }}
+                    {% if account.awaiting_response %}
+                    <i class="bi bi-hourglass-split ms-2" style="color: #92400e; font-size: 0.7em;" title="Awaiting Response"></i>
+                    {% endif %}
+                </h1>
                 <span class="tos-entity-sub">{{ account.account_type_display }}</span>
             </div>
             <div class="d-flex gap-2">
@@ -47,8 +54,23 @@
                 </form>
             </div>
         </div>
+
+        <!-- Awaiting Response Toggle -->
+        <div class="mt-3">
+            <form method="post" action="/accounts/{{ account.id }}/toggle-awaiting-response?from=/accounts/{{ account.id }}" class="d-inline">
+                {% if account.awaiting_response %}
+                <button type="submit" class="tos-btn" style="background: #fef3c7; color: #92400e; border: 1px solid #fcd34d;">
+                    <i class="bi bi-hourglass-split me-1"></i> Awaiting Response
+                </button>
+                {% else %}
+                <button type="submit" class="tos-btn tos-btn-secondary">
+                    <i class="bi bi-hourglass me-1"></i> Mark Awaiting Response
+                </button>
+                {% endif %}
+            </form>
+        </div>
     </div>
-    
+
     <div class="row g-3">
         <!-- Account Details -->
         <div class="col-lg-4">
@@ -139,6 +161,9 @@
                                     </a>
                                     {% if contact.is_primary %}
                                     <span class="tos-badge-pending ms-1">Primary</span>
+                                    {% endif %}
+                                    {% if contact.has_responded %}
+                                    <i class="bi bi-check-circle-fill ms-1" style="color: #059669;" title="Has Responded"></i>
                                     {% endif %}
                                 </td>
                                 <td class="tos-entity-sub">{{ contact.title or '—' }}</td>

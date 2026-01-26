@@ -30,6 +30,7 @@ class Contact(Base):
     phone = Column(String(50), nullable=True)
     mobile = Column(String(50), nullable=True)
     is_primary = Column(Boolean, nullable=False, default=False)
+    has_responded = Column(Boolean, nullable=False, default=False)
     notes = Column(Text, nullable=True)
     last_contacted = Column(Date, nullable=True)
     next_followup = Column(Date, nullable=True)
