@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session, selectinload
 from app.database import get_db
 from app.models import Contact, Activity
 from app.services.dashboard_service import get_dashboard_data
-from app.template_config import templates
+from app.template_config import templates, get_app_tz
 
 router = APIRouter(tags=["dashboard"])
 
@@ -16,14 +16,15 @@ USE_DASHBOARD_V2 = True
 
 def get_week_start_monday(for_date: date = None) -> date:
     """Get the Monday of the week for a given date (or current week if None)."""
-    target = for_date or date.today()
+    target = for_date or datetime.now(get_app_tz()).date()
     days_since_monday = target.weekday()
     return target - timedelta(days=days_since_monday)
 
 
 @router.get("/", response_class=HTMLResponse)
 async def dashboard(request: Request, db: Session = Depends(get_db)):
-    today = date.today()
+    # Use app timezone for "today" to ensure consistent date comparisons
+    today = datetime.now(get_app_tz()).date()
     data = get_dashboard_data(db, today)
 
     if not USE_DASHBOARD_V2:

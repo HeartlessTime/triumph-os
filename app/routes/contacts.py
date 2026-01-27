@@ -7,7 +7,7 @@ from app.database import get_db
 from app.models import Contact, Account, Opportunity, Activity
 from app.services.followup import calculate_next_followup
 from app.services.validators import validate_contact
-from app.template_config import templates, utc_now
+from app.template_config import templates, utc_now, get_app_tz
 
 
 def add_business_days(start_date: date, num_days: int) -> date:
@@ -276,7 +276,7 @@ async def view_contact(
         {
             "request": request,
             "contact": contact,
-            "today": date.today(),
+            "today": datetime.now(get_app_tz()).date(),
         },
     )
 
