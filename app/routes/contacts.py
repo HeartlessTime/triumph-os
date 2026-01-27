@@ -521,12 +521,16 @@ async def log_contact(
     contact_id: int,
     activity_type: str = Form(...),  # Required - no default, must come from modal form
     notes: str = Form(None),
+    next_followup: str = Form(None),  # Optional: custom follow-up date (YYYY-MM-DD)
     db: Session = Depends(get_db),
 ):
-    """Log contact - updates last_contacted to today and next_followup to 30 days from now.
+    """Log contact - updates last_contacted to today and next_followup.
 
     Creates a follow-up Activity for the contact (appears in summaries/audit log).
     Also creates Activity entries on all related opportunities.
+
+    If next_followup is provided, uses that date (normalized to business day).
+    Otherwise falls back to activity_type-based calculation.
     """
     contact = db.query(Contact).filter(Contact.id == contact_id).first()
     if not contact:
@@ -537,10 +541,19 @@ async def log_contact(
     if activity_type != "meeting_requested":
         contact.last_contacted = date.today()
 
-    # Pass activity_type to determine follow-up timing:
-    # - "meeting_requested" gets a short 2 business day follow-up
-    # - All other types get the standard 30 day follow-up
-    update_contact_followup(contact, activity_type=activity_type)
+    # Use custom follow-up date if provided, otherwise use activity_type-based calculation
+    if next_followup and next_followup.strip():
+        try:
+            parsed_date = date.fromisoformat(next_followup.strip())
+            contact.next_followup = normalize_to_business_day(parsed_date)
+        except ValueError:
+            # Invalid date format - fall back to default
+            update_contact_followup(contact, activity_type=activity_type)
+    else:
+        # Pass activity_type to determine follow-up timing:
+        # - "meeting_requested" gets a short 2 business day follow-up
+        # - All other types get the standard 30 day follow-up
+        update_contact_followup(contact, activity_type=activity_type)
 
     current_user = request.state.current_user
 

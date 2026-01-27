@@ -175,6 +175,17 @@
                         </select>
                     </div>
                     <div class="mb-3">
+                        <label class="form-label">Follow-up In</label>
+                        <div class="d-flex gap-2 flex-wrap mb-2" id="followupPresets">
+                            <button type="button" class="btn btn-outline-secondary followup-preset" data-days="3">3 days</button>
+                            <button type="button" class="btn btn-outline-secondary followup-preset" data-days="7">7 days</button>
+                            <button type="button" class="btn btn-outline-primary followup-preset active" data-days="30">30 days</button>
+                            <button type="button" class="btn btn-outline-secondary followup-preset" data-days="60">60 days</button>
+                        </div>
+                        <input type="date" class="form-control" name="next_followup" id="next_followup_input" style="max-width: 200px;">
+                        <div class="form-text" id="followupDatePreview"></div>
+                    </div>
+                    <div class="mb-3">
                         <label for="contact_notes" class="form-label">Notes <span class="text-muted">(optional)</span></label>
                         <textarea class="form-control" id="contact_notes" name="notes" rows="3"
                             placeholder="Add notes about this contact..."></textarea>
@@ -263,5 +274,112 @@ document.getElementById('meeting_type').addEventListener('change', function() {
     document.getElementById('meetingRequestedInfo').style.display = this.value === 'meeting_requested' ? 'inline' : 'none';
     document.getElementById('meetingOccurredInfo').style.display = this.value === 'meeting' ? 'inline' : 'none';
 });
+
+// Follow-up preset buttons and date picker
+(function() {
+    const presets = document.querySelectorAll('.followup-preset');
+    const dateInput = document.getElementById('next_followup_input');
+    const preview = document.getElementById('followupDatePreview');
+
+    // Calculate follow-up date, skipping weekends
+    function calculateFollowupDate(days) {
+        const d = new Date();
+        d.setDate(d.getDate() + days);
+        return normalizeToBusinessDay(d);
+    }
+
+    // Skip weekends: Saturday -> Monday, Sunday -> Monday
+    function normalizeToBusinessDay(d) {
+        const dayOfWeek = d.getDay();
+        if (dayOfWeek === 6) d.setDate(d.getDate() + 2); // Saturday -> Monday
+        if (dayOfWeek === 0) d.setDate(d.getDate() + 1); // Sunday -> Monday
+        return d;
+    }
+
+    // Format date as YYYY-MM-DD for form/input
+    function formatDateISO(d) {
+        const year = d.getFullYear();
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    }
+
+    // Format date for display (e.g., "Mon, Jan 27")
+    function formatDateDisplay(d) {
+        return d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+    }
+
+    // Update preview text from current date input value
+    function updatePreview() {
+        if (dateInput.value) {
+            const d = new Date(dateInput.value + 'T12:00:00'); // Noon to avoid timezone issues
+            preview.textContent = 'Follow-up: ' + formatDateDisplay(d);
+        } else {
+            preview.textContent = '';
+        }
+    }
+
+    // Clear all preset active states
+    function clearPresetSelection() {
+        presets.forEach(function(p) {
+            p.classList.remove('active', 'btn-outline-primary');
+            p.classList.add('btn-outline-secondary');
+        });
+    }
+
+    // Set follow-up date from preset button
+    function setFollowupFromPreset(days, btn) {
+        const followupDate = calculateFollowupDate(days);
+        dateInput.value = formatDateISO(followupDate);
+        updatePreview();
+
+        // Update active state
+        clearPresetSelection();
+        btn.classList.remove('btn-outline-secondary');
+        btn.classList.add('active', 'btn-outline-primary');
+    }
+
+    // Handle manual date input change
+    dateInput.addEventListener('change', function() {
+        if (this.value) {
+            // Normalize to business day if weekend selected
+            const selected = new Date(this.value + 'T12:00:00');
+            const normalized = normalizeToBusinessDay(new Date(selected));
+            const normalizedISO = formatDateISO(normalized);
+
+            if (this.value !== normalizedISO) {
+                // Date was moved to avoid weekend
+                this.value = normalizedISO;
+                preview.textContent = 'Follow-up: ' + formatDateDisplay(normalized) + ' (moved from weekend)';
+            } else {
+                updatePreview();
+            }
+        }
+        // Clear preset selection when manually editing
+        clearPresetSelection();
+    });
+
+    // Initialize with 30-day default
+    const defaultBtn = document.querySelector('.followup-preset[data-days="30"]');
+    if (defaultBtn) {
+        setFollowupFromPreset(30, defaultBtn);
+    }
+
+    // Handle preset clicks
+    presets.forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            const days = parseInt(this.dataset.days, 10);
+            setFollowupFromPreset(days, this);
+        });
+    });
+
+    // Reset to default when modal opens
+    const modal = document.getElementById('logContactModal');
+    if (modal) {
+        modal.addEventListener('show.bs.modal', function() {
+            if (defaultBtn) setFollowupFromPreset(30, defaultBtn);
+        });
+    }
+})();
 </script>
 {% endblock %}
