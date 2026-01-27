@@ -1013,7 +1013,7 @@
         <div class="sidebar-brand">
             <div class="brand-content">
                 <h4><i class="bi bi-graph-up-arrow me-2"></i>Triumph OS</h4>
-                <small>Sales & Estimating</small>
+                <small id="sidebarDateTime"></small>
             </div>
             <button type="button" class="sidebar-close-btn" id="sidebarCloseBtn" aria-label="Close menu">
                 <i class="bi bi-x-lg"></i>
@@ -1903,6 +1903,28 @@
                 localStorage.setItem(LIST_RESTORE_KEY, 'true');
             }
         });
+    })();
+    </script>
+
+    <!-- Sidebar Date/Time Display -->
+    <script>
+    (function() {
+        const el = document.getElementById('sidebarDateTime');
+        if (!el) return;
+
+        function updateDateTime() {
+            const now = new Date();
+            const options = { weekday: 'short', month: 'short', day: 'numeric' };
+            const dateStr = now.toLocaleDateString('en-US', options);
+            const timeStr = now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+            el.textContent = dateStr + ' · ' + timeStr;
+        }
+
+        // Initial update
+        updateDateTime();
+
+        // Update every minute
+        setInterval(updateDateTime, 60000);
     })();
     </script>
 
