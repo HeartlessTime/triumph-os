@@ -59,9 +59,13 @@ async def list_accounts(
     if account_type:
         query = query.filter(Account.account_type == account_type)
 
-    # Handle "waiting" view - accounts awaiting response for 14+ days
+    # Handle "waiting" view - accounts awaiting response
     if view == "waiting":
         query = query.filter(Account.awaiting_response == True)
+
+    # Handle "hot" view - hot accounts only
+    if view == "hot":
+        query = query.filter(Account.is_hot == True)
 
     # Normalize direction
     direction = dir if dir in ("asc", "desc") else None
@@ -528,7 +532,7 @@ async def api_quick_create_account(
 # Column names for Account model (only these can be set)
 ACCOUNT_COLUMNS = {
     "name", "account_type", "industry", "website", "phone",
-    "address", "city", "state", "zip_code", "notes", "awaiting_response",
+    "address", "city", "state", "zip_code", "notes", "awaiting_response", "is_hot",
 }
 
 
@@ -552,6 +556,28 @@ async def toggle_awaiting_response(
         return {"success": True, "awaiting_response": account.awaiting_response}
 
     # Redirect back to referring page or account detail for form submissions
+    redirect_url = request.query_params.get("from") or f"/accounts/{account_id}"
+    return RedirectResponse(url=redirect_url, status_code=303)
+
+
+@router.post("/{account_id}/toggle-hot")
+async def toggle_hot(
+    account_id: int,
+    request: Request,
+    db: Session = Depends(get_db),
+):
+    """Toggle the is_hot flag on an account."""
+    account = db.query(Account).filter(Account.id == account_id).first()
+    if not account:
+        raise HTTPException(status_code=404, detail="Account not found")
+
+    account.is_hot = not account.is_hot
+    db.commit()
+
+    accept_header = request.headers.get("accept", "")
+    if "application/json" in accept_header:
+        return {"success": True, "is_hot": account.is_hot}
+
     redirect_url = request.query_params.get("from") or f"/accounts/{account_id}"
     return RedirectResponse(url=redirect_url, status_code=303)
 

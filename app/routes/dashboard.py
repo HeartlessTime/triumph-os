@@ -4,7 +4,7 @@ from fastapi.responses import HTMLResponse
 from sqlalchemy.orm import Session, selectinload
 
 from app.database import get_db
-from app.models import Contact, Activity
+from app.models import Account, Contact, Activity
 from app.services.dashboard_service import get_dashboard_data
 from app.template_config import templates, get_app_tz
 
@@ -73,6 +73,15 @@ async def dashboard(request: Request, db: Session = Depends(get_db)):
         .all()
     )
 
+    # Hot accounts, sorted by most recently updated
+    hot_accounts = (
+        db.query(Account)
+        .filter(Account.is_hot == True)
+        .order_by(Account.updated_at.desc())
+        .limit(7)
+        .all()
+    )
+
     return templates.TemplateResponse(
         "dashboard/dashboard_v2.html",
         {
@@ -81,5 +90,6 @@ async def dashboard(request: Request, db: Session = Depends(get_db)):
             "followup_contacts": followup_contacts,
             "meetings_pending": meetings_pending,
             "meetings_completed": meetings_completed,
+            "hot_accounts": hot_accounts,
         },
     )

@@ -19,6 +19,7 @@ class Account(Base):
     zip_code = Column(String(20), nullable=True)
     notes = Column(Text, nullable=True)
     awaiting_response = Column(Boolean, nullable=False, default=False, index=True)
+    is_hot = Column(Boolean, nullable=False, default=False, index=True)
     created_by_id = Column(Integer, ForeignKey("users.id"), nullable=True)
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
     updated_at = Column(

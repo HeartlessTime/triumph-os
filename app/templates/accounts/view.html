@@ -31,6 +31,9 @@
             <div>
                 <h1 class="mb-1">
                     {{ account.name }}
+                    {% if account.is_hot %}
+                    <i class="bi bi-fire ms-2" style="color: #dc2626; font-size: 0.7em;" title="Hot Account"></i>
+                    {% endif %}
                     {% if account.awaiting_response %}
                     <i class="bi bi-hourglass-split ms-2" style="color: #92400e; font-size: 0.7em;" title="Awaiting Response"></i>
                     {% endif %}
@@ -55,8 +58,19 @@
             </div>
         </div>
 
-        <!-- Awaiting Response Toggle -->
-        <div class="mt-3">
+        <!-- Account Status Toggles -->
+        <div class="mt-3 d-flex gap-2">
+            <form method="post" action="/accounts/{{ account.id }}/toggle-hot?from=/accounts/{{ account.id }}" class="d-inline">
+                {% if account.is_hot %}
+                <button type="submit" class="tos-btn" style="background: #fef2f2; color: #dc2626; border: 1px solid #fca5a5;">
+                    <i class="bi bi-fire me-1"></i> Hot
+                </button>
+                {% else %}
+                <button type="submit" class="tos-btn tos-btn-secondary">
+                    <i class="bi bi-fire me-1"></i> Mark Hot
+                </button>
+                {% endif %}
+            </form>
             <form method="post" action="/accounts/{{ account.id }}/toggle-awaiting-response?from=/accounts/{{ account.id }}" class="d-inline">
                 {% if account.awaiting_response %}
                 <button type="submit" class="tos-btn" style="background: #fef3c7; color: #92400e; border: 1px solid #fcd34d;">
@@ -273,8 +287,8 @@
                     <div class="mb-3">
                         <label for="activity_type" class="form-label">Activity Type</label>
                         <select class="form-select" id="activity_type" name="activity_type">
-                            <option value="call" selected>Phone Call</option>
-                            <option value="email">Email</option>
+                            <option value="call">Phone Call</option>
+                            <option value="email" selected>Email</option>
                             <option value="meeting">Meeting</option>
                             <option value="other">Other</option>
                         </select>
@@ -377,7 +391,7 @@
 
         // Clear previous notes
         document.getElementById('contact_notes').value = '';
-        document.getElementById('activity_type').value = 'call';
+        document.getElementById('activity_type').value = 'email';
     });
 
     // Site Visit Modal: set default date/time when modal opens

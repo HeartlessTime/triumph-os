@@ -59,6 +59,11 @@
             <!-- Saved Views -->
             <div class="d-flex gap-2 align-items-center">
                 <span class="text-muted small me-1">View:</span>
+                <a href="/accounts?view=hot"
+                   class="tos-filter-pill {% if view == 'hot' %}active{% endif %}"
+                   style="{% if view == 'hot' %}background: #fef2f2; color: #dc2626; border-color: #fca5a5;{% endif %}">
+                    <i class="bi bi-fire me-1"></i>Hot
+                </a>
                 <a href="/accounts?view=waiting"
                    class="tos-filter-pill {% if view == 'waiting' %}active{% endif %}"
                    style="{% if view == 'waiting' %}background: #fef3c7; color: #92400e; border-color: #fcd34d;{% endif %}">
@@ -110,6 +115,7 @@
                         data-last-activity="{{ account.last_contacted.strftime('%Y-%m-%d') if account.last_contacted else '0000-00-00' }}">
                         <td>
                             <span class="tos-entity-name">{{ account.name }}</span>
+                            {% if account.is_hot %}<i class="bi bi-fire ms-1" style="color: #dc2626;" title="Hot Account"></i>{% endif %}
                             <i class="bi bi-hourglass-split ms-1 awaiting-indicator" style="color: #92400e; {% if not account.awaiting_response %}display: none;{% endif %}" title="Awaiting Response"></i>
                         </td>
                         <td>

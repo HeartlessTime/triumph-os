@@ -328,6 +328,37 @@
             </div>
         </div>
 
+        <!-- Hot Accounts -->
+        {% if hot_accounts %}
+        <div class="section-card" style="margin-bottom: 1rem;">
+            <div class="section-header" style="background: #fef2f2;">
+                <i class="bi bi-fire me-1" style="color: #dc2626;"></i>Hot Accounts
+                <span class="badge" style="background: #fef2f2; color: #dc2626; border: 1px solid #fca5a5; font-size: 0.7rem; padding: 0.2em 0.5em; font-weight: 500;">{{ hot_accounts|length }}</span>
+            </div>
+            <div class="section-body" style="padding: 0;">
+                <table class="dense-table">
+                    <tbody>
+                        {% for account in hot_accounts %}
+                        <tr data-href="/accounts/{{ account.id }}">
+                            <td>
+                                <span class="entity-name">{{ account.name }}</span>
+                                <div class="entity-sub">{{ account.industry or account.account_type_display }}</div>
+                            </td>
+                            <td class="text-end entity-sub" style="white-space: nowrap;">
+                                {% if account.last_contacted %}
+                                {{ account.last_contacted.strftime('%b %d') }}
+                                {% else %}
+                                —
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% endif %}
+
         <div class="dashboard-grid">
             <!-- SECTION 1: Outreach & Follow-Ups -->
             <div class="section-card section-full section--outreach">
