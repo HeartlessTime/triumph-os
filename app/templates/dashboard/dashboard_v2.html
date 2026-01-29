@@ -328,40 +328,99 @@
             </div>
         </div>
 
-        <!-- Hot Accounts -->
-        {% if hot_accounts %}
+        <!-- Tasks (top priority) -->
         <div class="section-card" style="margin-bottom: 1rem;">
-            <div class="section-header" style="background: #fef2f2;">
-                <i class="bi bi-fire me-1" style="color: #dc2626;"></i>Hot Accounts
-                <span class="badge" style="background: #fef2f2; color: #dc2626; border: 1px solid #fca5a5; font-size: 0.7rem; padding: 0.2em 0.5em; font-weight: 500;">{{ hot_accounts|length }}</span>
-                <a href="/accounts?view=hot" class="ms-auto" style="font-size: 0.7rem; font-weight: 400; text-transform: none; letter-spacing: 0; color: #64748b; text-decoration: none;">View all &rarr;</a>
+            <div class="section-header">
+                <i class="bi bi-check2-square me-1"></i>Tasks
+                <span class="badge bg-secondary ms-2">{{ my_tasks|length }}</span>
+                <button type="button" class="btn btn-action btn-view ms-2" data-bs-toggle="modal" data-bs-target="#quickAddTaskModal">
+                    <i class="bi bi-plus-lg"></i>
+                </button>
             </div>
-            <div style="max-height: 220px; overflow-y: auto; padding: 0;">
+            <div class="section-body" style="max-height: 220px; overflow-y: auto;">
+                {% if my_tasks %}
                 <table class="dense-table">
                     <tbody>
-                        {% for account in hot_accounts %}
-                        <tr data-href="/accounts/{{ account.id }}">
-                            <td style="padding: 0.35rem 0.75rem;">
-                                <span class="entity-name">{{ account.name }}</span>
+                        {% for task in my_tasks %}
+                        <tr data-href="/tasks/{{ task.id }}/edit?from=/"
+                            {% if task.status != 'Completed' and task.due_date %}
+                            {% if task.is_overdue %}style="background-color: #fef2f2;"{% elif task.days_until_due is not none and task.days_until_due <= 3 %}style="background-color: #fffbeb;"{% endif %}
+                            {% endif %}>
+                            <td style="width: 1.5rem; padding-right: 0;">
+                                <button type="button"
+                                    class="btn btn-sm p-0 task-complete-btn {% if task.status == 'Completed' %}text-success{% else %}text-muted{% endif %}"
+                                    data-task-complete
+                                    data-task-id="{{ task.id }}"
+                                    data-completed="{{ 'true' if task.status == 'Completed' else 'false' }}"
+                                    title="{{ 'Reopen Task' if task.status == 'Completed' else 'Complete Task' }}"
+                                    style="font-size: 1rem; line-height: 1;"
+                                    >
+                                    <i class="bi {% if task.status == 'Completed' %}bi-check-circle-fill{% else %}bi-circle{% endif %}"></i>
+                                </button>
                             </td>
-                            <td class="text-end" style="white-space: nowrap; padding: 0.35rem 0.75rem; font-size: 0.8rem;">
-                                {% if account.days_since_last_activity is not none %}
-                                <span style="color: {% if account.days_since_last_activity >= 30 %}#dc2626{% elif account.days_since_last_activity >= 14 %}#d97706{% else %}#059669{% endif %};">
-                                    {{ account.days_since_last_activity }}d ago
+                            <td>
+                                <span class="entity-name {% if task.status == 'Completed' %}text-decoration-line-through text-muted{% endif %}">{{ task.title }}</span>
+                                {% if task.opportunity %}
+                                <div class="entity-sub">{{ task.opportunity.name }}</div>
+                                {% endif %}
+                            </td>
+                            <td class="text-end" style="white-space: nowrap;">
+                                <span class="priority-{{ task.priority|lower }}" style="font-size: 0.7rem; font-weight: 500;">
+                                    {{ task.priority[0] }}
                                 </span>
-                                {% else %}
-                                <span style="color: #dc2626;">Never</span>
+                                {% if task.due_date %}
+                                <span class="ms-1 {% if task.is_overdue %}text-danger{% elif task.days_until_due is not none and task.days_until_due <= 3 %}text-warning{% else %}text-muted{% endif %}" style="font-size: 0.75rem;">
+                                    {{ task.due_date.strftime('%b %d') }}
+                                </span>
                                 {% endif %}
                             </td>
                         </tr>
                         {% endfor %}
                     </tbody>
                 </table>
+                {% else %}
+                <div class="empty-state">
+                    <i class="bi bi-check-all"></i>
+                    <div>No open tasks.</div>
+                </div>
+                {% endif %}
             </div>
         </div>
-        {% endif %}
 
         <div class="dashboard-grid">
+            <!-- Hot Accounts -->
+            {% if hot_accounts %}
+            <div class="section-card section--tasks">
+                <div class="section-header" style="background: #fef2f2;">
+                    <i class="bi bi-fire me-1" style="color: #dc2626;"></i>Hot Accounts
+                    <span class="badge" style="background: #fef2f2; color: #dc2626; border: 1px solid #fca5a5; font-size: 0.7rem; padding: 0.2em 0.5em; font-weight: 500;">{{ hot_accounts|length }}</span>
+                    <a href="/accounts?view=hot" class="ms-auto" style="font-size: 0.7rem; font-weight: 400; text-transform: none; letter-spacing: 0; color: #64748b; text-decoration: none;">View all &rarr;</a>
+                </div>
+                <div class="section-body">
+                    <table class="dense-table">
+                        <tbody>
+                            {% for account in hot_accounts %}
+                            <tr data-href="/accounts/{{ account.id }}">
+                                <td style="padding: 0.35rem 0.75rem;">
+                                    <span class="entity-name">{{ account.name }}</span>
+                                </td>
+                                <td class="text-end" style="white-space: nowrap; padding: 0.35rem 0.75rem; font-size: 0.8rem;">
+                                    {% if account.days_since_last_activity is not none %}
+                                    <span style="color: {% if account.days_since_last_activity >= 30 %}#dc2626{% elif account.days_since_last_activity >= 14 %}#d97706{% else %}#059669{% endif %};">
+                                        {{ account.days_since_last_activity }}d ago
+                                    </span>
+                                    {% else %}
+                                    <span style="color: #dc2626;">Never</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            {% endif %}
+
             <!-- SECTION 1: Outreach & Follow-Ups -->
             <div class="section-card section-full section--outreach">
                 <div class="section-header">
@@ -582,62 +641,6 @@
                     <div class="empty-state">
                         <i class="bi bi-calendar"></i>
                         <div>No meetings tracked.</div>
-                    </div>
-                    {% endif %}
-                </div>
-            </div>
-
-            <!-- SECTION 3: Tasks -->
-            <div class="section-card section--tasks">
-                <div class="section-header">
-                    <i class="bi bi-check2-square me-1"></i>Tasks
-                    <span class="badge bg-secondary ms-2">{{ my_tasks|length }}</span>
-                    <button type="button" class="btn btn-action btn-view ms-2" data-bs-toggle="modal" data-bs-target="#quickAddTaskModal">
-                        <i class="bi bi-plus-lg"></i>
-                    </button>
-                </div>
-                <div class="section-body">
-                    {% if my_tasks %}
-                    <table class="dense-table">
-                        <tbody>
-                            {% for task in my_tasks %}
-                            <tr data-href="/tasks/{{ task.id }}/edit?from=/">
-                                <td style="width: 1.5rem; padding-right: 0;">
-                                    <button type="button"
-                                        class="btn btn-sm p-0 task-complete-btn {% if task.status == 'Completed' %}text-success{% else %}text-muted{% endif %}"
-                                        data-task-complete
-                                        data-task-id="{{ task.id }}"
-                                        data-completed="{{ 'true' if task.status == 'Completed' else 'false' }}"
-                                        title="{{ 'Reopen Task' if task.status == 'Completed' else 'Complete Task' }}"
-                                        style="font-size: 1rem; line-height: 1;"
-                                        >
-                                        <i class="bi {% if task.status == 'Completed' %}bi-check-circle-fill{% else %}bi-circle{% endif %}"></i>
-                                    </button>
-                                </td>
-                                <td>
-                                    <span class="entity-name {% if task.status == 'Completed' %}text-decoration-line-through text-muted{% endif %}">{{ task.title }}</span>
-                                    {% if task.opportunity %}
-                                    <div class="entity-sub">{{ task.opportunity.name }}</div>
-                                    {% endif %}
-                                </td>
-                                <td class="text-end" style="white-space: nowrap;">
-                                    <span class="priority-{{ task.priority|lower }}" style="font-size: 0.7rem; font-weight: 500;">
-                                        {{ task.priority[0] }}
-                                    </span>
-                                    {% if task.due_date %}
-                                    <span class="ms-1 {% if task.is_overdue %}text-danger{% else %}text-muted{% endif %}" style="font-size: 0.75rem;">
-                                        {{ task.due_date.strftime('%b %d') }}
-                                    </span>
-                                    {% endif %}
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                    {% else %}
-                    <div class="empty-state">
-                        <i class="bi bi-check-all"></i>
-                        <div>No open tasks.</div>
                     </div>
                     {% endif %}
                 </div>
