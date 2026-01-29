@@ -255,7 +255,7 @@
                         {% for activity in meetings_pending %}
                         {# ROW CLICK: Opens activity edit view. Button click is separate (stopPropagation). #}
                         <div class="list-group-item list-group-item-action meeting-pending-row"
-                             data-href="/activities/{{ activity.id }}/edit?from=/today"
+                             data-href="/activities/{{ activity.id }}?from=/today"
                              style="cursor: pointer;">
                             <div class="d-flex justify-content-between align-items-center">
                                 <div>

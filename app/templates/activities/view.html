@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+
+{% set return_to = request.query_params.get('from') %}
+
+{% block title %}{{ activity.subject }} - Triumph OS{% endblock %}
+
+{% block content %}
+<div class="content-area">
+    <div class="page-header">
+        {% if return_to %}
+        <div class="mb-2">
+            <a href="{{ return_to }}" class="tos-btn tos-btn-secondary">
+                <i class="bi bi-arrow-left me-1"></i> Back
+            </a>
+        </div>
+        {% endif %}
+
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-1">
+                {% if activity.opportunity %}
+                <li class="breadcrumb-item"><a href="/opportunities">Opportunities</a></li>
+                <li class="breadcrumb-item"><a href="/opportunities/{{ activity.opportunity_id }}">{{ activity.opportunity.name }}</a></li>
+                {% elif activity.contact %}
+                <li class="breadcrumb-item"><a href="/contacts">Contacts</a></li>
+                <li class="breadcrumb-item"><a href="/contacts/{{ activity.contact_id }}">{{ activity.contact.full_name }}</a></li>
+                {% else %}
+                <li class="breadcrumb-item"><a href="/summary/my-weekly">Summary</a></li>
+                {% endif %}
+                <li class="breadcrumb-item active">{{ activity.subject }}</li>
+            </ol>
+        </nav>
+        <div class="d-flex justify-content-between align-items-center">
+            <h1>{{ activity.subject }}</h1>
+            <div class="d-flex gap-2">
+                <a href="/activities/{{ activity.id }}/edit{% if return_to %}?from={{ return_to | urlencode }}{% endif %}" class="tos-btn tos-btn-primary">
+                    <i class="bi bi-pencil me-1"></i> Edit
+                </a>
+                <form method="post" action="/activities/{{ activity.id }}/delete{% if return_to %}?from={{ return_to | urlencode }}{% endif %}" class="d-inline" onsubmit="return confirm('Delete this activity? This cannot be undone.');">
+                    <button type="submit" class="tos-btn" style="background: #fef2f2; color: #991b1b; border: 1px solid #fecaca;">
+                        <i class="bi bi-trash me-1"></i> Delete
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-3">
+        <div class="col-lg-8">
+            <div class="tos-card">
+                <div class="tos-section-header">
+                    <i class="bi bi-info-circle me-1"></i>Details
+                </div>
+                <div class="p-3">
+                    <dl class="mb-0" style="font-size: 0.9rem;">
+                        <dt class="tos-entity-sub">Type</dt>
+                        <dd class="mb-3">{{ activity.type_display }}</dd>
+
+                        <dt class="tos-entity-sub">Date & Time</dt>
+                        <dd class="mb-3">{{ activity.activity_date.strftime('%A, %B %d, %Y at %I:%M %p') }}</dd>
+
+                        {% if activity.contact and activity.activity_type != 'meeting' %}
+                        <dt class="tos-entity-sub">Contact</dt>
+                        <dd class="mb-3">
+                            <a href="/contacts/{{ activity.contact_id }}" class="tos-row-link">{{ activity.contact.full_name }}</a>
+                            {% if activity.contact.account %}
+                            <span class="tos-entity-sub ms-1">
+                                (<a href="/accounts/{{ activity.contact.account_id }}" class="tos-row-link">{{ activity.contact.account.name }}</a>)
+                            </span>
+                            {% endif %}
+                        </dd>
+                        {% endif %}
+
+                        {% if activity.opportunity %}
+                        <dt class="tos-entity-sub">Opportunity</dt>
+                        <dd class="mb-3">
+                            <a href="/opportunities/{{ activity.opportunity_id }}" class="tos-row-link">{{ activity.opportunity.name }}</a>
+                        </dd>
+                        {% endif %}
+
+                        {% if activity.description %}
+                        <dt class="tos-entity-sub">Notes</dt>
+                        <dd class="mb-0" style="white-space: pre-line;">{{ activity.description }}</dd>
+                        {% endif %}
+                    </dl>
+                </div>
+            </div>
+        </div>
+
+        {% if activity.activity_type == 'meeting' and activity.attendees %}
+        <div class="col-lg-4">
+            <div class="tos-card">
+                <div class="tos-section-header">
+                    <i class="bi bi-people me-1"></i>Attendees
+                </div>
+                <div class="p-3">
+                    {% for contact in activity.attendees %}
+                    <div class="{% if not loop.last %}mb-2 pb-2 border-bottom{% endif %}">
+                        <a href="/contacts/{{ contact.id }}" class="tos-row-link tos-entity-name">{{ contact.full_name }}</a>
+                        {% if contact.title %}
+                        <div class="tos-entity-sub">{{ contact.title }}</div>
+                        {% endif %}
+                        {% if contact.account %}
+                        <div class="tos-entity-sub">
+                            <a href="/accounts/{{ contact.account_id }}" class="tos-row-link">{{ contact.account.name }}</a>
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

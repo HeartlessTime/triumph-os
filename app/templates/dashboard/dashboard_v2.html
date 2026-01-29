@@ -521,7 +521,7 @@
                     <table class="dense-table">
                         <tbody>
                             {% for activity in meetings_pending %}
-                            <tr data-href="/activities/{{ activity.id }}/edit?from=/">
+                            <tr data-href="/activities/{{ activity.id }}?from=/">
                                 <td style="width: 45%;">
                                     <span class="entity-name">{{ activity.attendees_display or activity.contact.full_name }}</span>
                                     <div class="entity-sub">{{ activity.contact.account.name if activity.contact and activity.contact.account else '' }}</div>
@@ -555,7 +555,7 @@
                     <table class="dense-table">
                         <tbody>
                             {% for activity in meetings_completed %}
-                            <tr data-href="/activities/{{ activity.id }}/edit?from=/">
+                            <tr data-href="/activities/{{ activity.id }}?from=/">
                                 <td style="width: 45%;">
                                     <span class="entity-name">{{ activity.attendees_display or activity.subject }}</span>
                                     <div class="entity-sub">{{ activity.contact.account.name if activity.contact and activity.contact.account else '' }}</div>
@@ -569,7 +569,7 @@
                                     </span>
                                 </td>
                                 <td class="text-end">
-                                    <a href="/activities/{{ activity.id }}/edit?from=/" class="btn btn-action btn-view"><i class="bi bi-eye"></i></a>
+                                    <a href="/activities/{{ activity.id }}?from=/" class="btn btn-action btn-view"><i class="bi bi-eye"></i></a>
                                 </td>
                             </tr>
                             {% endfor %}

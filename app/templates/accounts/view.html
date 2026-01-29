@@ -143,8 +143,53 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Meetings with this Account -->
+            <div class="tos-card mt-3">
+                <div class="tos-section-header">
+                    <i class="bi bi-calendar-check me-1"></i>Meetings
+                </div>
+                {% if account_meetings %}
+                <div class="table-responsive">
+                    <table class="tos-table">
+                        <thead>
+                            <tr>
+                                <th>Attendees</th>
+                                <th>Date</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for meeting in account_meetings[:7] %}
+                            <tr data-href="/activities/{{ meeting.id }}?from=/accounts/{{ account.id }}">
+                                <td>
+                                    <a href="/activities/{{ meeting.id }}?from=/accounts/{{ account.id }}" class="tos-row-link tos-entity-name">{{ meeting.attendees_display or meeting.subject }}</a>
+                                </td>
+                                <td class="tos-entity-sub">{{ meeting.activity_date.strftime('%b %d, %Y') }}</td>
+                                <td class="text-end">
+                                    <a href="/activities/{{ meeting.id }}/edit?from=/accounts/{{ account.id }}" class="tos-btn tos-btn-secondary" title="Edit">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% if account_meetings|length > 7 %}
+                <div class="p-2 text-center">
+                    <span class="tos-entity-sub">Showing 7 of {{ account_meetings|length }} meetings</span>
+                </div>
+                {% endif %}
+                {% else %}
+                <div class="tos-empty-state">
+                    <i class="bi bi-calendar"></i>
+                    <p>No meetings logged yet</p>
+                </div>
+                {% endif %}
+            </div>
         </div>
-        
+
         <!-- Contacts -->
         <div class="col-lg-8">
             <div class="tos-card">
@@ -268,55 +313,6 @@
                     <i class="bi bi-bullseye"></i>
                     <p>No opportunities yet</p>
                     <a href="/opportunities/intake?account_id={{ account.id }}" class="tos-btn tos-btn-primary">Create First Opportunity</a>
-                </div>
-                {% endif %}
-            </div>
-
-            <!-- Meetings with this Account -->
-            <div class="tos-card mt-3">
-                <div class="tos-section-header">
-                    <i class="bi bi-calendar-check me-1"></i>Meetings
-                </div>
-                {% if account_meetings %}
-                <div class="table-responsive">
-                    <table class="tos-table">
-                        <thead>
-                            <tr>
-                                <th>Attendees</th>
-                                <th>Date</th>
-                                <th>Notes</th>
-                                <th></th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for meeting in account_meetings[:7] %}
-                            <tr>
-                                <td>
-                                    <span class="tos-entity-name">{{ meeting.attendees_display or meeting.subject }}</span>
-                                </td>
-                                <td class="tos-entity-sub">{{ meeting.activity_date.strftime('%b %d, %Y') }}</td>
-                                <td class="tos-entity-sub text-truncate" style="max-width: 200px;">
-                                    {{ meeting.description[:60] if meeting.description else '—' }}{% if meeting.description and meeting.description|length > 60 %}...{% endif %}
-                                </td>
-                                <td class="text-end">
-                                    <a href="/activities/{{ meeting.id }}/edit?from=/accounts/{{ account.id }}" class="tos-btn tos-btn-secondary" title="Edit">
-                                        <i class="bi bi-pencil"></i>
-                                    </a>
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-                {% if account_meetings|length > 7 %}
-                <div class="p-2 text-center">
-                    <span class="tos-entity-sub">Showing 7 of {{ account_meetings|length }} meetings</span>
-                </div>
-                {% endif %}
-                {% else %}
-                <div class="tos-empty-state">
-                    <i class="bi bi-calendar"></i>
-                    <p>No meetings logged yet</p>
                 </div>
                 {% endif %}
             </div>

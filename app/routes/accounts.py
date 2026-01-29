@@ -277,36 +277,32 @@ async def view_account(
     contact_ids = [c.id for c in account.contacts]
     account_meetings = []
     if contact_ids:
-        # Meetings where contact_id is from this account OR has attendees from this account
         from sqlalchemy import or_
         from sqlalchemy.orm import selectinload as sl
+        # Subquery: unique meeting IDs linked to this account's contacts
+        meeting_ids_sub = (
+            db.query(Activity.id)
+            .outerjoin(ActivityAttendee, ActivityAttendee.activity_id == Activity.id)
+            .filter(
+                Activity.activity_type == "meeting",
+                or_(
+                    Activity.contact_id.in_(contact_ids),
+                    ActivityAttendee.contact_id.in_(contact_ids),
+                ),
+            )
+            .distinct()
+            .subquery()
+        )
         account_meetings = (
             db.query(Activity)
             .options(
                 sl(Activity.contact),
                 sl(Activity.attendee_links).selectinload(ActivityAttendee.contact),
             )
-            .filter(
-                Activity.activity_type == "meeting",
-                or_(
-                    Activity.contact_id.in_(contact_ids),
-                    Activity.id.in_(
-                        db.query(ActivityAttendee.activity_id)
-                        .filter(ActivityAttendee.contact_id.in_(contact_ids))
-                    ),
-                ),
-            )
+            .filter(Activity.id.in_(meeting_ids_sub))
             .order_by(Activity.activity_date.desc())
             .all()
         )
-        # Deduplicate (in case both contact_id and attendee match)
-        seen = set()
-        deduped = []
-        for m in account_meetings:
-            if m.id not in seen:
-                seen.add(m.id)
-                deduped.append(m)
-        account_meetings = deduped
 
     # Get return URL from query params (for back navigation with sort preserved)
     return_to = request.query_params.get("from")

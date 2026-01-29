@@ -176,7 +176,7 @@
                         </thead>
                         <tbody>
                             {% for activity in outreach_activities %}
-                            <tr data-href="/activities/{{ activity.id }}/edit?from=/summary/my-weekly">
+                            <tr data-href="/activities/{{ activity.id }}?from=/summary/my-weekly">
                                 <td>
                                     <span class="me-1">{{ activity.icon }}</span>
                                     {% if activity.contact %}
@@ -238,7 +238,7 @@
                         </thead>
                         <tbody>
                             {% for meeting in meetings %}
-                            <tr data-href="/activities/{{ meeting.id }}/edit?from=/summary/my-weekly">
+                            <tr data-href="/activities/{{ meeting.id }}?from=/summary/my-weekly">
                                 <td>
                                     <span class="tos-entity-name">{{ meeting.attendees_display or meeting.subject }}</span>
                                     <input type="text"
@@ -292,7 +292,7 @@
                         </thead>
                         <tbody>
                             {% for visit in site_visits %}
-                            <tr data-href="/activities/{{ visit.id }}/edit?from=/summary/my-weekly">
+                            <tr data-href="/activities/{{ visit.id }}?from=/summary/my-weekly">
                                 <td>
                                     <span class="tos-entity-name">{{ visit.subject or 'Site Visit' }}</span>
                                     {% if visit.contact %}
@@ -526,7 +526,7 @@
                     {% if activities_logged %}
                     <div class="activity-timeline">
                         {% for activity in activities_logged %}
-                        <div class="activity-item" data-href="/activities/{{ activity.id }}/edit?from=/summary/my-weekly">
+                        <div class="activity-item" data-href="/activities/{{ activity.id }}?from=/summary/my-weekly">
                             <div class="d-flex justify-content-between align-items-start">
                                 <div>
                                     <span class="me-2">{{ activity.icon }}</span>

@@ -208,6 +208,35 @@ async def log_meeting(
     return RedirectResponse(url=redirect_to, status_code=303)
 
 
+@router.get("/{activity_id}", response_class=HTMLResponse)
+async def view_activity(
+    request: Request, activity_id: int, db: Session = Depends(get_db)
+):
+    """View activity details (read-only)."""
+    from sqlalchemy.orm import selectinload as sl
+
+    activity = (
+        db.query(Activity)
+        .options(
+            sl(Activity.contact).selectinload(Contact.account),
+            sl(Activity.opportunity),
+            sl(Activity.attendee_links).selectinload(ActivityAttendee.contact).selectinload(Contact.account),
+        )
+        .filter(Activity.id == activity_id)
+        .first()
+    )
+    if not activity:
+        raise HTTPException(status_code=404, detail="Activity not found")
+
+    return templates.TemplateResponse(
+        "activities/view.html",
+        {
+            "request": request,
+            "activity": activity,
+        },
+    )
+
+
 @router.get("/{activity_id}/edit", response_class=HTMLResponse)
 async def edit_activity_form(
     request: Request, activity_id: int, db: Session = Depends(get_db)
@@ -509,6 +538,21 @@ async def auto_save_activity(
                     activity.description = str(value).strip() if value and str(value).strip() else None
             except Exception:
                 continue
+
+        # Update attendees for meetings
+        try:
+            if "contact_ids" in payload and activity.activity_type == "meeting":
+                raw_ids = payload["contact_ids"]
+                if isinstance(raw_ids, list):
+                    new_ids = [int(v) for v in raw_ids if v not in (None, "", "null")]
+                else:
+                    new_ids = [int(raw_ids)] if raw_ids not in (None, "", "null", False) else []
+                db.query(ActivityAttendee).filter(ActivityAttendee.activity_id == activity.id).delete()
+                for cid in new_ids:
+                    db.add(ActivityAttendee(activity_id=activity.id, contact_id=cid))
+                activity.contact_id = new_ids[0] if new_ids else None
+        except Exception:
+            pass
 
         # Update contact follow-up date if provided or activity_type changed
         try:
