@@ -67,6 +67,22 @@
                         <textarea class="form-control" id="description" name="description" rows="4">{{ activity.description or '' }}</textarea>
                     </div>
                     {% if contacts %}
+                    {% if activity.activity_type == 'meeting' %}
+                    <div class="col-12">
+                        <label class="form-label">Attendees</label>
+                        <div class="d-flex flex-column gap-1" style="max-height: 200px; overflow-y: auto; border: 1px solid #dee2e6; border-radius: 0.375rem; padding: 0.5rem;">
+                            {% for contact in contacts %}
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="contact_ids" value="{{ contact.id }}" id="editContact{{ contact.id }}"
+                                    {% if contact.id in attendee_ids %}checked{% endif %}>
+                                <label class="form-check-label" for="editContact{{ contact.id }}">
+                                    {{ contact.full_name }}{% if contact.title %} <span class="text-muted">({{ contact.title }})</span>{% endif %}
+                                </label>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% else %}
                     <div class="col-md-6">
                         <label for="contact_id" class="form-label">Contact</label>
                         <select class="form-select" id="contact_id" name="contact_id">
@@ -78,6 +94,7 @@
                             {% endfor %}
                         </select>
                     </div>
+                    {% endif %}
                     {% endif %}
                     {# Follow-up date field - visible when activity has a contact #}
                     {% if activity.contact %}

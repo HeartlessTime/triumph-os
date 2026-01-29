@@ -523,8 +523,8 @@
                             {% for activity in meetings_pending %}
                             <tr data-href="/activities/{{ activity.id }}/edit?from=/">
                                 <td style="width: 45%;">
-                                    <span class="entity-name">{{ activity.contact.full_name }}</span>
-                                    <div class="entity-sub">{{ activity.contact.account.name if activity.contact.account else '' }}</div>
+                                    <span class="entity-name">{{ activity.attendees_display or activity.contact.full_name }}</span>
+                                    <div class="entity-sub">{{ activity.contact.account.name if activity.contact and activity.contact.account else '' }}</div>
                                     {% if activity.description %}
                                     <div class="entity-sub text-truncate" style="max-width: 250px; font-style: italic;">{{ activity.description[:80] }}{% if activity.description|length > 80 %}...{% endif %}</div>
                                     {% endif %}
@@ -557,7 +557,7 @@
                             {% for activity in meetings_completed %}
                             <tr data-href="/activities/{{ activity.id }}/edit?from=/">
                                 <td style="width: 45%;">
-                                    <span class="entity-name">{{ activity.contact.full_name if activity.contact else activity.subject }}</span>
+                                    <span class="entity-name">{{ activity.attendees_display or activity.subject }}</span>
                                     <div class="entity-sub">{{ activity.contact.account.name if activity.contact and activity.contact.account else '' }}</div>
                                     {% if activity.description %}
                                     <div class="entity-sub text-truncate" style="max-width: 250px; font-style: italic;">{{ activity.description[:80] }}{% if activity.description|length > 80 %}...{% endif %}</div>

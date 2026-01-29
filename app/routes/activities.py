@@ -4,8 +4,9 @@ from fastapi import APIRouter, Request, Depends, Form, HTTPException
 from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy.orm import Session
 
+from typing import List, Optional
 from app.database import get_db
-from app.models import Opportunity, Activity, Contact
+from app.models import Opportunity, Activity, Contact, ActivityAttendee
 from app.services.followup import calculate_next_followup
 from app.template_config import templates, utc_now
 
@@ -135,6 +136,78 @@ async def add_standalone_activity(
     return RedirectResponse(url=redirect_to, status_code=303)
 
 
+@router.post("/log-meeting")
+async def log_meeting(
+    request: Request,
+    account_id: int = Form(...),
+    activity_date: str = Form(...),
+    subject: str = Form(None),
+    description: str = Form(None),
+    db: Session = Depends(get_db),
+):
+    """Log a meeting with multiple contacts from the same account.
+
+    Creates one Activity record with multiple attendees via the
+    activity_attendees junction table.
+    """
+    current_user = request.state.current_user
+
+    # Parse contact_ids from form (multiple checkboxes with same name)
+    form_data = await request.form()
+    contact_ids = [int(v) for v in form_data.getlist("contact_ids") if v]
+
+    # Parse activity date
+    activity_dt = datetime.strptime(activity_date, "%Y-%m-%dT%H:%M")
+
+    # Build subject from attendees if not provided
+    if not subject or not subject.strip():
+        if contact_ids:
+            contacts = db.query(Contact).filter(Contact.id.in_(contact_ids)).all()
+            names = [c.full_name for c in contacts]
+            if len(names) == 1:
+                subject = f"Meeting with {names[0]}"
+            elif len(names) == 2:
+                subject = f"Meeting with {names[0]} and {names[1]}"
+            else:
+                subject = f"Meeting with {names[0]} + {len(names) - 1} others"
+        else:
+            subject = "Meeting"
+
+    activity = Activity(
+        activity_type="meeting",
+        subject=subject.strip() if subject else "Meeting",
+        description=description.strip() if description and description.strip() else None,
+        activity_date=activity_dt,
+        contact_id=contact_ids[0] if contact_ids else None,  # Primary contact for backward compat
+        created_by_id=current_user.id,
+    )
+    db.add(activity)
+    db.flush()  # Get activity.id
+
+    # Add attendees
+    for cid in contact_ids:
+        attendee = ActivityAttendee(
+            activity_id=activity.id,
+            contact_id=cid,
+        )
+        db.add(attendee)
+
+    # Update last_contacted on all attending contacts
+    if contact_ids and activity_dt.date() <= date.today():
+        contacts = db.query(Contact).filter(Contact.id.in_(contact_ids)).all()
+        for contact in contacts:
+            contact.last_contacted = activity_dt.date()
+            # Set 30-day follow-up (standard post-meeting)
+            contact.next_followup = _normalize_to_business_day(
+                activity_dt.date() + timedelta(days=30)
+            )
+
+    db.commit()
+
+    redirect_to = request.query_params.get("from", "/")
+    return RedirectResponse(url=redirect_to, status_code=303)
+
+
 @router.get("/{activity_id}/edit", response_class=HTMLResponse)
 async def edit_activity_form(
     request: Request, activity_id: int, db: Session = Depends(get_db)
@@ -183,12 +256,20 @@ async def edit_activity_form(
             .all()
         )
 
+    # Get attendee IDs for meetings
+    attendee_ids = set()
+    if activity.attendee_links:
+        attendee_ids = {link.contact_id for link in activity.attendee_links}
+    elif activity.contact_id:
+        attendee_ids = {activity.contact_id}
+
     return templates.TemplateResponse(
         "activities/edit.html",
         {
             "request": request,
             "activity": activity,
             "contacts": contacts,
+            "attendee_ids": attendee_ids,
             "activity_types": Activity.ACTIVITY_TYPES,
         },
     )
@@ -240,12 +321,25 @@ async def update_activity(
     old_type = activity.activity_type
     type_changed = old_type != activity_type
 
+    # Parse multi-contact attendee IDs (for meetings)
+    form_data = await request.form()
+    contact_ids = [int(v) for v in form_data.getlist("contact_ids") if v]
+
     # Apply updates
     activity.activity_type = activity_type
     activity.subject = subject
     activity.description = description or None
     activity.activity_date = datetime.strptime(activity_date, "%Y-%m-%dT%H:%M")
-    activity.contact_id = contact_id if contact_id else None
+
+    # For meetings with attendees, update attendee_links and set contact_id to first
+    if activity_type == "meeting" and contact_ids:
+        activity.contact_id = contact_ids[0]
+        # Replace attendee links
+        db.query(ActivityAttendee).filter(ActivityAttendee.activity_id == activity.id).delete()
+        for cid in contact_ids:
+            db.add(ActivityAttendee(activity_id=activity.id, contact_id=cid))
+    else:
+        activity.contact_id = contact_id if contact_id else None
 
     # Update contact follow-up date
     # GLOBAL RULE: All follow-up dates are normalized to business days (Mon-Fri)

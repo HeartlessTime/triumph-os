@@ -219,13 +219,7 @@
                             {% for meeting in meetings %}
                             <tr data-href="/activities/{{ meeting.id }}/edit?from=/summary/weekly">
                                 <td>
-                                    {% if meeting.contact %}
-                                    <a href="/contacts/{{ meeting.contact.id }}" class="tos-row-link tos-entity-name">
-                                        {{ meeting.contact.full_name }}
-                                    </a>
-                                    {% else %}
-                                    <span class="tos-entity-name">{{ meeting.subject }}</span>
-                                    {% endif %}
+                                    <span class="tos-entity-name">{{ meeting.attendees_display or meeting.subject }}</span>
                                     {% if meeting.description %}
                                     <div class="tos-entity-sub text-truncate" style="max-width: 200px; font-style: italic;">{{ meeting.description[:60] }}{% if meeting.description|length > 60 %}...{% endif %}</div>
                                     {% endif %}

@@ -240,16 +240,7 @@
                             {% for meeting in meetings %}
                             <tr data-href="/activities/{{ meeting.id }}/edit?from=/summary/my-weekly">
                                 <td>
-                                    {% if meeting.contact %}
-                                    <a href="/contacts/{{ meeting.contact.id }}" class="tos-row-link tos-entity-name">
-                                        {{ meeting.contact.full_name }}
-                                    </a>
-                                    {% if meeting.contact.title %}
-                                    <div class="tos-entity-sub">{{ meeting.contact.title }}</div>
-                                    {% endif %}
-                                    {% else %}
-                                    <span class="tos-entity-sub">{{ meeting.subject }}</span>
-                                    {% endif %}
+                                    <span class="tos-entity-name">{{ meeting.attendees_display or meeting.subject }}</span>
                                     <input type="text"
                                            class="quick-note-input form-control form-control-sm mt-1"
                                            data-activity-id="{{ meeting.id }}"

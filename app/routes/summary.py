@@ -14,7 +14,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
 from sqlalchemy.orm import Session, selectinload
 
 from app.database import get_db
-from app.models import Account, Contact, Opportunity, Activity, Task, WeeklySummaryNote, UserSummarySuppression
+from app.models import Account, Contact, Opportunity, Activity, ActivityAttendee, Task, WeeklySummaryNote, UserSummarySuppression
 from app.template_config import templates
 
 router = APIRouter(prefix="/summary", tags=["summary"])
@@ -87,6 +87,7 @@ def get_executive_summary(
         .options(
             selectinload(Activity.contact).selectinload(Contact.account),
             selectinload(Activity.opportunity),
+            selectinload(Activity.attendee_links).selectinload(ActivityAttendee.contact),
         )
         .filter(
             Activity.activity_date >= start_datetime,

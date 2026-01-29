@@ -26,6 +26,11 @@ class Activity(Base):
     opportunity = relationship("Opportunity", back_populates="activities")
     contact = relationship("Contact", back_populates="activities")
     created_by = relationship("User", back_populates="created_activities")
+    attendee_links = relationship(
+        "ActivityAttendee",
+        back_populates="activity",
+        cascade="all, delete-orphan",
+    )
 
     # Activity types for logging interactions.
     # "meeting_requested" is used when a meeting has been discussed/proposed but not yet
@@ -52,6 +57,37 @@ class Activity(Base):
         "task_completed": "✅",
         "other": "📋",
     }
+
+    @property
+    def attendees(self):
+        """Get all attendee contacts for this activity.
+
+        For meetings: uses the activity_attendees junction table.
+        Falls back to the single contact_id for legacy/non-meeting activities.
+        """
+        if self.attendee_links:
+            return [link.contact for link in self.attendee_links]
+        if self.contact:
+            return [self.contact]
+        return []
+
+    @property
+    def attendees_display(self):
+        """Human-readable attendee string.
+
+        Examples:
+          - 'John Smith'
+          - 'John Smith and Sarah Lee'
+          - 'John Smith + 2 others'
+        """
+        names = [c.full_name for c in self.attendees]
+        if not names:
+            return None
+        if len(names) == 1:
+            return names[0]
+        if len(names) == 2:
+            return f"{names[0]} and {names[1]}"
+        return f"{names[0]} + {len(names) - 1} others"
 
     @property
     def type_display(self):

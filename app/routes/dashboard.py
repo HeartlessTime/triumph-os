@@ -4,7 +4,7 @@ from fastapi.responses import HTMLResponse
 from sqlalchemy.orm import Session, selectinload
 
 from app.database import get_db
-from app.models import Account, Contact, Activity
+from app.models import Account, Contact, Activity, ActivityAttendee
 from app.services.dashboard_service import get_dashboard_data
 from app.template_config import templates, get_app_tz
 
@@ -51,7 +51,10 @@ async def dashboard(request: Request, db: Session = Depends(get_db)):
     # Meetings pending: "meeting_requested" activities with a contact (all future)
     meetings_pending = (
         db.query(Activity)
-        .options(selectinload(Activity.contact).selectinload(Contact.account))
+        .options(
+            selectinload(Activity.contact).selectinload(Contact.account),
+            selectinload(Activity.attendee_links).selectinload(ActivityAttendee.contact),
+        )
         .filter(
             Activity.activity_type == "meeting_requested",
             Activity.contact_id.isnot(None),
@@ -63,7 +66,10 @@ async def dashboard(request: Request, db: Session = Depends(get_db)):
     # Meetings completed: "meeting" activities during current week (same as Summary)
     meetings_completed = (
         db.query(Activity)
-        .options(selectinload(Activity.contact).selectinload(Contact.account))
+        .options(
+            selectinload(Activity.contact).selectinload(Contact.account),
+            selectinload(Activity.attendee_links).selectinload(ActivityAttendee.contact),
+        )
         .filter(
             Activity.activity_type == "meeting",
             Activity.activity_date >= start_datetime,

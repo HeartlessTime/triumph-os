@@ -44,6 +44,9 @@
                 <a href="/accounts/{{ account.id }}/edit" class="tos-btn tos-btn-secondary">
                     <i class="bi bi-pencil me-1"></i> Edit
                 </a>
+                <button type="button" class="tos-btn tos-btn-primary" data-bs-toggle="modal" data-bs-target="#logMeetingModal">
+                    <i class="bi bi-calendar-check me-1"></i> Meeting
+                </button>
                 <button type="button" class="tos-btn tos-btn-primary" data-bs-toggle="modal" data-bs-target="#logSiteVisitModal">
                     <i class="bi bi-geo-alt me-1"></i> Site Visit
                 </button>
@@ -268,6 +271,55 @@
                 </div>
                 {% endif %}
             </div>
+
+            <!-- Meetings with this Account -->
+            <div class="tos-card mt-3">
+                <div class="tos-section-header">
+                    <i class="bi bi-calendar-check me-1"></i>Meetings
+                </div>
+                {% if account_meetings %}
+                <div class="table-responsive">
+                    <table class="tos-table">
+                        <thead>
+                            <tr>
+                                <th>Attendees</th>
+                                <th>Date</th>
+                                <th>Notes</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for meeting in account_meetings[:7] %}
+                            <tr>
+                                <td>
+                                    <span class="tos-entity-name">{{ meeting.attendees_display or meeting.subject }}</span>
+                                </td>
+                                <td class="tos-entity-sub">{{ meeting.activity_date.strftime('%b %d, %Y') }}</td>
+                                <td class="tos-entity-sub text-truncate" style="max-width: 200px;">
+                                    {{ meeting.description[:60] if meeting.description else '—' }}{% if meeting.description and meeting.description|length > 60 %}...{% endif %}
+                                </td>
+                                <td class="text-end">
+                                    <a href="/activities/{{ meeting.id }}/edit?from=/accounts/{{ account.id }}" class="tos-btn tos-btn-secondary" title="Edit">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% if account_meetings|length > 7 %}
+                <div class="p-2 text-center">
+                    <span class="tos-entity-sub">Showing 7 of {{ account_meetings|length }} meetings</span>
+                </div>
+                {% endif %}
+                {% else %}
+                <div class="tos-empty-state">
+                    <i class="bi bi-calendar"></i>
+                    <p>No meetings logged yet</p>
+                </div>
+                {% endif %}
+            </div>
         </div>
     </div>
 </div>
@@ -304,6 +356,56 @@
                     <button type="submit" class="btn btn-primary">
                         <i class="bi bi-check-lg me-1"></i>Log Contact
                     </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Log Meeting Modal -->
+<div class="modal fade" id="logMeetingModal" tabindex="-1" aria-labelledby="logMeetingModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="post" id="meetingForm" action="/activities/log-meeting?from=/accounts/{{ account.id }}">
+                <input type="hidden" name="account_id" value="{{ account.id }}">
+                <div class="modal-header py-2">
+                    <h6 class="modal-title" id="logMeetingModalLabel"><i class="bi bi-calendar-check me-2"></i>Log Meeting - {{ account.name }}</h6>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body py-2">
+                    <div class="mb-2">
+                        <label for="meetingDate" class="form-label small mb-1">Date & Time <span class="text-danger">*</span></label>
+                        <input type="datetime-local" class="form-control form-control-sm" id="meetingDate" name="activity_date" required>
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label small mb-1">Attendees <span class="text-danger">*</span></label>
+                        {% if sorted_contacts %}
+                        <div class="d-flex flex-column gap-1" style="max-height: 150px; overflow-y: auto; border: 1px solid #dee2e6; border-radius: 0.375rem; padding: 0.5rem;">
+                            {% for contact in sorted_contacts %}
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="contact_ids" value="{{ contact.id }}" id="meetingContact{{ contact.id }}">
+                                <label class="form-check-label small" for="meetingContact{{ contact.id }}">
+                                    {{ contact.full_name }}{% if contact.title %} <span class="text-muted">({{ contact.title }})</span>{% endif %}
+                                </label>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% else %}
+                        <p class="text-muted small">No contacts on this account.</p>
+                        {% endif %}
+                    </div>
+                    <div class="mb-2">
+                        <label for="meetingSubject" class="form-label small mb-1">Subject</label>
+                        <input type="text" class="form-control form-control-sm" id="meetingSubject" name="subject" placeholder="Meeting subject (optional)">
+                    </div>
+                    <div class="mb-0">
+                        <label for="meetingNotes" class="form-label small mb-1">Notes</label>
+                        <textarea class="form-control form-control-sm" id="meetingNotes" name="description" rows="2" placeholder="Meeting notes..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer py-2">
+                    <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-sm btn-primary"><i class="bi bi-calendar-check me-1"></i>Log Meeting</button>
                 </div>
             </form>
         </div>
@@ -393,6 +495,20 @@
         document.getElementById('contact_notes').value = '';
         document.getElementById('activity_type').value = 'email';
     });
+
+    // Meeting Modal: set default date/time when modal opens
+    const meetingModal = document.getElementById('logMeetingModal');
+    if (meetingModal) {
+        meetingModal.addEventListener('show.bs.modal', function() {
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            document.getElementById('meetingDate').value = `${year}-${month}-${day}T${hours}:${minutes}`;
+        });
+    }
 
     // Site Visit Modal: set default date/time when modal opens
     const siteVisitModal = document.getElementById('logSiteVisitModal');
