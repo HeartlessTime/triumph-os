@@ -543,15 +543,31 @@ async def auto_save_activity(
         try:
             if "contact_ids" in payload and activity.activity_type == "meeting":
                 raw_ids = payload["contact_ids"]
+                new_ids = []
                 if isinstance(raw_ids, list):
-                    new_ids = [int(v) for v in raw_ids if v not in (None, "", "null")]
-                else:
-                    new_ids = [int(raw_ids)] if raw_ids not in (None, "", "null", False) else []
-                db.query(ActivityAttendee).filter(ActivityAttendee.activity_id == activity.id).delete()
-                for cid in new_ids:
-                    db.add(ActivityAttendee(activity_id=activity.id, contact_id=cid))
-                activity.contact_id = new_ids[0] if new_ids else None
-        except Exception:
+                    for v in raw_ids:
+                        try:
+                            new_ids.append(int(v))
+                        except (ValueError, TypeError):
+                            pass
+                elif not isinstance(raw_ids, bool):
+                    # Scalar value (not a boolean from checkbox default)
+                    try:
+                        if raw_ids not in (None, "", "null"):
+                            new_ids = [int(raw_ids)]
+                    except (ValueError, TypeError):
+                        pass
+                # else: boolean means malformed checkbox data — skip attendee update
+                if isinstance(raw_ids, list) or not isinstance(raw_ids, bool):
+                    db.query(ActivityAttendee).filter(
+                        ActivityAttendee.activity_id == activity.id
+                    ).delete(synchronize_session="fetch")
+                    for cid in new_ids:
+                        db.add(ActivityAttendee(activity_id=activity.id, contact_id=cid))
+                    activity.contact_id = new_ids[0] if new_ids else activity.contact_id
+        except Exception as e:
+            import logging
+            logging.getLogger(__name__).error(f"Auto-save ATTENDEE ERROR for activity {activity_id}: {e}")
             pass
 
         # Update contact follow-up date if provided or activity_type changed
@@ -578,9 +594,15 @@ async def auto_save_activity(
 
         try:
             db.commit()
-        except Exception:
+            import logging
+            logging.getLogger(__name__).info(f"Auto-save OK for activity {activity_id}: description={activity.description!r}")
+        except Exception as e:
+            import logging
+            logging.getLogger(__name__).error(f"Auto-save COMMIT FAILED for activity {activity_id}: {e}")
             db.rollback()
 
         return {"status": "saved"}
-    except Exception:
+    except Exception as e:
+        import logging
+        logging.getLogger(__name__).error(f"Auto-save OUTER ERROR for activity {activity_id}: {e}")
         return {"status": "saved"}

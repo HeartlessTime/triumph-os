@@ -2079,28 +2079,30 @@
                 data[key] = value;
             }
 
-            // Handle checkboxes (send true/false)
+            // Handle checkboxes: group by name
+            // Checkboxes with a custom value (not "on") are value-based groups (e.g., contact_ids)
+            // Checkboxes with default value "on" are boolean toggles
+            const cbByName = {};
             form.querySelectorAll('input[type="checkbox"][name]').forEach(function(cb) {
-                data[cb.name] = cb.checked;
+                if (!cbByName[cb.name]) cbByName[cb.name] = [];
+                cbByName[cb.name].push(cb);
+            });
+            Object.keys(cbByName).forEach(function(name) {
+                var cbs = cbByName[name];
+                var isValueGroup = cbs.length > 1 || (cbs.length === 1 && cbs[0].value !== 'on');
+                if (isValueGroup) {
+                    // Send as array of checked values
+                    data[name] = cbs.filter(function(c) { return c.checked; })
+                                    .map(function(c) { return c.value; });
+                } else {
+                    // Single boolean toggle
+                    data[name] = cbs[0].checked;
+                }
             });
 
             // Handle multi-select fields
             form.querySelectorAll('select[multiple][name]').forEach(function(sel) {
                 data[sel.name] = Array.from(sel.selectedOptions).map(function(opt) { return opt.value; });
-            });
-
-            // Handle multiple checkboxes with same name (e.g., gc_ids, scope_names)
-            const checkboxGroups = {};
-            form.querySelectorAll('input[type="checkbox"][name]').forEach(function(cb) {
-                if (!checkboxGroups[cb.name]) {
-                    const allWithName = form.querySelectorAll('input[type="checkbox"][name="' + cb.name + '"]');
-                    if (allWithName.length > 1) {
-                        checkboxGroups[cb.name] = true;
-                        data[cb.name] = Array.from(allWithName)
-                            .filter(function(c) { return c.checked; })
-                            .map(function(c) { return c.value; });
-                    }
-                }
             });
 
             return data;
