@@ -73,14 +73,18 @@ async def dashboard(request: Request, db: Session = Depends(get_db)):
         .all()
     )
 
-    # Hot accounts, sorted by most recently updated
-    hot_accounts = (
+    # Hot accounts — stalest first (oldest last_contacted at top)
+    hot_accounts_all = (
         db.query(Account)
+        .options(selectinload(Account.contacts))
         .filter(Account.is_hot == True)
-        .order_by(Account.updated_at.desc())
-        .limit(7)
         .all()
     )
+    # Sort by last_contacted ASC (None = never contacted = top priority)
+    hot_accounts_all.sort(
+        key=lambda a: a.last_contacted or date.min,
+    )
+    hot_accounts = hot_accounts_all[:7]
 
     return templates.TemplateResponse(
         "dashboard/dashboard_v2.html",

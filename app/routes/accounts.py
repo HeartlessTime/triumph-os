@@ -92,8 +92,8 @@ async def list_accounts(
         query = query.outerjoin(
             pipeline_subq, Account.id == pipeline_subq.c.account_id
         ).order_by(pipeline_subq.c.total_value.desc().nullslast())
-    elif sort != "last_activity" and view != "waiting":
-        # Default sort (skip if last_activity or waiting view - handled in Python below)
+    elif sort != "last_activity" and view not in ("waiting", "hot"):
+        # Default sort (skip if last_activity or waiting/hot view - handled in Python below)
         query = query.order_by(Account.name.asc())
 
     accounts = query.all()
@@ -106,9 +106,8 @@ async def list_accounts(
             reverse=reverse_sort,
         )
 
-    # For "waiting" view: sort by days_since_last_activity desc (no additional filtering)
-    if view == "waiting":
-        # Sort: accounts with no activity at top, then by days_since_last_activity descending
+    # For "waiting" and "hot" views: sort by days_since_last_activity desc
+    if view in ("waiting", "hot"):
         accounts.sort(
             key=lambda a: a.days_since_last_activity if a.days_since_last_activity is not None else 9999,
             reverse=True,

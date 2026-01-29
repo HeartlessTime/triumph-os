@@ -334,21 +334,23 @@
             <div class="section-header" style="background: #fef2f2;">
                 <i class="bi bi-fire me-1" style="color: #dc2626;"></i>Hot Accounts
                 <span class="badge" style="background: #fef2f2; color: #dc2626; border: 1px solid #fca5a5; font-size: 0.7rem; padding: 0.2em 0.5em; font-weight: 500;">{{ hot_accounts|length }}</span>
+                <a href="/accounts?view=hot" class="ms-auto" style="font-size: 0.7rem; font-weight: 400; text-transform: none; letter-spacing: 0; color: #64748b; text-decoration: none;">View all &rarr;</a>
             </div>
-            <div class="section-body" style="padding: 0;">
+            <div style="max-height: 220px; overflow-y: auto; padding: 0;">
                 <table class="dense-table">
                     <tbody>
                         {% for account in hot_accounts %}
                         <tr data-href="/accounts/{{ account.id }}">
-                            <td>
+                            <td style="padding: 0.35rem 0.75rem;">
                                 <span class="entity-name">{{ account.name }}</span>
-                                <div class="entity-sub">{{ account.industry or account.account_type_display }}</div>
                             </td>
-                            <td class="text-end entity-sub" style="white-space: nowrap;">
-                                {% if account.last_contacted %}
-                                {{ account.last_contacted.strftime('%b %d') }}
+                            <td class="text-end" style="white-space: nowrap; padding: 0.35rem 0.75rem; font-size: 0.8rem;">
+                                {% if account.days_since_last_activity is not none %}
+                                <span style="color: {% if account.days_since_last_activity >= 30 %}#dc2626{% elif account.days_since_last_activity >= 14 %}#d97706{% else %}#059669{% endif %};">
+                                    {{ account.days_since_last_activity }}d ago
+                                </span>
                                 {% else %}
-                                —
+                                <span style="color: #dc2626;">Never</span>
                                 {% endif %}
                             </td>
                         </tr>

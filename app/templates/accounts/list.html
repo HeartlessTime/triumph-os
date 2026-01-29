@@ -141,11 +141,11 @@
                         </td>
                         <td>{{ account.contacts|length }}</td>
                         <td class="tos-entity-sub">
-                            {% if view == 'waiting' and account.days_since_last_activity is not none %}
+                            {% if view in ('waiting', 'hot') and account.days_since_last_activity is not none %}
                             <span style="color: {% if account.days_since_last_activity >= 30 %}#dc2626{% elif account.days_since_last_activity >= 14 %}#d97706{% else %}#059669{% endif %};">
                                 {{ account.days_since_last_activity }}d ago
                             </span>
-                            {% elif view == 'waiting' %}
+                            {% elif view in ('waiting', 'hot') %}
                             <span style="color: #dc2626;">Never</span>
                             {% else %}
                             {{ account.last_contacted.strftime('%b %d') if account.last_contacted else '—' }}
