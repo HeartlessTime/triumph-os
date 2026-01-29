@@ -42,27 +42,6 @@
     .activity-item[data-href]:hover {
         background-color: rgba(0, 123, 255, 0.08);
     }
-    /* Quick note input - subtle styling */
-    .quick-note-input {
-        font-size: 0.75rem;
-        font-style: italic;
-        color: var(--text-muted);
-        border: 1px solid transparent;
-        background: transparent;
-        padding: 0.15rem 0.35rem;
-        width: 100%;
-        min-width: 180px;
-    }
-    .quick-note-input:focus {
-        border-color: var(--border-default);
-        background: var(--bg-elevated);
-        font-style: normal;
-        color: var(--text-primary);
-    }
-    .quick-note-input::placeholder {
-        color: var(--text-muted);
-        font-style: italic;
-    }
     /* Pastel section header backgrounds */
     .section--summary .tos-section-header { background: var(--tint-summary); }
     .section--outreach .tos-section-header { background: var(--tint-outreach); }
@@ -225,13 +204,9 @@
                             <tr data-href="/activities/{{ meeting.id }}?from=/summary/my-weekly%3Fweek_start%3D{{ week_start }}">
                                 <td>
                                     <span class="tos-entity-name">{{ meeting.attendees_display or meeting.subject }}</span>
-                                    <input type="text"
-                                           class="quick-note-input form-control form-control-sm mt-1"
-                                           data-activity-id="{{ meeting.id }}"
-                                           value="{{ meeting.description or '' }}"
-                                           placeholder="+ Add note..."
-                                           onclick="event.stopPropagation();"
-                                           onmousedown="event.stopPropagation();">
+                                    {% if meeting.description %}
+                                    <div class="tos-entity-sub text-truncate" style="max-width: 200px; font-style: italic;">{{ meeting.description[:60] }}{% if meeting.description|length > 60 %}...{% endif %}</div>
+                                    {% endif %}
                                 </td>
                                 <td>
                                     {% if meeting.contact and meeting.contact.account %}
@@ -703,41 +678,6 @@ document.getElementById('copyToClipboard')?.addEventListener('click', function()
     });
 });
 
-// Quick note auto-save for meetings (idempotent)
-document.querySelectorAll('.quick-note-input').forEach(function(input) {
-    if (input.dataset.quickNoteBound) return;
-    input.dataset.quickNoteBound = 'true';
-
-    let originalValue = input.value;
-
-    function saveNote() {
-        const newValue = input.value.trim();
-        if (newValue === originalValue) return;
-
-        const activityId = input.dataset.activityId;
-        fetch('/activities/' + activityId + '/quick-note', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ notes: newValue })
-        }).then(function(res) {
-            if (res.ok) {
-                originalValue = newValue;
-                input.style.borderColor = '#28a745';
-                setTimeout(function() { input.style.borderColor = 'transparent'; }, 1000);
-            }
-        }).catch(function(err) {
-            console.error('Failed to save note:', err);
-        });
-    }
-
-    input.addEventListener('blur', saveNote);
-    input.addEventListener('keydown', function(e) {
-        if (e.key === 'Enter') {
-            e.preventDefault();
-            input.blur();
-        }
-    });
-});
 </script>
 
 <!-- Quick Add Task Modal -->
