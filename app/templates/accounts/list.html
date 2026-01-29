@@ -112,7 +112,10 @@
                         data-href="/accounts/{{ account.id }}{% if list_query_string %}?from=/accounts?{{ list_query_string }}{% endif %}"
                         data-account-id="{{ account.id }}"
                         data-name="{{ account.name|lower }}"
-                        data-last-activity="{{ account.last_contacted.strftime('%Y-%m-%d') if account.last_contacted else '0000-00-00' }}">
+                        data-last-activity="{{ account.last_contacted.strftime('%Y-%m-%d') if account.last_contacted else '0000-00-00' }}"
+                        {% if account.is_hot %}
+                        {% if account.days_since_last_activity is none or account.days_since_last_activity >= 30 %}style="background-color: #fee2e2;"{% elif account.days_since_last_activity >= 21 %}style="background-color: #fef3c7;"{% endif %}
+                        {% endif %}>
                         <td>
                             <span class="tos-entity-name">{{ account.name }}</span>
                             {% if account.is_hot %}<i class="bi bi-fire ms-1" style="color: #dc2626;" title="Hot Account"></i>{% endif %}
@@ -142,7 +145,7 @@
                         <td>{{ account.contacts|length }}</td>
                         <td class="tos-entity-sub">
                             {% if view in ('waiting', 'hot') and account.days_since_last_activity is not none %}
-                            <span style="color: {% if account.days_since_last_activity >= 30 %}#dc2626{% elif account.days_since_last_activity >= 14 %}#d97706{% else %}#059669{% endif %};">
+                            <span style="color: {% if account.days_since_last_activity >= 30 %}#dc2626{% elif account.days_since_last_activity >= 21 %}#d97706{% else %}#059669{% endif %};">
                                 {{ account.days_since_last_activity }}d ago
                             </span>
                             {% elif view in ('waiting', 'hot') %}

@@ -10,7 +10,7 @@
         <!-- Back button when navigating from another page -->
         {% if return_to %}
         <div class="mb-2">
-            <a href="{{ return_to }}" class="btn btn-sm btn-outline-secondary">
+            <a href="{{ return_to }}" class="tos-btn tos-btn-secondary">
                 <i class="bi bi-arrow-left me-1"></i> Back
             </a>
         </div>
@@ -33,8 +33,8 @@
         <div class="d-flex justify-content-between align-items-center">
             <h1>Edit Activity</h1>
             <form method="post" action="/activities/{{ activity.id }}/delete{% if return_to %}?from={{ return_to | urlencode }}{% endif %}" class="d-inline" onsubmit="return confirm('Delete this activity? This cannot be undone.');">
-                <button type="submit" class="btn btn-outline-danger">
-                    <i class="bi bi-trash me-1"></i> Delete
+                <button type="submit" class="tos-btn tos-btn-danger">
+                    <i class="bi bi-trash"></i> Delete
                 </button>
             </form>
         </div>
@@ -63,7 +63,9 @@
                             value="{{ activity.subject }}" required>
                     </div>
                     <div class="col-12">
-                        <label for="description" class="form-label">Description</label>
+                        <label for="description" class="form-label" id="descriptionLabel">
+                            {% if activity.activity_type == 'meeting' %}Meeting Summary{% else %}Description{% endif %}
+                        </label>
                         <textarea class="form-control" id="description" name="description" rows="4">{{ activity.description or '' }}</textarea>
                     </div>
                     {% if contacts %}
@@ -112,19 +114,19 @@
             <div class="card-footer d-flex gap-2">
                 <!-- Auto-save mode: no Save button, just Done -->
                 {% if return_to %}
-                <a href="{{ return_to }}" class="btn btn-primary">
+                <a href="{{ return_to }}" class="tos-btn tos-btn-primary">
                     <i class="bi bi-check-lg me-1"></i> Done
                 </a>
                 {% elif activity.opportunity %}
-                <a href="/opportunities/{{ activity.opportunity_id }}" class="btn btn-primary">
+                <a href="/opportunities/{{ activity.opportunity_id }}" class="tos-btn tos-btn-primary">
                     <i class="bi bi-check-lg me-1"></i> Done
                 </a>
                 {% elif activity.contact %}
-                <a href="/contacts/{{ activity.contact_id }}" class="btn btn-primary">
+                <a href="/contacts/{{ activity.contact_id }}" class="tos-btn tos-btn-primary">
                     <i class="bi bi-check-lg me-1"></i> Done
                 </a>
                 {% else %}
-                <a href="/summary/my-weekly" class="btn btn-primary">
+                <a href="/summary/my-weekly" class="tos-btn tos-btn-primary">
                     <i class="bi bi-check-lg me-1"></i> Done
                 </a>
                 {% endif %}
@@ -144,6 +146,26 @@
     const endpoint = form.dataset.autoSave;
     if (form && endpoint) {
         AutoSave.init(form, endpoint);
+    }
+
+    // Save before navigating away via Done link
+    document.querySelectorAll('.card-footer a.tos-btn-primary').forEach(function(link) {
+        link.addEventListener('click', function(e) {
+            e.preventDefault();
+            var href = link.getAttribute('href');
+            AutoSave.saveForm(form, endpoint)
+                .then(function() { window.location.href = href; })
+                .catch(function() { window.location.href = href; });
+        });
+    });
+
+    // Update description label when activity type changes
+    var typeSelect = document.getElementById('activity_type');
+    var descLabel = document.getElementById('descriptionLabel');
+    if (typeSelect && descLabel) {
+        typeSelect.addEventListener('change', function() {
+            descLabel.textContent = typeSelect.value === 'meeting' ? 'Meeting Summary' : 'Description';
+        });
     }
 })();
 </script>

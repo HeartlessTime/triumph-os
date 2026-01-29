@@ -19,18 +19,18 @@
             <div class="d-flex gap-2">
                 {% if task.status == 'Open' %}
                 <form method="post" action="/tasks/{{ task.id }}/complete" class="d-inline">
-                    <button type="submit" class="btn btn-success">
+                    <button type="submit" class="tos-btn tos-btn-success">
                         <i class="bi bi-check-lg me-1"></i> Complete
                     </button>
                 </form>
                 {% else %}
                 <form method="post" action="/tasks/{{ task.id }}/reopen" class="d-inline">
-                    <button type="submit" class="btn btn-outline-secondary">
+                    <button type="submit" class="tos-btn tos-btn-secondary">
                         <i class="bi bi-arrow-counterclockwise me-1"></i> Reopen
                     </button>
                 </form>
                 {% endif %}
-                <a href="/tasks/{{ task.id }}/edit" class="btn btn-outline-primary">
+                <a href="/tasks/{{ task.id }}/edit" class="tos-btn tos-btn-secondary">
                     <i class="bi bi-pencil me-1"></i> Edit
                 </a>
             </div>
@@ -133,7 +133,7 @@
                     </div>
                     {% if task.opportunity %}
                     <div class="text-center mt-3">
-                        <a href="/opportunities/{{ task.opportunity_id }}" class="btn btn-sm btn-outline-secondary">
+                        <a href="/opportunities/{{ task.opportunity_id }}" class="tos-btn tos-btn-sm tos-btn-secondary">
                             View Full Timeline
                         </a>
                     </div>

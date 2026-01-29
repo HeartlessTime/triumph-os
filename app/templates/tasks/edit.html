@@ -10,7 +10,7 @@
         <!-- Back button when navigating from another page -->
         {% if return_to %}
         <div class="mb-2">
-            <a href="{{ return_to }}" class="btn btn-sm btn-outline-secondary">
+            <a href="{{ return_to }}" class="tos-btn tos-btn-secondary">
                 <i class="bi bi-arrow-left me-1"></i> Back
             </a>
         </div>
@@ -30,8 +30,8 @@
         <div class="d-flex justify-content-between align-items-center">
             <h1>Edit Task</h1>
             <form method="post" action="/tasks/{{ task.id }}/delete{% if return_to %}?from={{ return_to | urlencode }}{% endif %}" class="d-inline" onsubmit="return confirm('Delete this task? This cannot be undone.');">
-                <button type="submit" class="btn btn-outline-danger">
-                    <i class="bi bi-trash me-1"></i> Delete
+                <button type="submit" class="tos-btn tos-btn-danger">
+                    <i class="bi bi-trash"></i> Delete
                 </button>
             </form>
         </div>
@@ -75,15 +75,15 @@
             <div class="card-footer d-flex gap-2">
                 <!-- Auto-save mode: no Save button, just Done -->
                 {% if return_to %}
-                <a href="{{ return_to }}" class="btn btn-primary">
+                <a href="{{ return_to }}" class="tos-btn tos-btn-primary">
                     <i class="bi bi-check-lg me-1"></i> Done
                 </a>
                 {% elif task.opportunity %}
-                <a href="/opportunities/{{ task.opportunity_id }}" class="btn btn-primary">
+                <a href="/opportunities/{{ task.opportunity_id }}" class="tos-btn tos-btn-primary">
                     <i class="bi bi-check-lg me-1"></i> Done
                 </a>
                 {% else %}
-                <a href="/summary/my-weekly" class="btn btn-primary">
+                <a href="/summary/my-weekly" class="tos-btn tos-btn-primary">
                     <i class="bi bi-check-lg me-1"></i> Done
                 </a>
                 {% endif %}

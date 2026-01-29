@@ -36,8 +36,8 @@
                     <i class="bi bi-pencil me-1"></i> Edit
                 </a>
                 <form method="post" action="/activities/{{ activity.id }}/delete{% if return_to %}?from={{ return_to | urlencode }}{% endif %}" class="d-inline" onsubmit="return confirm('Delete this activity? This cannot be undone.');">
-                    <button type="submit" class="tos-btn" style="background: #fef2f2; color: #991b1b; border: 1px solid #fecaca;">
-                        <i class="bi bi-trash me-1"></i> Delete
+                    <button type="submit" class="tos-btn tos-btn-danger">
+                        <i class="bi bi-trash"></i> Delete
                     </button>
                 </form>
             </div>
@@ -78,7 +78,7 @@
                         {% endif %}
 
                         {% if activity.description %}
-                        <dt class="tos-entity-sub">Notes</dt>
+                        <dt class="tos-entity-sub">{% if activity.activity_type == 'meeting' %}Meeting Summary{% else %}Notes{% endif %}</dt>
                         <dd class="mb-0" style="white-space: pre-line;">{{ activity.description }}</dd>
                         {% endif %}
                     </dl>

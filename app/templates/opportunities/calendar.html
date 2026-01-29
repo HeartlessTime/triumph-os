@@ -9,7 +9,7 @@
             <h1>Bid Calendar</h1>
             <p class="text-muted mb-0">Interactive calendar view of all bid opportunities</p>
         </div>
-        <a href="/opportunities" class="btn btn-outline-secondary">
+        <a href="/opportunities" class="tos-btn tos-btn-secondary">
             <i class="bi bi-list me-1"></i> Back to List
         </a>
     </div>
@@ -54,39 +54,46 @@ document.addEventListener('DOMContentLoaded', function() {
 }
 
 .fc {
-    --fc-border-color: #e2e8f0;
-    --fc-button-bg-color: #2563eb;
-    --fc-button-border-color: #2563eb;
-    --fc-button-hover-bg-color: #1d4ed8;
-    --fc-button-active-bg-color: #1d4ed8;
-    --fc-today-bg-color: #f0f9ff;
+    --fc-border-color: var(--border-default);
+    --fc-button-bg-color: var(--primary);
+    --fc-button-border-color: var(--primary);
+    --fc-button-hover-bg-color: var(--primary-dark);
+    --fc-button-active-bg-color: var(--primary-dark);
+    --fc-today-bg-color: var(--bg-elevated);
+    --fc-page-bg-color: var(--bg-surface);
+    --fc-neutral-bg-color: var(--bg-elevated);
+    --fc-neutral-text-color: var(--text-secondary);
+    color: var(--text-primary);
 }
 
 .fc .fc-button-primary:not(:disabled) {
-    background-color: var(--fc-button-bg-color);
-    border-color: var(--fc-button-border-color);
+    background-color: var(--primary);
+    border-color: var(--primary);
 }
 
 .fc .fc-button-primary:not(:disabled):hover {
-    background-color: var(--fc-button-hover-bg-color);
+    background-color: var(--primary-dark);
 }
 
 .fc .fc-button-primary:not(:disabled).fc-button-active {
-    background-color: var(--fc-button-active-bg-color);
+    background-color: var(--primary-dark);
 }
 
 .fc .fc-daygrid-day.fc-day-today {
-    background-color: var(--fc-today-bg-color);
+    background-color: var(--bg-elevated);
 }
 
 .fc .fc-event {
-    background-color: #2563eb;
-    border-color: #1d4ed8;
+    background-color: var(--primary);
+    border-color: var(--primary-dark);
 }
 
 .fc .fc-event:hover {
-    background-color: #1d4ed8;
+    background-color: var(--primary-dark);
     cursor: pointer;
 }
+
+.fc th, .fc td { border-color: var(--border-default); }
+.fc .fc-col-header-cell { background: var(--bg-elevated); color: var(--text-secondary); }
 </style>
 {% endblock %}

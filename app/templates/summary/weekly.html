@@ -13,15 +13,15 @@
         width: 6px;
     }
     .summary-card-body::-webkit-scrollbar-track {
-        background: #f1f1f1;
+        background: var(--bg-elevated);
         border-radius: 3px;
     }
     .summary-card-body::-webkit-scrollbar-thumb {
-        background: #ccc;
+        background: var(--border-default);
         border-radius: 3px;
     }
     .summary-card-body::-webkit-scrollbar-thumb:hover {
-        background: #aaa;
+        background: var(--text-muted);
     }
     /* Clickable rows - hover styling */
     tr[data-href] {
@@ -43,30 +43,14 @@
         background-color: rgba(0, 123, 255, 0.08);
     }
     /* Pastel section header backgrounds */
-    .section--summary .tos-section-header {
-        background: #f5f3ff;  /* light purple */
-    }
-    .section--outreach .tos-section-header {
-        background: #fef7f0;  /* warm peach */
-    }
-    .section--pipeline .tos-section-header {
-        background: #fef0f7;  /* soft pink */
-    }
-    .section--tasks .tos-section-header {
-        background: #f0fef4;  /* light green */
-    }
-    .section--site-visits .tos-section-header {
-        background: #fff7ed;  /* soft orange */
-    }
-    .section--meetings .tos-section-header {
-        background: #f0f7fe;  /* soft blue */
-    }
-    .section--activity .tos-section-header {
-        background: #f0f7fe;  /* soft blue */
-    }
-    .section--notes .tos-section-header {
-        background: #fefce8;  /* pale yellow */
-    }
+    .section--summary .tos-section-header { background: var(--tint-summary); }
+    .section--outreach .tos-section-header { background: var(--tint-outreach); }
+    .section--pipeline .tos-section-header { background: var(--tint-pipeline); }
+    .section--tasks .tos-section-header { background: var(--tint-tasks); }
+    .section--site-visits .tos-section-header { background: var(--tint-activity); }
+    .section--meetings .tos-section-header { background: var(--tint-meetings); }
+    .section--activity .tos-section-header { background: var(--tint-meetings); }
+    .section--notes .tos-section-header { background: var(--tint-notes); }
 </style>
 {% endblock %}
 

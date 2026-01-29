@@ -47,7 +47,7 @@
                     {% endif %}
                 </div>
                 <div class="card-footer">
-                    <button class="btn btn-sm btn-outline-primary w-100" onclick="showEstimatorDetails({{ workload.estimator.id }}, '{{ workload.estimator.full_name }}')">
+                    <button class="tos-btn tos-btn-sm tos-btn-secondary w-100" onclick="showEstimatorDetails({{ workload.estimator.id }}, '{{ workload.estimator.full_name }}')">
                         <i class="bi bi-eye me-1"></i> View Details
                     </button>
                 </div>
@@ -126,32 +126,12 @@
 
 <style>
 /* Capacity Level Colors */
-.border-green {
-    border-left: 4px solid #28a745 !important;
-}
-
-.border-yellow {
-    border-left: 4px solid #ffc107 !important;
-}
-
-.border-red {
-    border-left: 4px solid #dc3545 !important;
-}
-
-.bg-green {
-    background-color: #28a745 !important;
-    color: white;
-}
-
-.bg-yellow {
-    background-color: #ffc107 !important;
-    color: #000;
-}
-
-.bg-red {
-    background-color: #dc3545 !important;
-    color: white;
-}
+.border-green { border-left: 4px solid var(--text-success-inline) !important; }
+.border-yellow { border-left: 4px solid var(--text-warning-inline) !important; }
+.border-red { border-left: 4px solid var(--text-danger-inline) !important; }
+.bg-green { background-color: var(--success-bg) !important; color: var(--success-text) !important; }
+.bg-yellow { background-color: var(--warning-bg) !important; color: var(--warning-text) !important; }
+.bg-red { background-color: var(--danger-bg) !important; color: var(--danger-text) !important; }
 </style>
 
 <script>

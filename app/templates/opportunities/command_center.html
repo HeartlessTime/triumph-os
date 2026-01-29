@@ -31,20 +31,20 @@
                 {% endif %}
             </div>
             <div class="d-flex gap-2">
-                <a href="/opportunities/{{ opportunity.id }}/edit" class="btn btn-outline-secondary">
+                <a href="/opportunities/{{ opportunity.id }}/edit" class="tos-btn tos-btn-secondary">
                     <i class="bi bi-pencil me-1"></i> Edit
                 </a>
                 <form method="post" action="/opportunities/{{ opportunity.id }}/log-contact" class="d-inline">
-                    <button type="submit" class="btn btn-primary">
+                    <button type="submit" class="tos-btn tos-btn-primary">
                         <i class="bi bi-telephone me-1"></i> Log Contact
                     </button>
                 </form>
-                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#logSiteVisitModal">
+                <button type="button" class="tos-btn tos-btn-primary" data-bs-toggle="modal" data-bs-target="#logSiteVisitModal">
                     <i class="bi bi-geo-alt me-1"></i> Site Visit
                 </button>
                 <form method="post" action="/opportunities/{{ opportunity.id }}/delete" class="d-inline" onsubmit="return confirm('Delete this opportunity and all related activities, tasks, and documents? This cannot be undone.');">
-                    <button type="submit" class="btn btn-outline-danger">
-                        <i class="bi bi-trash me-1"></i> Delete
+                    <button type="submit" class="tos-btn tos-btn-danger">
+                        <i class="bi bi-trash"></i> Delete
                     </button>
                 </form>
             </div>
@@ -128,7 +128,7 @@
         <div class="card-header">
             <i class="bi bi-person me-2"></i>Primary Contact
             {% if opportunity.primary_contact %}
-            <a href="/contacts/{{ opportunity.primary_contact.id }}#logContactModal" class="btn btn-sm btn-primary ms-2">
+            <a href="/contacts/{{ opportunity.primary_contact.id }}#logContactModal" class="tos-btn tos-btn-sm tos-btn-primary ms-2">
                 <i class="bi bi-telephone me-1"></i> Log
             </a>
             {% endif %}
@@ -175,7 +175,7 @@
             <div class="card mb-4">
                 <div class="card-header">
                     <i class="bi bi-check2-square me-2"></i>Tasks
-                    <button class="btn btn-sm btn-outline-primary ms-2" data-bs-toggle="modal" data-bs-target="#taskModal">
+                    <button class="tos-btn tos-btn-sm tos-btn-secondary ms-2" data-bs-toggle="modal" data-bs-target="#taskModal">
                         <i class="bi bi-plus-lg me-1"></i> Add
                     </button>
                 </div>
@@ -186,15 +186,15 @@
                         <div class="list-group-item d-flex justify-content-between align-items-center">
                             <div class="d-flex align-items-center">
                                 <form method="post" action="/tasks/{{ task.id }}/complete" class="me-3 d-inline">
-                                    <button type="submit" class="btn btn-sm btn-outline-secondary rounded-circle p-1" title="Complete">
+                                    <button type="submit" class="tos-btn tos-btn-sm tos-btn-secondary" title="Complete">
                                         <i class="bi bi-check"></i>
                                     </button>
                                 </form>
-                                <a href="/tasks/{{ task.id }}/edit" class="btn btn-sm btn-outline-secondary me-2" title="Edit Task">
+                                <a href="/tasks/{{ task.id }}/edit" class="tos-btn tos-btn-sm tos-btn-secondary me-2" title="Edit Task">
                                     <i class="bi bi-pencil"></i>
                                 </a>
                                 <form method="post" action="/tasks/{{ task.id }}/delete" class="d-inline" onsubmit="return confirm('Delete this task?');">
-                                    <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete Task">
+                                    <button type="submit" class="tos-btn tos-btn-sm tos-btn-danger" title="Delete Task">
                                         <i class="bi bi-trash"></i>
                                     </button>
                                 </form>
@@ -221,15 +221,15 @@
                         <div class="list-group-item d-flex justify-content-between align-items-center text-muted" style="text-decoration: line-through;">
                             <div class="d-flex align-items-center">
                                 <form method="post" action="/tasks/{{ task.id }}/reopen" class="me-3 d-inline">
-                                    <button type="submit" class="btn btn-sm btn-success rounded-circle p-1" title="Reopen">
+                                    <button type="submit" class="tos-btn tos-btn-sm tos-btn-success" title="Reopen">
                                         <i class="bi bi-check"></i>
                                     </button>
                                 </form>
-                                <a href="/tasks/{{ task.id }}/edit" class="btn btn-sm btn-outline-secondary me-2" title="Edit Task">
+                                <a href="/tasks/{{ task.id }}/edit" class="tos-btn tos-btn-sm tos-btn-secondary me-2" title="Edit Task">
                                     <i class="bi bi-pencil"></i>
                                 </a>
                                 <form method="post" action="/tasks/{{ task.id }}/delete" class="d-inline" onsubmit="return confirm('Delete this task?');">
-                                    <button type="submit" class="btn btn-sm btn-outline-danger me-2" title="Delete Task">
+                                    <button type="submit" class="tos-btn tos-btn-sm tos-btn-danger me-2" title="Delete Task">
                                         <i class="bi bi-trash"></i>
                                     </button>
                                 </form>
@@ -251,7 +251,7 @@
             <div class="card mb-4">
                 <div class="card-header">
                     <i class="bi bi-clock-history me-2"></i>Activity Timeline
-                    <button class="btn btn-sm btn-outline-primary ms-2" data-bs-toggle="modal" data-bs-target="#activityModal">
+                    <button class="tos-btn tos-btn-sm tos-btn-secondary ms-2" data-bs-toggle="modal" data-bs-target="#activityModal">
                         <i class="bi bi-plus-lg me-1"></i> Log
                     </button>
                 </div>
@@ -270,11 +270,11 @@
                                 </div>
                                 <div class="d-flex align-items-center gap-2">
                                     <small class="text-muted">{{ activity.activity_date | localtime('%b %d, %H:%M') }}</small>
-                                    <a href="/activities/{{ activity.id }}/edit" class="btn btn-sm btn-outline-secondary" title="Edit">
+                                    <a href="/activities/{{ activity.id }}/edit" class="tos-btn tos-btn-sm tos-btn-secondary" title="Edit">
                                         <i class="bi bi-pencil"></i>
                                     </a>
                                     <form method="post" action="/activities/{{ activity.id }}/delete" class="d-inline" onsubmit="return confirm('Delete this activity?');">
-                                        <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete">
+                                        <button type="submit" class="tos-btn tos-btn-sm tos-btn-danger" title="Delete">
                                             <i class="bi bi-trash"></i>
                                         </button>
                                     </form>
@@ -499,8 +499,8 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Add Task</button>
+                    <button type="button" class="tos-btn tos-btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="tos-btn tos-btn-primary">Add Task</button>
                 </div>
             </form>
         </div>
@@ -532,7 +532,7 @@
                         <input type="text" class="form-control" id="activity_subject" name="subject" required>
                     </div>
                     <div class="mb-3">
-                        <label for="activity_description" class="form-label">Notes</label>
+                        <label for="activity_description" class="form-label" id="activityDescLabel">Notes</label>
                         <textarea class="form-control" id="activity_description" name="description" rows="3"></textarea>
                     </div>
                     <div class="row g-3">
@@ -556,8 +556,8 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Log Activity</button>
+                    <button type="button" class="tos-btn tos-btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="tos-btn tos-btn-primary">Log Activity</button>
                 </div>
             </form>
         </div>
@@ -565,4 +565,19 @@
 </div>
 
 {% include "partials/site_visit_modal.html" %}
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function() {
+    var typeSelect = document.getElementById('activity_type');
+    var descLabel = document.getElementById('activityDescLabel');
+    if (typeSelect && descLabel) {
+        typeSelect.addEventListener('change', function() {
+            descLabel.textContent = typeSelect.value === 'meeting' ? 'Meeting Summary' : 'Notes';
+        });
+    }
+})();
+</script>
 {% endblock %}

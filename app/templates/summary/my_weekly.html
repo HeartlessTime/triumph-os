@@ -13,15 +13,15 @@
         width: 6px;
     }
     .summary-card-body::-webkit-scrollbar-track {
-        background: #f1f1f1;
+        background: var(--bg-elevated);
         border-radius: 3px;
     }
     .summary-card-body::-webkit-scrollbar-thumb {
-        background: #ccc;
+        background: var(--border-default);
         border-radius: 3px;
     }
     .summary-card-body::-webkit-scrollbar-thumb:hover {
-        background: #aaa;
+        background: var(--text-muted);
     }
     /* Clickable rows - hover styling */
     tr[data-href] {
@@ -46,7 +46,7 @@
     .quick-note-input {
         font-size: 0.75rem;
         font-style: italic;
-        color: #6c757d;
+        color: var(--text-muted);
         border: 1px solid transparent;
         background: transparent;
         padding: 0.15rem 0.35rem;
@@ -54,40 +54,24 @@
         min-width: 180px;
     }
     .quick-note-input:focus {
-        border-color: #ced4da;
-        background: #fff;
+        border-color: var(--border-default);
+        background: var(--bg-elevated);
         font-style: normal;
-        color: #212529;
+        color: var(--text-primary);
     }
     .quick-note-input::placeholder {
-        color: #adb5bd;
+        color: var(--text-muted);
         font-style: italic;
     }
     /* Pastel section header backgrounds */
-    .section--summary .tos-section-header {
-        background: #f5f3ff;  /* light purple */
-    }
-    .section--outreach .tos-section-header {
-        background: #fef7f0;  /* warm peach */
-    }
-    .section--pipeline .tos-section-header {
-        background: #fef0f7;  /* soft pink */
-    }
-    .section--meetings .tos-section-header {
-        background: #f0f7fe;  /* soft blue */
-    }
-    .section--tasks .tos-section-header {
-        background: #f0fef4;  /* light green */
-    }
-    .section--site-visits .tos-section-header {
-        background: #fff7ed;  /* soft orange */
-    }
-    .section--activity .tos-section-header {
-        background: #f0f7fe;  /* soft blue */
-    }
-    .section--notes .tos-section-header {
-        background: #fefce8;  /* pale yellow */
-    }
+    .section--summary .tos-section-header { background: var(--tint-summary); }
+    .section--outreach .tos-section-header { background: var(--tint-outreach); }
+    .section--pipeline .tos-section-header { background: var(--tint-pipeline); }
+    .section--meetings .tos-section-header { background: var(--tint-meetings); }
+    .section--tasks .tos-section-header { background: var(--tint-tasks); }
+    .section--site-visits .tos-section-header { background: var(--tint-activity); }
+    .section--activity .tos-section-header { background: var(--tint-meetings); }
+    .section--notes .tos-section-header { background: var(--tint-notes); }
 </style>
 {% endblock %}
 
@@ -365,7 +349,7 @@
                                 <td data-no-row-click>
                                     <form action="/summary/suppress-opportunity/{{ opp.id }}" method="post" style="display: inline;">
                                         <input type="hidden" name="week_start" value="{{ week_start }}">
-                                        <button type="submit" class="btn btn-sm btn-link text-muted p-0" title="Remove from My Summary" onclick="event.stopPropagation();">
+                                        <button type="submit" class="tos-btn tos-btn-sm tos-btn-secondary p-0" title="Remove from My Summary" onclick="event.stopPropagation();">
                                             <i class="bi bi-x-lg"></i>
                                         </button>
                                     </form>
@@ -790,8 +774,8 @@ document.querySelectorAll('.quick-note-input').forEach(function(input) {
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary"><i class="bi bi-plus-lg me-1"></i>Add Task</button>
+                    <button type="button" class="tos-btn tos-btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="tos-btn tos-btn-primary"><i class="bi bi-plus-lg me-1"></i>Add Task</button>
                 </div>
             </form>
         </div>

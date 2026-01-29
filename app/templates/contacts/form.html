@@ -133,14 +133,14 @@
 
                         <div class="mt-4 d-flex gap-2">
                             {% if is_new or warnings %}
-                            <button type="submit" class="btn btn-primary">
+                            <button type="submit" class="tos-btn tos-btn-primary">
                                 <i class="bi bi-check-lg me-1"></i>
                                 {% if warnings %}Save Anyway{% else %}Create Contact{% endif %}
                             </button>
-                            <a href="/contacts" class="btn btn-outline-secondary">Cancel</a>
+                            <a href="/contacts" class="tos-btn tos-btn-secondary">Cancel</a>
                             {% else %}
                             <!-- Auto-save mode: no Save button, just Done -->
-                            <a href="/contacts/{{ contact.id }}" class="btn btn-primary">
+                            <a href="/contacts/{{ contact.id }}" class="tos-btn tos-btn-primary">
                                 <i class="bi bi-check-lg me-1"></i> Done
                             </a>
                             <span class="text-muted small align-self-center ms-2">

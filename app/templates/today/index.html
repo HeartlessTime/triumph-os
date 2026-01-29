@@ -39,12 +39,12 @@
                                 </span>
                             </div>
                             <div class="d-flex gap-1">
-                                <a href="/opportunities/{{ opp.id }}" class="btn btn-sm btn-outline-secondary">
+                                <a href="/opportunities/{{ opp.id }}" class="tos-btn tos-btn-sm tos-btn-secondary">
                                     <i class="bi bi-eye"></i> View
                                 </a>
                                 <form method="post" action="/opportunities/{{ opp.id }}/log-contact" class="d-inline">
                                     <input type="hidden" name="next" value="/today">
-                                    <button type="submit" class="btn btn-sm btn-primary">
+                                    <button type="submit" class="tos-btn tos-btn-sm tos-btn-primary">
                                         <i class="bi bi-telephone"></i> Log Contact
                                     </button>
                                 </form>
@@ -79,10 +79,10 @@
                                 </span>
                             </div>
                             <div class="d-flex gap-1">
-                                <a href="/contacts/{{ contact.id }}" class="btn btn-sm btn-outline-primary">
+                                <a href="/contacts/{{ contact.id }}" class="tos-btn tos-btn-sm tos-btn-secondary">
                                     <i class="bi bi-eye"></i> View
                                 </a>
-                                <button type="button" class="btn btn-sm btn-outline-secondary"
+                                <button type="button" class="tos-btn tos-btn-sm tos-btn-secondary"
                                     data-bs-toggle="modal" data-bs-target="#logContactModal"
                                     data-contact-id="{{ contact.id }}"
                                     data-contact-name="{{ contact.full_name }}">
@@ -91,7 +91,7 @@
                                 {# Show "Mark as Meeting" button if this contact has a pending meeting request #}
                                 {% if meeting_activity %}
                                 <button type="button"
-                                        class="btn btn-sm btn-outline-success mark-meeting-btn"
+                                        class="tos-btn tos-btn-sm tos-btn-success mark-meeting-btn"
                                         data-activity-id="{{ meeting_activity.id }}"
                                         title="Mark meeting as occurred">
                                     <i class="bi bi-check-lg me-1"></i>Mark as Meeting
@@ -155,19 +155,17 @@
                             </div>
                             <div class="d-flex gap-1">
                                 {% if task.opportunity %}
-                                <a href="/opportunities/{{ task.opportunity.id }}" class="btn btn-sm btn-outline-primary" >
+                                <a href="/opportunities/{{ task.opportunity.id }}" class="tos-btn tos-btn-sm tos-btn-secondary" >
                                     <i class="bi bi-eye"></i> View
                                 </a>
                                 {% endif %}
                                 <button type="button"
-                                    class="btn btn-sm {% if task.status == 'Completed' %}btn-success{% else %}btn-outline-success{% endif %}"
+                                    class="task-check {% if task.status == 'Completed' %}checked{% endif %}"
                                     data-task-complete
                                     data-task-id="{{ task.id }}"
                                     data-completed="{{ 'true' if task.status == 'Completed' else 'false' }}"
-                                    >
-                                    <i class="bi {% if task.status == 'Completed' %}bi-check-circle-fill{% else %}bi-check{% endif %}"></i>
-                                    {{ 'Done' if task.status == 'Completed' else 'Complete' }}
-                                </button>
+                                    title="{{ 'Reopen Task' if task.status == 'Completed' else 'Complete Task' }}"
+                                    >{% if task.status == 'Completed' %}<i class="bi bi-check"></i>{% endif %}</button>
                             </div>
                         </div>
                         {% endfor %}
@@ -213,12 +211,12 @@
                                 </div>
                             </div>
                             <div class="d-flex gap-1">
-                                <a href="/opportunities/{{ opp.id }}" class="btn btn-sm btn-outline-secondary">
+                                <a href="/opportunities/{{ opp.id }}" class="tos-btn tos-btn-sm tos-btn-secondary">
                                     <i class="bi bi-eye"></i> View
                                 </a>
                                 <form method="post" action="/opportunities/{{ opp.id }}/log-contact" class="d-inline">
                                     <input type="hidden" name="next" value="/today">
-                                    <button type="submit" class="btn btn-sm btn-primary">
+                                    <button type="submit" class="tos-btn tos-btn-sm tos-btn-primary">
                                         <i class="bi bi-telephone"></i> Log Contact
                                     </button>
                                 </form>
@@ -282,7 +280,7 @@
                                     {% endif %}
                                     {# QUICK ACTION: Mark meeting as occurred. stopPropagation prevents row navigation. #}
                                     <button type="button"
-                                            class="btn btn-sm btn-outline-success mark-meeting-btn"
+                                            class="tos-btn tos-btn-sm tos-btn-success mark-meeting-btn"
                                             data-activity-id="{{ activity.id }}"
                                             title="Mark meeting as occurred">
                                         <i class="bi bi-check-lg me-1"></i>Mark as Meeting
@@ -335,8 +333,8 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-success">
+                    <button type="button" class="tos-btn tos-btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="tos-btn tos-btn-primary">
                         <i class="bi bi-check-lg me-1"></i>Log Contact
                     </button>
                 </div>

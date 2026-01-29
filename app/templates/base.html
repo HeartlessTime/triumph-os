@@ -5,6 +5,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>{% block title %}Triumph OS{% endblock %}</title>
 
+    <!-- Prevent flash of wrong theme -->
+    <script>
+        (function() {
+            if (localStorage.getItem('theme') === 'dark') {
+                document.documentElement.setAttribute('data-theme', 'dark');
+            }
+        })();
+    </script>
+
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -16,16 +25,104 @@
 
     <style>
         :root {
+            /* Layout */
+            --sidebar-width: 260px;
+
+            /* Brand */
             --primary: #2563eb;
             --primary-dark: #1d4ed8;
-            --secondary: #64748b;
-            --success: #10b981;
-            --danger: #ef4444;
-            --warning: #f59e0b;
-            --info: #0ea5e9;
-            --dark: #1e293b;
-            --light: #f8fafc;
-            --sidebar-width: 260px;
+
+            /* Surface hierarchy: app → surface → elevated */
+            --bg-app: #f1f5f9;
+            --bg-surface: #ffffff;
+            --bg-elevated: #f8fafc;
+            --bg-input: #ffffff;
+            --bg-hover: #f8fafc;
+            --bg-hover-row: rgba(0, 123, 255, 0.06);
+
+            /* Text */
+            --text-primary: #0f172a;
+            --text-secondary: #475569;
+            --text-muted: #94a3b8;
+            --text-heading: #1e293b;
+
+            /* Borders */
+            --border-default: #e2e8f0;
+            --border-subtle: #f1f5f9;
+
+            /* Shadows */
+            --shadow-card: 0 1px 3px rgba(0,0,0,0.08);
+            --shadow-card-sm: 0 1px 2px rgba(0,0,0,0.04);
+
+            /* Semantic status - backgrounds (tinted, not solid) */
+            --danger-bg: #fee2e2;
+            --danger-text: #991b1b;
+            --warning-bg: #fef3c7;
+            --warning-text: #92400e;
+            --success-bg: #f0fdf4;
+            --success-text: #166534;
+
+            /* Links */
+            --link-color: #2563eb;
+            --link-hover: #1d4ed8;
+
+            /* Section header tints (light mode pastels) */
+            --tint-outreach: #fef7f0;
+            --tint-meetings: #f0f7fe;
+            --tint-tasks: #f0fef4;
+            --tint-pipeline: #fef0f7;
+            --tint-summary: #f5f3ff;
+            --tint-activity: #fff7ed;
+            --tint-notes: #fefce8;
+            --tint-hot: #fef2f2;
+
+            /* Misc */
+            --text-danger-inline: #dc2626;
+            --text-warning-inline: #d97706;
+            --text-success-inline: #059669;
+        }
+
+        [data-theme="dark"] {
+            --bg-app: #0b1220;
+            --bg-surface: #111a2e;
+            --bg-elevated: #16213a;
+            --bg-input: #16213a;
+            --bg-hover: rgba(255,255,255,0.04);
+            --bg-hover-row: rgba(56, 139, 253, 0.1);
+
+            --text-primary: #e5e7eb;
+            --text-secondary: #9ca3af;
+            --text-muted: #6b7280;
+            --text-heading: #f1f5f9;
+
+            --border-default: #1f2a44;
+            --border-subtle: #172033;
+
+            --shadow-card: none;
+            --shadow-card-sm: none;
+
+            --danger-bg: rgba(220, 38, 38, 0.22);
+            --danger-text: #f87171;
+            --warning-bg: rgba(245, 158, 11, 0.22);
+            --warning-text: #fbbf24;
+            --success-bg: rgba(34, 197, 94, 0.22);
+            --success-text: #4ade80;
+
+            --link-color: #60a5fa;
+            --link-hover: #93c5fd;
+
+            --tint-outreach: rgba(59, 130, 246, 0.08);
+            --tint-meetings: rgba(34, 197, 94, 0.08);
+            --tint-tasks: rgba(34, 197, 94, 0.08);
+            --tint-pipeline: rgba(168, 85, 247, 0.08);
+            --tint-summary: rgba(139, 92, 246, 0.08);
+            --tint-activity: rgba(245, 158, 11, 0.08);
+            --tint-notes: rgba(234, 179, 8, 0.08);
+            --tint-hot: rgba(220, 38, 38, 0.12);
+
+            --text-danger-inline: #f87171;
+            --text-warning-inline: #fbbf24;
+            --text-success-inline: #4ade80;
         }
 
         * {
@@ -37,7 +134,8 @@
         }
 
         body {
-            background: #f1f5f9;
+            background: var(--bg-app);
+            color: var(--text-primary);
             min-height: 100vh;
         }
 
@@ -192,9 +290,9 @@
         }
 
         .top-bar {
-            background: white;
+            background: var(--bg-surface);
             padding: 1rem 2rem;
-            border-bottom: 1px solid #e2e8f0;
+            border-bottom: 1px solid var(--border-default);
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -209,23 +307,37 @@
         /* Cards */
         .card {
             border: none;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            box-shadow: var(--shadow-card);
             border-radius: 0.75rem;
+            background: var(--bg-surface);
+            color: var(--text-primary);
         }
 
         .card-header {
-            background: white;
-            border-bottom: 1px solid #e2e8f0;
+            background: var(--bg-elevated);
+            border-bottom: 1px solid var(--border-default);
             padding: 1rem 1.5rem;
             font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .card-body {
+            background: var(--bg-surface);
+            color: var(--text-primary);
+        }
+
+        .card-footer {
+            background: var(--bg-surface);
+            border-top: 1px solid var(--border-default);
+            color: var(--text-primary);
         }
 
         /* Stats Cards */
         .stat-card {
-            background: white;
+            background: var(--bg-surface);
             border-radius: 0.75rem;
             padding: 1.5rem;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            box-shadow: var(--shadow-card);
         }
 
         .stat-card .stat-icon {
@@ -241,11 +353,11 @@
         .stat-card .stat-value {
             font-size: 1.75rem;
             font-weight: 700;
-            color: var(--dark);
+            color: var(--text-heading);
         }
 
         .stat-card .stat-label {
-            color: var(--secondary);
+            color: var(--text-secondary);
             font-size: 0.875rem;
         }
 
@@ -267,16 +379,19 @@
 
         .table th {
             font-weight: 600;
-            color: var(--secondary);
+            color: var(--text-secondary);
             text-transform: uppercase;
             font-size: 0.75rem;
             letter-spacing: 0.05em;
-            border-bottom-width: 1px;
+            border-bottom: 1px solid var(--border-default);
+            background: var(--bg-elevated);
         }
 
         .table td {
             vertical-align: middle;
             padding: 1rem 0.75rem;
+            border-bottom-color: var(--border-subtle);
+            color: var(--text-primary);
         }
 
         /* Badges */
@@ -286,28 +401,55 @@
             font-weight: 500;
         }
 
-        .badge-prospecting { background: #dbeafe; color: #1e40af; }
-        .badge-proposal { background: #e0e7ff; color: #3730a3; }
-        .badge-bid-sent { background: #ccfbf1; color: #065f46; }
-        .badge-negotiation { background: #fef9c3; color: #854d0e; }
-        .badge-won { background: #dcfce7; color: #166534; }
-        .badge-lost { background: #fee2e2; color: #991b1b; }
+        .badge-prospecting { background: rgba(37, 99, 235, 0.15); color: var(--link-color); }
+        .badge-proposal { background: rgba(99, 102, 241, 0.15); color: #818cf8; }
+        .badge-bid-sent { background: var(--success-bg); color: var(--success-text); }
+        .badge-negotiation { background: var(--warning-bg); color: var(--warning-text); }
+        .badge-won { background: var(--success-bg); color: var(--success-text); }
+        .badge-lost { background: var(--danger-bg); color: var(--danger-text); }
 
         /* Forms */
         .form-label {
             font-weight: 500;
-            color: var(--dark);
+            color: var(--text-heading);
             margin-bottom: 0.5rem;
         }
 
         .form-control, .form-select {
-            border-color: #e2e8f0;
+            background-color: var(--bg-input);
+            color: var(--text-primary);
+            border: 1px solid var(--border-default);
             padding: 0.625rem 0.875rem;
         }
 
         .form-control:focus, .form-select:focus {
+            background-color: var(--bg-input);
+            color: var(--text-primary);
             border-color: var(--primary);
-            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+        }
+
+        .form-control::placeholder {
+            color: var(--text-muted);
+        }
+
+        .form-text {
+            color: var(--text-muted);
+        }
+
+        .form-check-input {
+            background-color: var(--bg-input);
+            border-color: var(--border-default);
+        }
+
+        .form-check-input:checked {
+            background-color: var(--primary);
+            border-color: var(--primary);
+        }
+
+        textarea.form-control {
+            background-color: var(--bg-input);
+            color: var(--text-primary);
         }
 
         /* Page Headers */
@@ -318,7 +460,7 @@
         .page-header h1 {
             font-size: 1.75rem;
             font-weight: 700;
-            color: var(--dark);
+            color: var(--text-heading);
             margin: 0;
         }
 
@@ -345,7 +487,7 @@
             top: 0;
             bottom: 0;
             width: 2px;
-            background: #e2e8f0;
+            background: var(--border-default);
         }
 
         .activity-item {
@@ -361,7 +503,7 @@
             width: 12px;
             height: 12px;
             border-radius: 50%;
-            background: white;
+            background: var(--bg-surface);
             border: 2px solid var(--primary);
         }
 
@@ -377,7 +519,7 @@
             align-items: center;
             gap: 0.75rem;
             padding: 0.5rem 0;
-            border-bottom: 1px solid #f1f5f9;
+            border-bottom: 1px solid var(--border-subtle);
         }
 
         .checklist-item:last-child {
@@ -393,7 +535,7 @@
         .empty-state {
             text-align: center;
             padding: 3rem 2rem;
-            color: var(--secondary);
+            color: var(--text-muted);
         }
 
         .empty-state i {
@@ -590,23 +732,23 @@
 
         /* Section Cards - consistent card styling */
         .tos-card {
-            background: white;
+            background: var(--bg-surface);
             border-radius: 0.5rem;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+            box-shadow: var(--shadow-card-sm);
             margin-bottom: 1rem;
             overflow: hidden;
         }
 
         /* Section Headers */
         .tos-section-header {
-            background: #f8fafc;
+            background: var(--bg-elevated);
             padding: 0.5rem 0.75rem;
-            border-bottom: 1px solid #e2e8f0;
+            border-bottom: 1px solid var(--border-default);
             font-weight: 600;
             font-size: 0.8rem;
             text-transform: uppercase;
             letter-spacing: 0.03em;
-            color: #475569;
+            color: var(--text-secondary);
         }
 
         .tos-section-header .badge {
@@ -623,20 +765,21 @@
         }
 
         .tos-table th {
-            background: #f8fafc;
+            background: var(--bg-elevated);
             padding: 0.4rem 0.75rem;
             font-weight: 500;
             font-size: 0.7rem;
             text-transform: uppercase;
             letter-spacing: 0.03em;
-            color: #64748b;
-            border-bottom: 1px solid #e2e8f0;
+            color: var(--text-secondary);
+            border-bottom: 1px solid var(--border-default);
         }
 
         .tos-table td {
             padding: 0.5rem 0.75rem;
-            border-bottom: 1px solid #f1f5f9;
+            border-bottom: 1px solid var(--border-subtle);
             vertical-align: middle;
+            color: var(--text-primary);
         }
 
         .tos-table tr:last-child td {
@@ -644,13 +787,13 @@
         }
 
         .tos-table tr:hover {
-            background: #f8fafc;
+            background: var(--bg-hover);
         }
 
         /* Status Badges - Muted Pastel Palette */
         .tos-badge-overdue {
-            background: #fef2f2;
-            color: #991b1b;
+            background: var(--danger-bg);
+            color: var(--danger-text);
             font-weight: 500;
             font-size: 0.75rem;
             padding: 0.25em 0.5em;
@@ -658,8 +801,8 @@
         }
 
         .tos-badge-today {
-            background: #fef3c7;
-            color: #92400e;
+            background: var(--warning-bg);
+            color: var(--warning-text);
             font-weight: 500;
             font-size: 0.75rem;
             padding: 0.25em 0.5em;
@@ -667,8 +810,8 @@
         }
 
         .tos-badge-soon {
-            background: #f0fdf4;
-            color: #166534;
+            background: var(--success-bg);
+            color: var(--success-text);
             font-weight: 500;
             font-size: 0.75rem;
             padding: 0.25em 0.5em;
@@ -676,8 +819,8 @@
         }
 
         .tos-badge-pending {
-            background: #eff6ff;
-            color: #1e40af;
+            background: var(--success-bg);
+            color: var(--success-text);
             font-weight: 500;
             font-size: 0.75rem;
             padding: 0.25em 0.5em;
@@ -685,8 +828,8 @@
         }
 
         .tos-badge-completed {
-            background: #f0fdf4;
-            color: #166534;
+            background: var(--success-bg);
+            color: var(--success-text);
             font-weight: 500;
             font-size: 0.75rem;
             padding: 0.25em 0.5em;
@@ -694,8 +837,8 @@
         }
 
         .tos-badge-neutral {
-            background: #f1f5f9;
-            color: #475569;
+            background: var(--bg-elevated);
+            color: var(--text-secondary);
             font-weight: 500;
             font-size: 0.75rem;
             padding: 0.25em 0.5em;
@@ -703,68 +846,123 @@
         }
 
         .tos-badge-info {
-            background: #e0f2fe;
-            color: #0369a1;
+            background: var(--success-bg);
+            color: var(--success-text);
             font-weight: 500;
             font-size: 0.75rem;
             padding: 0.25em 0.5em;
             border-radius: 0.25rem;
         }
 
-        /* Compact Action Buttons */
+        /* ==============================================
+           UNIFIED BUTTON SYSTEM
+           Three variants: primary, secondary, danger
+           All share identical sizing / spacing / radius
+           ============================================== */
         .tos-btn {
-            padding: 0.25rem 0.5rem;
-            font-size: 0.75rem;
-            line-height: 1.2;
-            border-radius: 0.25rem;
+            padding: 0.35rem 0.65rem;
+            font-size: 0.8rem;
+            font-weight: 500;
+            line-height: 1.3;
+            border-radius: 0.375rem;
+            border: 1px solid transparent;
             text-decoration: none;
             display: inline-flex;
             align-items: center;
-            gap: 0.25rem;
+            justify-content: center;
+            gap: 0.35rem;
+            cursor: pointer;
+            transition: background 0.15s, color 0.15s, border-color 0.15s, opacity 0.15s;
+            white-space: nowrap;
+            vertical-align: middle;
         }
 
-        .tos-btn-primary {
-            background: #2563eb;
-            color: white;
-            border: 1px solid #2563eb;
-        }
+        .tos-btn:hover { text-decoration: none; }
+        .tos-btn:disabled, .tos-btn.disabled { opacity: 0.5; pointer-events: none; }
+        .tos-btn i { font-size: 0.85em; }
 
+        /* A) Primary: solid brand background, white text */
+        .tos-btn-primary,
+        a.tos-btn-primary,
+        a.tos-btn-primary:hover,
+        a.tos-btn-primary:visited {
+            background: var(--primary);
+            color: #fff !important;
+            border-color: var(--primary);
+        }
         .tos-btn-primary:hover {
-            background: #1d4ed8;
-            color: white;
+            background: var(--primary-dark);
+            color: #fff;
+            border-color: var(--primary-dark);
         }
 
-        .tos-btn-secondary {
-            background: #f8fafc;
-            color: #475569;
-            border: 1px solid #e2e8f0;
+        /* B) Secondary: subtle surface background, muted text */
+        .tos-btn-secondary,
+        a.tos-btn-secondary,
+        a.tos-btn-secondary:hover,
+        a.tos-btn-secondary:visited {
+            background: var(--bg-elevated);
+            color: var(--text-secondary) !important;
+            border-color: var(--border-default);
+        }
+        .tos-btn-secondary:hover,
+        a.tos-btn-secondary:hover {
+            background: var(--bg-hover);
+            color: var(--text-primary) !important;
+            border-color: var(--text-muted);
         }
 
-        .tos-btn-secondary:hover {
-            background: #f1f5f9;
-            color: #334155;
+        /* C) Danger: red background, white text — delete only */
+        .tos-btn-danger,
+        a.tos-btn-danger,
+        a.tos-btn-danger:hover,
+        a.tos-btn-danger:visited {
+            background: var(--danger-bg);
+            color: var(--danger-text) !important;
+            border-color: var(--danger-text);
+        }
+        .tos-btn-danger:hover {
+            opacity: 0.85;
         }
 
-        .tos-btn-success {
-            background: #ecfdf5;
-            color: #047857;
-            border: 1px solid #a7f3d0;
+        /* D) Warning: amber background, dark text */
+        .tos-btn-warning,
+        a.tos-btn-warning {
+            background: var(--warning-bg);
+            color: var(--warning-text) !important;
+            border-color: var(--warning-text);
+        }
+        .tos-btn-warning:hover {
+            opacity: 0.85;
         }
 
+        /* E) Success: green background, dark text */
+        .tos-btn-success,
+        a.tos-btn-success {
+            background: var(--success-bg);
+            color: var(--success-text) !important;
+            border-color: var(--success-text);
+        }
         .tos-btn-success:hover {
-            background: #d1fae5;
-            color: #065f46;
+            opacity: 0.85;
         }
+
+        /* Size variant: compact (icon-only or tight inline) */
+        .tos-btn-sm {
+            padding: 0.2rem 0.4rem;
+            font-size: 0.72rem;
+        }
+        .tos-btn-sm i { font-size: 0.8em; }
 
         /* Entity Name Styling */
         .tos-entity-name {
             font-weight: 500;
-            color: #1e293b;
+            color: var(--text-heading);
         }
 
         .tos-entity-sub {
             font-size: 0.75rem;
-            color: #94a3b8;
+            color: var(--text-muted);
         }
 
         /* Row Links */
@@ -774,7 +972,7 @@
         }
 
         .tos-row-link:hover {
-            color: #2563eb;
+            color: var(--link-color);
         }
 
         /* Quick Stats */
@@ -786,19 +984,19 @@
         }
 
         .tos-quick-stat {
-            background: white;
+            background: var(--bg-surface);
             padding: 0.5rem 1rem;
             border-radius: 0.375rem;
-            border: 1px solid #e2e8f0;
+            border: 1px solid var(--border-default);
             font-size: 0.85rem;
         }
 
         .tos-quick-stat strong {
-            color: #1e293b;
+            color: var(--text-heading);
         }
 
         .tos-quick-stat span {
-            color: #64748b;
+            color: var(--text-secondary);
             margin-left: 0.25rem;
         }
 
@@ -806,7 +1004,7 @@
         .tos-empty-state {
             padding: 2rem;
             text-align: center;
-            color: #94a3b8;
+            color: var(--text-muted);
             font-size: 0.85rem;
         }
 
@@ -819,11 +1017,11 @@
 
         /* Search & Filter Controls */
         .tos-controls {
-            background: white;
+            background: var(--bg-surface);
             border-radius: 0.5rem;
             padding: 0.75rem 1rem;
             margin-bottom: 1rem;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+            box-shadow: var(--shadow-card-sm);
         }
 
         .tos-search-input {
@@ -833,25 +1031,25 @@
         /* Sort Button Styling */
         .tos-sort-btn {
             background: none;
-            border: 1px solid #e2e8f0;
+            border: 1px solid var(--border-default);
             padding: 0.35rem 0.65rem;
             border-radius: 0.25rem;
             font-size: 0.8rem;
-            color: #64748b;
+            color: var(--text-secondary);
             cursor: pointer;
             transition: all 0.15s ease;
             text-decoration: none;
         }
 
         .tos-sort-btn:hover {
-            border-color: #cbd5e1;
-            color: #475569;
+            border-color: var(--text-muted);
+            color: var(--text-primary);
         }
 
         .tos-sort-btn.active {
-            border-color: #2563eb;
-            color: #2563eb;
-            background-color: rgba(37, 99, 235, 0.05);
+            border-color: var(--primary);
+            color: var(--link-color);
+            background-color: rgba(37, 99, 235, 0.08);
         }
 
         .tos-sort-btn .sort-icon {
@@ -869,39 +1067,39 @@
             border-radius: 0.25rem;
             font-size: 0.8rem;
             text-decoration: none;
-            border: 1px solid #e2e8f0;
-            color: #64748b;
-            background: white;
+            border: 1px solid var(--border-default);
+            color: var(--text-secondary);
+            background: var(--bg-surface);
         }
 
         .tos-filter-pill:hover {
-            border-color: #cbd5e1;
-            color: #475569;
+            border-color: var(--text-muted);
+            color: var(--text-primary);
         }
 
         .tos-filter-pill.active {
-            background: #2563eb;
+            background: var(--primary);
             color: white;
-            border-color: #2563eb;
+            border-color: var(--primary);
         }
 
         /* Page Header - Compact */
         .tos-page-header {
             margin-bottom: 1rem;
             padding-bottom: 0.75rem;
-            border-bottom: 1px solid #e2e8f0;
+            border-bottom: 1px solid var(--border-default);
         }
 
         .tos-page-header h1 {
             font-size: 1.25rem;
             margin-bottom: 0;
             font-weight: 600;
-            color: #1e293b;
+            color: var(--text-heading);
         }
 
         .tos-page-header p {
             font-size: 0.85rem;
-            color: #64748b;
+            color: var(--text-secondary);
             margin-bottom: 0;
         }
 
@@ -912,86 +1110,246 @@
            Works with both .tos-section-header and .section-header
            ============================================== */
 
-        /* Outreach & Follow-ups - Muted blue */
+        /* Section wayfinding - icon + header text color */
         .section--outreach .tos-section-header,
-        .section--outreach .section-header {
-            color: #4a6fa5;
-        }
-        .section--outreach .tos-section-header i,
-        .section--outreach .section-header i {
-            color: #4a6fa5;
-        }
-
-        /* Meetings - Soft green */
+        .section--outreach .section-header { color: var(--link-color); }
         .section--meetings .tos-section-header,
-        .section--meetings .section-header {
-            color: #3d7a5a;
-        }
-        .section--meetings .tos-section-header i,
-        .section--meetings .section-header i {
-            color: #3d7a5a;
-        }
-
-        /* Pipeline / Opportunities - Muted violet */
+        .section--meetings .section-header { color: var(--success-text); }
         .section--pipeline .tos-section-header,
-        .section--pipeline .section-header {
-            color: #6b5b95;
-        }
-        .section--pipeline .tos-section-header i,
-        .section--pipeline .section-header i {
-            color: #6b5b95;
-        }
-
-        /* Tasks - Neutral gray with soft green accent */
+        .section--pipeline .section-header { color: #818cf8; }
         .section--tasks .tos-section-header,
-        .section--tasks .section-header {
-            color: #4a7c59;
-        }
-        .section--tasks .tos-section-header i,
-        .section--tasks .section-header i {
-            color: #4a7c59;
-        }
-
-        /* New Records / Activity - Muted amber */
+        .section--tasks .section-header { color: var(--success-text); }
         .section--activity .tos-section-header,
-        .section--activity .section-header {
-            color: #9a7b4f;
-        }
-        .section--activity .tos-section-header i,
-        .section--activity .section-header i {
-            color: #9a7b4f;
-        }
-
-        /* Executive Summary - Neutral dark */
+        .section--activity .section-header { color: var(--warning-text); }
         .section--summary .tos-section-header,
-        .section--summary .section-header {
-            color: #475569;
-        }
-        .section--summary .tos-section-header i,
-        .section--summary .section-header i {
-            color: #475569;
-        }
-
-        /* Other Notes - Neutral gray */
+        .section--summary .section-header { color: var(--text-secondary); }
         .section--notes .tos-section-header,
-        .section--notes .section-header {
-            color: #64748b;
-        }
-        .section--notes .tos-section-header i,
-        .section--notes .section-header i {
-            color: #64748b;
-        }
+        .section--notes .section-header { color: var(--text-muted); }
 
         /* Section header count badge - muted styling */
         .tos-section-header .section-count,
         .section-header .section-count {
-            background: #e2e8f0;
-            color: #64748b;
+            background: var(--border-default);
+            color: var(--text-secondary);
             font-size: 0.7rem;
             padding: 0.15em 0.45em;
             border-radius: 0.25rem;
             font-weight: 500;
             margin-left: 0.5rem;
+        }
+
+        /* ==============================================
+           DARK MODE - Supplemental overrides
+           CSS variables handle most theming automatically.
+           These overrides target Bootstrap components,
+           inline styles, and third-party elements.
+           ============================================== */
+
+        /* Links & headings */
+        [data-theme="dark"] a { color: var(--link-color); }
+        [data-theme="dark"] a:hover { color: var(--link-hover); }
+        [data-theme="dark"] .tos-row-link { color: inherit; }
+        [data-theme="dark"] a.tos-btn-primary,
+        [data-theme="dark"] a.tos-btn-danger,
+        [data-theme="dark"] a.tos-btn-success { color: #fff; }
+        [data-theme="dark"] a.tos-btn-secondary { color: var(--text-secondary); }
+        [data-theme="dark"] .input-group-text { color: var(--text-muted); background: var(--bg-elevated); border-color: var(--border-default); }
+        [data-theme="dark"] .form-control,
+        [data-theme="dark"] .form-select { background: var(--bg-elevated); color: var(--text-primary); border-color: var(--border-default); }
+        [data-theme="dark"] .form-control:focus,
+        [data-theme="dark"] .form-select:focus { background: var(--bg-elevated); color: var(--text-primary); border-color: var(--primary); box-shadow: 0 0 0 0.2rem rgba(99, 102, 241, 0.25); }
+        [data-theme="dark"] .form-control::placeholder { color: var(--text-muted); }
+        [data-theme="dark"] h1, [data-theme="dark"] h2, [data-theme="dark"] h3,
+        [data-theme="dark"] h4, [data-theme="dark"] h5, [data-theme="dark"] h6 { color: var(--text-heading); }
+
+        /* Bootstrap text utilities */
+        [data-theme="dark"] .text-muted { color: var(--text-muted) !important; }
+        [data-theme="dark"] .text-dark { color: var(--text-heading) !important; }
+        [data-theme="dark"] .text-danger { color: var(--danger-text) !important; }
+        [data-theme="dark"] .text-warning { color: var(--warning-text) !important; }
+        [data-theme="dark"] .text-success { color: var(--success-text) !important; }
+        [data-theme="dark"] .text-secondary { color: var(--text-secondary) !important; }
+
+        /* Breadcrumbs */
+        [data-theme="dark"] .breadcrumb-item a { color: var(--link-color); }
+        [data-theme="dark"] .breadcrumb-item.active { color: var(--text-muted); }
+        [data-theme="dark"] .breadcrumb-item + .breadcrumb-item::before { color: var(--text-muted); }
+
+        /* Bootstrap buttons */
+        [data-theme="dark"] .btn-outline-secondary {
+            color: var(--text-secondary); border-color: var(--border-default);
+        }
+        [data-theme="dark"] .btn-outline-secondary:hover {
+            background: var(--bg-elevated); color: var(--text-primary); border-color: var(--text-muted);
+        }
+        [data-theme="dark"] .btn-outline-danger {
+            color: var(--danger-text); border-color: var(--border-default);
+        }
+        [data-theme="dark"] .btn-outline-danger:hover {
+            background: var(--danger-bg); color: var(--danger-text);
+        }
+        [data-theme="dark"] .btn-secondary {
+            background: var(--bg-elevated); border-color: var(--border-default); color: var(--text-primary);
+        }
+        [data-theme="dark"] .btn-light {
+            background: var(--bg-elevated); border-color: var(--border-default); color: var(--text-primary);
+        }
+
+        /* Bootstrap badges */
+        [data-theme="dark"] .badge.bg-secondary {
+            background: var(--bg-elevated) !important; color: var(--text-secondary) !important;
+        }
+        [data-theme="dark"] .badge.bg-primary {
+            background: rgba(37, 99, 235, 0.25) !important; color: #93c5fd !important;
+        }
+
+        /* Urgency row tints - override inline styles */
+        [data-theme="dark"] tr[style*="background-color: #fee2e2"],
+        [data-theme="dark"] tr[style*="background-color:#fee2e2"] {
+            background-color: var(--danger-bg) !important;
+        }
+        [data-theme="dark"] tr[style*="background-color: #fef3c7"],
+        [data-theme="dark"] tr[style*="background-color:#fef3c7"] {
+            background-color: var(--warning-bg) !important;
+        }
+
+        /* Modals */
+        [data-theme="dark"] .modal-content {
+            background: var(--bg-surface); border: 1px solid var(--border-default); color: var(--text-primary);
+        }
+        [data-theme="dark"] .modal-header {
+            border-bottom-color: var(--border-default); color: var(--text-heading);
+        }
+        [data-theme="dark"] .modal-header .btn-close { filter: invert(1) grayscale(100%) brightness(200%); }
+        [data-theme="dark"] .modal-footer { border-top-color: var(--border-default); }
+
+        /* List groups */
+        [data-theme="dark"] .list-group-item {
+            background: var(--bg-surface); border-color: var(--border-default); color: var(--text-primary);
+        }
+        [data-theme="dark"] .list-group-item-action:hover {
+            background: var(--bg-elevated); color: var(--text-heading);
+        }
+
+        /* Bootstrap border utilities */
+        [data-theme="dark"] .border-bottom { border-bottom-color: var(--border-default) !important; }
+        [data-theme="dark"] .border { border-color: var(--border-default) !important; }
+
+        /* ---- Inline style overrides (catch hardcoded light-mode colors) ---- */
+
+        /* Background overrides */
+        [data-theme="dark"] [style*="background: #fef2f2"],
+        [data-theme="dark"] [style*="background:#fef2f2"],
+        [data-theme="dark"] [style*="background-color: #fef2f2"] {
+            background: var(--danger-bg) !important; background-color: var(--danger-bg) !important;
+        }
+        [data-theme="dark"] [style*="background: #fee2e2"],
+        [data-theme="dark"] [style*="background-color: #fee2e2"] {
+            background: var(--danger-bg) !important; background-color: var(--danger-bg) !important;
+        }
+        [data-theme="dark"] [style*="background: #fef3c7"],
+        [data-theme="dark"] [style*="background:#fef3c7"],
+        [data-theme="dark"] [style*="background-color: #fef3c7"] {
+            background: var(--warning-bg) !important; background-color: var(--warning-bg) !important;
+        }
+        [data-theme="dark"] [style*="background: #f8fafc"],
+        [data-theme="dark"] [style*="background:#f8fafc"] {
+            background: var(--bg-elevated) !important;
+        }
+        [data-theme="dark"] [style*="background: #fff"],
+        [data-theme="dark"] [style*="background:#fff"] {
+            background: var(--bg-surface) !important;
+        }
+        [data-theme="dark"] [style*="background: #d1fae5"] { background: var(--success-bg) !important; }
+        [data-theme="dark"] [style*="background: #ecfdf5"] { background: var(--success-bg) !important; }
+        [data-theme="dark"] [style*="background: #fde68a"] { background: var(--warning-bg) !important; }
+
+        /* Section tint overrides */
+        [data-theme="dark"] [style*="background: #fef7f0"] { background: var(--tint-outreach) !important; }
+        [data-theme="dark"] [style*="background: #f0f7fe"] { background: var(--tint-meetings) !important; }
+        [data-theme="dark"] [style*="background: #f0fef4"] { background: var(--tint-tasks) !important; }
+        [data-theme="dark"] [style*="background: #fef0f7"] { background: var(--tint-pipeline) !important; }
+        [data-theme="dark"] [style*="background: #f5f3ff"] { background: var(--tint-summary) !important; }
+        [data-theme="dark"] [style*="background: #fff7ed"] { background: var(--tint-activity) !important; }
+        [data-theme="dark"] [style*="background: #fefce8"] { background: var(--tint-notes) !important; }
+        [data-theme="dark"] [style*="background: #f1f1f1"] { background: var(--bg-elevated) !important; }
+
+        /* Text color overrides */
+        [data-theme="dark"] [style*="color: #dc2626"] { color: var(--danger-text) !important; }
+        [data-theme="dark"] [style*="color: #991b1b"] { color: var(--danger-text) !important; }
+        [data-theme="dark"] [style*="color: #92400e"] { color: var(--warning-text) !important; }
+        [data-theme="dark"] [style*="color: #d97706"] { color: var(--warning-text) !important; }
+        [data-theme="dark"] [style*="color: #854d0e"] { color: var(--warning-text) !important; }
+        [data-theme="dark"] [style*="color: #78350f"] { color: var(--warning-text) !important; }
+        [data-theme="dark"] [style*="color: #059669"] { color: var(--success-text) !important; }
+        [data-theme="dark"] [style*="color: #065f46"] { color: var(--success-text) !important; }
+        [data-theme="dark"] [style*="color: #047857"] { color: var(--success-text) !important; }
+        [data-theme="dark"] [style*="color: #166534"] { color: var(--success-text) !important; }
+        [data-theme="dark"] [style*="color: #64748b"] { color: var(--text-muted) !important; }
+        [data-theme="dark"] [style*="color: #6c757d"] { color: var(--text-muted) !important; }
+        [data-theme="dark"] [style*="color: #6b7280"] { color: var(--text-muted) !important; }
+        [data-theme="dark"] [style*="color: #212529"] { color: var(--text-primary) !important; }
+        [data-theme="dark"] [style*="color: #0f172a"] { color: var(--text-primary) !important; }
+        [data-theme="dark"] [style*="color: #1e293b"] { color: var(--text-heading) !important; }
+        [data-theme="dark"] [style*="color: #475569"] { color: var(--text-secondary) !important; }
+        [data-theme="dark"] [style*="color: #000"] { color: var(--text-primary) !important; }
+
+        /* Border color overrides */
+        [data-theme="dark"] [style*="border: 1px solid #fecaca"],
+        [data-theme="dark"] [style*="border-color: #fecaca"],
+        [data-theme="dark"] [style*="border: 1px solid #fca5a5"],
+        [data-theme="dark"] [style*="border-color: #fca5a5"] {
+            border-color: var(--danger-text) !important;
+        }
+        [data-theme="dark"] [style*="border: 1px solid #fcd34d"],
+        [data-theme="dark"] [style*="border-color: #fcd34d"] {
+            border-color: var(--warning-text) !important;
+        }
+        [data-theme="dark"] [style*="border: 1px solid #6ee7b7"],
+        [data-theme="dark"] [style*="border: 1px solid #a7f3d0"] {
+            border-color: var(--success-text) !important;
+        }
+        [data-theme="dark"] [style*="border-top: 1px solid #e2e8f0"],
+        [data-theme="dark"] [style*="border: 1px solid #e2e8f0"],
+        [data-theme="dark"] [style*="border: 1px solid #dee2e6"],
+        [data-theme="dark"] [style*="border-color: #e2e8f0"],
+        [data-theme="dark"] [style*="border-color: #ced4da"] {
+            border-color: var(--border-default) !important;
+        }
+
+        /* Background-color overrides (for JS-set or non-standard format) */
+        [data-theme="dark"] [style*="background-color: #28a745"] { background-color: var(--success-bg) !important; color: var(--success-text) !important; }
+        [data-theme="dark"] [style*="background-color: #ffc107"] { background-color: var(--warning-bg) !important; color: var(--warning-text) !important; }
+        [data-theme="dark"] [style*="background-color: #dc3545"] { background-color: var(--danger-bg) !important; color: var(--danger-text) !important; }
+
+        /* Border-left accent overrides */
+        [data-theme="dark"] [style*="border-left: 4px solid #28a745"] { border-left-color: var(--success-text) !important; }
+        [data-theme="dark"] [style*="border-left: 4px solid #ffc107"] { border-left-color: var(--warning-text) !important; }
+        [data-theme="dark"] [style*="border-left: 4px solid #dc3545"] { border-left-color: var(--danger-text) !important; }
+
+        /* Scrollbar */
+        [data-theme="dark"] ::-webkit-scrollbar { width: 8px; }
+        [data-theme="dark"] ::-webkit-scrollbar-track { background: var(--bg-app); }
+        [data-theme="dark"] ::-webkit-scrollbar-thumb { background: var(--border-default); border-radius: 4px; }
+        [data-theme="dark"] ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+
+        /* Toggle button in sidebar */
+        .theme-toggle-btn {
+            background: transparent;
+            border: 1px solid rgba(255,255,255,0.15);
+            color: rgba(255,255,255,0.7);
+            border-radius: 0.25rem;
+            padding: 0.25rem 0.5rem;
+            cursor: pointer;
+            font-size: 1rem;
+            line-height: 1;
+            transition: all 0.2s;
+            flex-shrink: 0;
+        }
+
+        .theme-toggle-btn:hover {
+            color: white;
+            border-color: rgba(255,255,255,0.3);
         }
     </style>
     {% block extra_css %}{% endblock %}
@@ -1088,8 +1446,11 @@
                     <span class="user-role">{{ request.state.current_user.role }}</span>
                 </div>
             </div>
+            <button type="button" class="theme-toggle-btn" id="themeToggle" title="Toggle dark mode">
+                <i class="bi bi-moon-fill"></i>
+            </button>
             <form method="post" action="/logout" class="logout-form">
-                <button type="submit" class="btn btn-sm btn-outline-light" title="Sign out">
+                <button type="submit" class="tos-btn tos-btn-secondary" title="Sign out">
                     <i class="bi bi-box-arrow-right"></i>
                 </button>
             </form>
@@ -1098,7 +1459,7 @@
     </nav>
 
     <!-- Mobile sidebar toggle + overlay -->
-    <button id="sidebarToggle" class="btn btn-primary d-lg-none position-fixed" style="z-index:1130; left:1rem; top:1rem;">
+    <button id="sidebarToggle" class="tos-btn tos-btn-primary d-lg-none position-fixed" style="z-index:1130; left:1rem; top:1rem;">
         <i class="bi bi-list"></i>
     </button>
     <div id="sidebarOverlay" class="mobile-overlay"></div>
@@ -1414,14 +1775,12 @@
                 // Optimistic UI update
                 el.dataset.completed = newState.toString();
                 if (newState) {
-                    el.innerHTML = '<i class="bi bi-check-circle-fill"></i>';
-                    el.classList.remove('btn-outline-success');
-                    el.classList.add('btn-success');
+                    el.innerHTML = '<i class="bi bi-check"></i>';
+                    el.classList.add('checked');
                     if (row) row.classList.add('task-completed');
                 } else {
-                    el.innerHTML = '<i class="bi bi-check-lg"></i>';
-                    el.classList.remove('btn-success');
-                    el.classList.add('btn-outline-success');
+                    el.innerHTML = '';
+                    el.classList.remove('checked');
                     if (row) row.classList.remove('task-completed');
                 }
 
@@ -1431,14 +1790,12 @@
                         // Revert on failure
                         el.dataset.completed = isCompleted.toString();
                         if (isCompleted) {
-                            el.innerHTML = '<i class="bi bi-check-circle-fill"></i>';
-                            el.classList.remove('btn-outline-success');
-                            el.classList.add('btn-success');
+                            el.innerHTML = '<i class="bi bi-check"></i>';
+                            el.classList.add('checked');
                             if (row) row.classList.add('task-completed');
                         } else {
-                            el.innerHTML = '<i class="bi bi-check-lg"></i>';
-                            el.classList.remove('btn-success');
-                            el.classList.add('btn-outline-success');
+                            el.innerHTML = '';
+                            el.classList.remove('checked');
                             if (row) row.classList.remove('task-completed');
                         }
                         flash(el, false);
@@ -1520,10 +1877,54 @@
     </script>
 
     <style>
+    /* Task checkbox: minimalist circle */
+    .task-check {
+        width: 18px;
+        height: 18px;
+        min-width: 18px;
+        border-radius: 50%;
+        border: 1.5px solid var(--border-default);
+        background: transparent;
+        padding: 0;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        color: transparent;
+        font-size: 11px;
+        line-height: 1;
+        transition: border-color 0.15s, color 0.15s, background 0.15s;
+        vertical-align: middle;
+        flex-shrink: 0;
+    }
+    .task-check:hover {
+        border-color: var(--text-muted);
+    }
+    .task-check.checked {
+        border-color: var(--text-muted);
+        color: var(--text-muted);
+        background: transparent;
+    }
+    .task-check.checked i {
+        font-size: 10px;
+    }
+
+    [data-theme="dark"] .task-check {
+        border-color: rgba(255, 255, 255, 0.5);
+    }
+    [data-theme="dark"] .task-check:hover {
+        border-color: rgba(255, 255, 255, 0.7);
+    }
+    [data-theme="dark"] .task-check.checked {
+        border-color: rgba(255, 255, 255, 0.5);
+        color: rgba(255, 255, 255, 0.6);
+    }
+
     .task-completed .fw-medium,
+    .task-completed .entity-name,
     .task-completed td:first-child {
         text-decoration: line-through;
-        opacity: 0.6;
+        opacity: 0.5;
     }
 
     /* Clickable rows */
@@ -1925,6 +2326,34 @@
 
         // Update every minute
         setInterval(updateDateTime, 60000);
+    })();
+    </script>
+
+    <!-- Dark Mode Toggle -->
+    <script>
+    (function() {
+        const toggle = document.getElementById('themeToggle');
+        if (!toggle) return;
+
+        function applyTheme(dark) {
+            if (dark) {
+                document.documentElement.setAttribute('data-theme', 'dark');
+                toggle.innerHTML = '<i class="bi bi-sun-fill"></i>';
+                toggle.title = 'Switch to light mode';
+            } else {
+                document.documentElement.removeAttribute('data-theme');
+                toggle.innerHTML = '<i class="bi bi-moon-fill"></i>';
+                toggle.title = 'Switch to dark mode';
+            }
+        }
+
+        applyTheme(localStorage.getItem('theme') === 'dark');
+
+        toggle.addEventListener('click', function() {
+            const isDark = document.documentElement.hasAttribute('data-theme');
+            localStorage.setItem('theme', isDark ? 'light' : 'dark');
+            applyTheme(!isDark);
+        });
     })();
     </script>
 

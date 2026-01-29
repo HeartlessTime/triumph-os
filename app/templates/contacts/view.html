@@ -55,8 +55,8 @@
                     <i class="bi bi-calendar-event me-1"></i> Log Meeting
                 </button>
                 <form method="post" action="/contacts/{{ contact.id }}/delete" class="d-inline" onsubmit="return confirm('Delete this contact? This cannot be undone.');">
-                    <button type="submit" class="tos-btn" style="background: #fef2f2; color: #991b1b; border: 1px solid #fecaca;">
-                        <i class="bi bi-trash me-1"></i> Delete
+                    <button type="submit" class="tos-btn tos-btn-danger">
+                        <i class="bi bi-trash"></i> Delete
                     </button>
                 </form>
             </div>
@@ -88,11 +88,11 @@
                             <div class="tos-entity-sub">Response</div>
                             <form method="post" action="/contacts/{{ contact.id }}/toggle-has-responded?from=/contacts/{{ contact.id }}" class="d-inline">
                                 {% if contact.has_responded %}
-                                <button type="submit" style="background: #d1fae5; color: #065f46; border: 1px solid #6ee7b7; border-radius: 4px; padding: 0.15rem 0.5rem; font-size: 0.85rem; cursor: pointer;">
+                                <button type="submit" class="tos-btn tos-btn-sm tos-btn-success">
                                     <i class="bi bi-check-circle-fill me-1"></i>Responded
                                 </button>
                                 {% else %}
-                                <button type="submit" style="background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; border-radius: 4px; padding: 0.15rem 0.5rem; font-size: 0.85rem; cursor: pointer;">
+                                <button type="submit" class="tos-btn tos-btn-sm tos-btn-danger">
                                     <i class="bi bi-x-circle me-1"></i>No Response
                                 </button>
                                 {% endif %}
@@ -177,10 +177,10 @@
                     <div class="mb-3">
                         <label class="form-label">Follow-up In</label>
                         <div class="d-flex gap-2 flex-wrap mb-2" id="followupPresets">
-                            <button type="button" class="btn btn-outline-secondary followup-preset" data-days="3">3 days</button>
-                            <button type="button" class="btn btn-outline-secondary followup-preset" data-days="7">7 days</button>
-                            <button type="button" class="btn btn-outline-primary followup-preset active" data-days="30">30 days</button>
-                            <button type="button" class="btn btn-outline-secondary followup-preset" data-days="60">60 days</button>
+                            <button type="button" class="tos-btn tos-btn-secondary followup-preset" data-days="3">3 days</button>
+                            <button type="button" class="tos-btn tos-btn-secondary followup-preset" data-days="7">7 days</button>
+                            <button type="button" class="tos-btn tos-btn-primary followup-preset active" data-days="30">30 days</button>
+                            <button type="button" class="tos-btn tos-btn-secondary followup-preset" data-days="60">60 days</button>
                         </div>
                         <input type="date" class="form-control" name="next_followup" id="next_followup_input" style="max-width: 200px;">
                         <div class="form-text" id="followupDatePreview"></div>
@@ -192,8 +192,8 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary">
+                    <button type="button" class="tos-btn tos-btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="tos-btn tos-btn-primary">
                         <i class="bi bi-check-lg me-1"></i>Log Contact
                     </button>
                 </div>
@@ -242,8 +242,8 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-success">
+                    <button type="button" class="tos-btn tos-btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="tos-btn tos-btn-success">
                         <i class="bi bi-check-lg me-1"></i>Log Meeting
                     </button>
                 </div>
@@ -322,8 +322,8 @@ document.getElementById('meeting_type').addEventListener('change', function() {
     // Clear all preset active states
     function clearPresetSelection() {
         presets.forEach(function(p) {
-            p.classList.remove('active', 'btn-outline-primary');
-            p.classList.add('btn-outline-secondary');
+            p.classList.remove('active', 'tos-btn-primary');
+            p.classList.add('tos-btn-secondary');
         });
     }
 
@@ -335,8 +335,8 @@ document.getElementById('meeting_type').addEventListener('change', function() {
 
         // Update active state
         clearPresetSelection();
-        btn.classList.remove('btn-outline-secondary');
-        btn.classList.add('active', 'btn-outline-primary');
+        btn.classList.remove('tos-btn-secondary');
+        btn.classList.add('active', 'tos-btn-primary');
     }
 
     // Handle manual date input change
