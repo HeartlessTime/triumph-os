@@ -155,7 +155,7 @@
                         </thead>
                         <tbody>
                             {% for activity in outreach_activities %}
-                            <tr data-href="/activities/{{ activity.id }}?from=/summary/weekly">
+                            <tr data-href="/activities/{{ activity.id }}?from=/summary/weekly%3Fweek_start%3D{{ week_start }}">
                                 <td>
                                     <span class="me-1">{{ activity.icon }}</span>
                                     {% if activity.contact %}
@@ -217,7 +217,7 @@
                         </thead>
                         <tbody>
                             {% for meeting in meetings %}
-                            <tr data-href="/activities/{{ meeting.id }}?from=/summary/weekly">
+                            <tr data-href="/activities/{{ meeting.id }}?from=/summary/weekly%3Fweek_start%3D{{ week_start }}">
                                 <td>
                                     <span class="tos-entity-name">{{ meeting.attendees_display or meeting.subject }}</span>
                                     {% if meeting.description %}
@@ -267,7 +267,7 @@
                         </thead>
                         <tbody>
                             {% for visit in site_visits %}
-                            <tr data-href="/activities/{{ visit.id }}?from=/summary/weekly">
+                            <tr data-href="/activities/{{ visit.id }}?from=/summary/weekly%3Fweek_start%3D{{ week_start }}">
                                 <td>
                                     <span class="tos-entity-name">{{ visit.subject or 'Site Visit' }}</span>
                                     {% if visit.contact %}
@@ -375,7 +375,7 @@
                         </thead>
                         <tbody>
                             {% for task in tasks_completed %}
-                            <tr data-href="/tasks/{{ task.id }}/edit?from=/summary/weekly">
+                            <tr data-href="/tasks/{{ task.id }}/edit?from=/summary/weekly%3Fweek_start%3D{{ week_start }}">
                                 <td>
                                     <span class="tos-entity-name">{{ task.title }}</span>
                                     {% if task.description %}
@@ -492,7 +492,7 @@
                     {% if activities_logged %}
                     <div class="activity-timeline">
                         {% for activity in activities_logged %}
-                        <div class="activity-item" data-href="/activities/{{ activity.id }}?from=/summary/weekly">
+                        <div class="activity-item" data-href="/activities/{{ activity.id }}?from=/summary/weekly%3Fweek_start%3D{{ week_start }}">
                             <div class="d-flex justify-content-between align-items-start">
                                 <div>
                                     <span class="me-2">{{ activity.icon }}</span>
@@ -591,10 +591,14 @@ document.addEventListener('click', function(e) {
     // Also ignore modal triggers to let Bootstrap handle them
     if (e.target.closest('a, button, input, textarea, select, form, [data-bs-toggle]')) return;
 
-    // Navigate to the edit page with from param for back navigation
+    // Navigate with from param for back navigation
     const href = clickable.dataset.href;
-    const separator = href.includes('?') ? '&' : '?';
-    window.location.href = href + separator + 'from=' + encodeURIComponent(currentPageUrl);
+    if (href.includes('from=')) {
+        window.location.href = href;
+    } else {
+        const separator = href.includes('?') ? '&' : '?';
+        window.location.href = href + separator + 'from=' + encodeURIComponent(currentPageUrl);
+    }
 });
 
 // Add from param to all internal links on this page
