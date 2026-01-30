@@ -32,7 +32,8 @@
         box-shadow: var(--shadow-card-sm);
         margin-bottom: var(--section-gap);
         overflow: hidden;
-        align-self: start;
+        display: flex;
+        flex-direction: column;
     }
 
     .dashboard-v2 .section-header {
@@ -60,6 +61,8 @@
 
     .dashboard-v2 .section-body {
         padding: 0;
+        flex: 1;
+        overflow-y: auto;
     }
 
     /* Dense table styling */
