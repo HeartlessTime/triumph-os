@@ -90,7 +90,7 @@ async def dashboard(request: Request, db: Session = Depends(get_db)):
     hot_accounts_all.sort(
         key=lambda a: a.last_contacted or date.min,
     )
-    hot_accounts = hot_accounts_all[:7]
+    hot_accounts = hot_accounts_all
 
     return templates.TemplateResponse(
         "dashboard/dashboard_v2.html",

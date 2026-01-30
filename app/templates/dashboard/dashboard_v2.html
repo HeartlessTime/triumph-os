@@ -616,7 +616,7 @@
                     <i class="bi bi-fire me-1" style="color: #dc2626;"></i>Hot Accounts
                     <a href="/accounts?view=hot" class="ms-auto" style="font-size: 0.7rem; font-weight: 400; text-transform: none; letter-spacing: 0; color: #64748b; text-decoration: none;">View all &rarr;</a>
                 </div>
-                <div class="section-body">
+                <div class="section-body" style="max-height: 320px; overflow-y: auto;">
                     <table class="dense-table">
                         <tbody>
                             {% for account in hot_accounts %}
