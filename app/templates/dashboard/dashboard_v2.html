@@ -286,6 +286,28 @@
         color: var(--text-secondary);
         margin-left: 0.25rem;
     }
+
+    /* Account next-action rows inside Tasks */
+    .dashboard-v2 .task-row-account {
+        border-left: 3px solid #6366f1;
+    }
+    .dashboard-v2 .badge-account {
+        display: inline-block;
+        font-size: 0.6rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        padding: 0.1rem 0.35rem;
+        border-radius: 0.2rem;
+        background: #eef2ff;
+        color: #4338ca;
+        vertical-align: middle;
+        margin-left: 0.35rem;
+    }
+    [data-theme="dark"] .dashboard-v2 .badge-account {
+        background: #312e81;
+        color: #a5b4fc;
+    }
 </style>
 {% endblock %}
 
@@ -331,19 +353,50 @@
             </div>
         </div>
 
-        <!-- Tasks (top priority) -->
+        <!-- Tasks (top priority) — includes account next actions -->
         <div class="section-card" style="margin-bottom: 1rem;">
             <div class="section-header">
                 <i class="bi bi-check2-square me-1"></i>Tasks
-                <span class="badge bg-secondary ms-2">{{ my_tasks|length }}</span>
+                <span class="badge bg-secondary ms-2">{{ my_tasks|length + next_action_accounts|length }}</span>
                 <button type="button" class="tos-btn tos-btn-sm btn-view ms-2" data-bs-toggle="modal" data-bs-target="#quickAddTaskModal">
                     <i class="bi bi-plus-lg"></i>
                 </button>
             </div>
-            <div class="section-body" style="max-height: 220px; overflow-y: auto;">
-                {% if my_tasks %}
+            <div class="section-body" style="max-height: 320px; overflow-y: auto;">
+                {% if my_tasks or next_action_accounts %}
                 <table class="dense-table">
                     <tbody>
+                        {#- Build a unified list: tasks get sort_date from due_date, accounts from next_action_due_date -#}
+                        {#- Jinja doesn't support mixed sorting easily, so we render tasks first then account actions, -#}
+                        {#- both already sorted by due date from their queries -#}
+
+                        {#- Account next actions (already sorted by due date ASC from query) -#}
+                        {% for account in next_action_accounts %}
+                        <tr class="task-row-account" data-href="/accounts/{{ account.id }}"
+                            {% if account.days_until_next_action is not none and account.days_until_next_action < 0 %}style="background-color: #fee2e2;"{% elif account.days_until_next_action is not none and account.days_until_next_action <= 2 %}style="background-color: #fef3c7;"{% endif %}>
+                            <td style="width: 1.5rem; padding-right: 0;">
+                                <button type="button"
+                                    class="task-check"
+                                    data-account-next-action-complete
+                                    data-account-id="{{ account.id }}"
+                                    title="Complete Next Action"></button>
+                            </td>
+                            <td>
+                                <span class="entity-name">{{ account.next_action }}</span>
+                                <span class="badge-account">Account</span>
+                                <div class="entity-sub">{{ account.name }}</div>
+                            </td>
+                            <td class="text-end" style="white-space: nowrap;">
+                                {% if account.days_until_next_action is not none %}
+                                <span class="ms-1 {% if account.days_until_next_action < 0 %}text-danger{% elif account.days_until_next_action <= 2 %}text-warning{% else %}text-muted{% endif %}" style="font-size: 0.75rem;">
+                                    {{ account.next_action_due_date.strftime('%b %d') }}
+                                </span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+
+                        {#- Regular tasks -#}
                         {% for task in my_tasks %}
                         <tr data-href="/tasks/{{ task.id }}/edit?from=/"
                             {% if task.status != 'Completed' and task.due_date %}
@@ -612,41 +665,6 @@
                     {% endif %}
                 </div>
             </div>
-
-            <!-- Next Actions -->
-            {% if next_action_accounts %}
-            <div class="section-card">
-                <div class="section-header" style="background: var(--tint-tasks);">
-                    <i class="bi bi-lightning me-1"></i>Next Actions
-                    <span class="badge bg-secondary ms-2">{{ next_action_accounts|length }}</span>
-                </div>
-                <div class="section-body" style="max-height: 320px; overflow-y: auto;">
-                    <table class="dense-table">
-                        <tbody>
-                            {% for account in next_action_accounts %}
-                            <tr data-href="/accounts/{{ account.id }}"
-                                {% if account.days_until_next_action is not none and account.days_until_next_action < 0 %}style="background-color: #fee2e2;"{% elif account.days_until_next_action is not none and account.days_until_next_action <= 2 %}style="background-color: #fef3c7;"{% endif %}>
-                                <td style="padding: 0.35rem 0.75rem;">
-                                    <span class="entity-name">{{ account.name }}</span>
-                                    <div class="entity-sub">{{ account.next_action }}</div>
-                                </td>
-                                <td class="text-end" style="white-space: nowrap; padding: 0.35rem 0.75rem; font-size: 0.8rem;">
-                                    {% if account.days_until_next_action is not none %}
-                                    <span style="color: {% if account.days_until_next_action < 0 %}#dc2626{% elif account.days_until_next_action <= 2 %}#d97706{% else %}#059669{% endif %};">
-                                        {% if account.days_until_next_action < 0 %}{{ account.days_until_next_action|abs }}d overdue
-                                        {% elif account.days_until_next_action == 0 %}Today
-                                        {% else %}In {{ account.days_until_next_action }}d
-                                        {% endif %}
-                                    </span>
-                                    {% endif %}
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-            {% endif %}
 
             <!-- Hot Accounts -->
             {% if hot_accounts %}

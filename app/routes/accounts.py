@@ -614,6 +614,22 @@ async def toggle_hot(
     return RedirectResponse(url=redirect_url, status_code=303)
 
 
+@router.post("/{account_id}/clear-next-action")
+async def clear_next_action(
+    account_id: int,
+    db: Session = Depends(get_db),
+):
+    """Clear the next action and due date on an account (mark as done)."""
+    account = db.query(Account).filter(Account.id == account_id).first()
+    if not account:
+        raise HTTPException(status_code=404, detail="Account not found")
+
+    account.next_action = None
+    account.next_action_due_date = None
+    db.commit()
+    return {"status": "cleared"}
+
+
 @router.post("/{account_id}/auto-save")
 async def auto_save_account(
     account_id: int,

@@ -110,6 +110,6 @@ async def dashboard(request: Request, db: Session = Depends(get_db)):
             "meetings_pending": meetings_pending,
             "meetings_completed": meetings_completed,
             "hot_accounts": hot_accounts,
-            "next_action_accounts": next_action_accounts,
+            "next_action_accounts": next_action_accounts,  # merged into Tasks section in template
         },
     )

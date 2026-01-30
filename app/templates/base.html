@@ -1858,9 +1858,45 @@
             el.addEventListener('mousedown', function(e) { e.stopPropagation(); });
         }
 
+        // Account next-action completion (clear next action)
+        function bindAccountNextActionComplete(el) {
+            if (el.dataset.optimisticBound) return;
+            el.dataset.optimisticBound = 'true';
+
+            el.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+
+                var accountId = el.dataset.accountId;
+                var row = el.closest('tr');
+
+                // Optimistic UI
+                el.innerHTML = '<i class="bi bi-check"></i>';
+                el.classList.add('checked');
+                if (row) row.classList.add('task-completed');
+
+                post('/accounts/' + accountId + '/clear-next-action', {})
+                    .then(function() {
+                        flash(el, true);
+                        // Fade out after brief delay
+                        if (row) {
+                            row.style.transition = 'opacity 0.3s';
+                            row.style.opacity = '0.4';
+                        }
+                    })
+                    .catch(function() {
+                        el.innerHTML = '';
+                        el.classList.remove('checked');
+                        if (row) row.classList.remove('task-completed');
+                        flash(el, false);
+                    });
+            });
+        }
+
         // Auto-bind all elements with data attributes
         function init() {
             document.querySelectorAll('[data-task-complete]').forEach(bindTaskComplete);
+            document.querySelectorAll('[data-account-next-action-complete]').forEach(bindAccountNextActionComplete);
             document.querySelectorAll('[data-task-priority]').forEach(bindPrioritySelect);
             document.querySelectorAll('[data-task-inline]').forEach(bindInlineText);
         }
