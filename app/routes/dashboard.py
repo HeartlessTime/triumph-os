@@ -79,6 +79,15 @@ async def dashboard(request: Request, db: Session = Depends(get_db)):
         .all()
     )
 
+    # Accounts with next actions due (sorted: overdue first, then soonest)
+    next_action_accounts = (
+        db.query(Account)
+        .filter(Account.next_action.isnot(None), Account.next_action != "")
+        .filter(Account.next_action_due_date.isnot(None))
+        .order_by(Account.next_action_due_date)
+        .all()
+    )
+
     # Hot accounts — stalest first (oldest last_contacted at top)
     hot_accounts_all = (
         db.query(Account)
@@ -101,5 +110,6 @@ async def dashboard(request: Request, db: Session = Depends(get_db)):
             "meetings_pending": meetings_pending,
             "meetings_completed": meetings_completed,
             "hot_accounts": hot_accounts,
+            "next_action_accounts": next_action_accounts,
         },
     )

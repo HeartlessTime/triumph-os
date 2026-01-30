@@ -1,5 +1,5 @@
 from datetime import datetime, date
-from sqlalchemy import Column, Integer, String, Text, DateTime, Boolean, ForeignKey
+from sqlalchemy import Column, Integer, String, Text, DateTime, Date, Boolean, ForeignKey
 from sqlalchemy.orm import relationship
 from app.database import Base
 
@@ -20,6 +20,8 @@ class Account(Base):
     notes = Column(Text, nullable=True)
     awaiting_response = Column(Boolean, nullable=False, default=False, index=True)
     is_hot = Column(Boolean, nullable=False, default=False, index=True)
+    next_action = Column(Text, nullable=True)
+    next_action_due_date = Column(Date, nullable=True)
     created_by_id = Column(Integer, ForeignKey("users.id"), nullable=True)
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
     updated_at = Column(
@@ -131,6 +133,13 @@ class Account(Base):
         """Days since last contact with any contact at this account."""
         if self.last_contacted:
             return (date.today() - self.last_contacted).days
+        return None
+
+    @property
+    def days_until_next_action(self):
+        """Days until next action due date. Negative means overdue."""
+        if self.next_action_due_date:
+            return (self.next_action_due_date - date.today()).days
         return None
 
     def __repr__(self):

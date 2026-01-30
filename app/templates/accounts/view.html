@@ -144,6 +144,42 @@
                 </div>
             </div>
 
+            <!-- Next Action -->
+            <div class="tos-card mt-3">
+                <div class="tos-section-header">
+                    <i class="bi bi-lightning me-1"></i>Next Action
+                </div>
+                <div class="p-3">
+                    <form id="nextActionForm" data-auto-save="/accounts/{{ account.id }}/auto-save">
+                        <div class="mb-2">
+                            <input type="text" class="form-control form-control-sm" name="next_action"
+                                value="{{ account.next_action or '' }}" placeholder="What's the next step?">
+                        </div>
+                        <div class="d-flex align-items-center gap-2">
+                            <label class="form-label mb-0 small text-muted">Due:</label>
+                            <input type="date" class="form-control form-control-sm" name="next_action_due_date"
+                                value="{{ account.next_action_due_date.strftime('%Y-%m-%d') if account.next_action_due_date else '' }}"
+                                style="max-width: 160px;
+                                {% if account.days_until_next_action is not none %}
+                                    {% if account.days_until_next_action < 0 %}color: #dc2626; font-weight: 600;
+                                    {% elif account.days_until_next_action <= 2 %}color: #d97706; font-weight: 600;
+                                    {% else %}color: #059669;
+                                    {% endif %}
+                                {% endif %}">
+                            {% if account.days_until_next_action is not none %}
+                            <span class="small {% if account.days_until_next_action < 0 %}text-danger fw-bold{% elif account.days_until_next_action <= 2 %}text-warning{% else %}text-success{% endif %}">
+                                {% if account.days_until_next_action < 0 %}{{ account.days_until_next_action|abs }}d overdue
+                                {% elif account.days_until_next_action == 0 %}Due today
+                                {% else %}In {{ account.days_until_next_action }}d
+                                {% endif %}
+                            </span>
+                            {% endif %}
+                        </div>
+                    </form>
+                    <span class="text-muted small d-block mt-1"><i class="bi bi-cloud-check me-1"></i>Auto-saves</span>
+                </div>
+            </div>
+
             <!-- Meetings with this Account -->
             <div class="tos-card mt-3">
                 <div class="tos-section-header">
@@ -472,6 +508,13 @@
 {% block extra_js %}
 <script>
 (function() {
+    // Next Action auto-save
+    const nextActionForm = document.getElementById('nextActionForm');
+    if (nextActionForm) {
+        const endpoint = nextActionForm.dataset.autoSave;
+        AutoSave.init(nextActionForm, endpoint);
+    }
+
     const modal = document.getElementById('logContactModal');
     const form = document.getElementById('logContactForm');
     const modalTitle = document.getElementById('logContactModalLabel');

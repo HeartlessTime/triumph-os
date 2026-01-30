@@ -564,6 +564,7 @@ async def api_quick_create_account(
 ACCOUNT_COLUMNS = {
     "name", "account_type", "industry", "website", "phone",
     "address", "city", "state", "zip_code", "notes", "awaiting_response", "is_hot",
+    "next_action", "next_action_due_date",
 }
 
 
@@ -647,6 +648,12 @@ async def auto_save_account(
                         account.name = val
                 elif field == "account_type":
                     account.account_type = str(value).strip() if value and str(value).strip() else "end_user"
+                elif field == "next_action_due_date":
+                    if value and str(value).strip() and str(value).strip() not in ("null", ""):
+                        from datetime import datetime as dt
+                        account.next_action_due_date = dt.strptime(str(value).strip(), "%Y-%m-%d").date()
+                    else:
+                        account.next_action_due_date = None
                 else:
                     if isinstance(value, str):
                         setattr(account, field, value.strip() if value.strip() else None)

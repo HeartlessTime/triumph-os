@@ -32,6 +32,7 @@
         box-shadow: var(--shadow-card-sm);
         margin-bottom: var(--section-gap);
         overflow: hidden;
+        align-self: start;
     }
 
     .dashboard-v2 .section-header {
@@ -609,6 +610,41 @@
                 </div>
             </div>
 
+            <!-- Next Actions -->
+            {% if next_action_accounts %}
+            <div class="section-card">
+                <div class="section-header" style="background: var(--tint-tasks);">
+                    <i class="bi bi-lightning me-1"></i>Next Actions
+                    <span class="badge bg-secondary ms-2">{{ next_action_accounts|length }}</span>
+                </div>
+                <div class="section-body" style="max-height: 320px; overflow-y: auto;">
+                    <table class="dense-table">
+                        <tbody>
+                            {% for account in next_action_accounts %}
+                            <tr data-href="/accounts/{{ account.id }}"
+                                {% if account.days_until_next_action is not none and account.days_until_next_action < 0 %}style="background-color: #fee2e2;"{% elif account.days_until_next_action is not none and account.days_until_next_action <= 2 %}style="background-color: #fef3c7;"{% endif %}>
+                                <td style="padding: 0.35rem 0.75rem;">
+                                    <span class="entity-name">{{ account.name }}</span>
+                                    <div class="entity-sub">{{ account.next_action }}</div>
+                                </td>
+                                <td class="text-end" style="white-space: nowrap; padding: 0.35rem 0.75rem; font-size: 0.8rem;">
+                                    {% if account.days_until_next_action is not none %}
+                                    <span style="color: {% if account.days_until_next_action < 0 %}#dc2626{% elif account.days_until_next_action <= 2 %}#d97706{% else %}#059669{% endif %};">
+                                        {% if account.days_until_next_action < 0 %}{{ account.days_until_next_action|abs }}d overdue
+                                        {% elif account.days_until_next_action == 0 %}Today
+                                        {% else %}In {{ account.days_until_next_action }}d
+                                        {% endif %}
+                                    </span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            {% endif %}
+
             <!-- Hot Accounts -->
             {% if hot_accounts %}
             <div class="section-card">
@@ -620,15 +656,28 @@
                     <table class="dense-table">
                         <tbody>
                             {% for account in hot_accounts %}
+                            {% set urgency_days = account.days_until_next_action if account.days_until_next_action is not none else none %}
+                            {% set fallback_days = account.days_since_last_activity %}
                             <tr data-href="/accounts/{{ account.id }}"
-                                {% if account.days_since_last_activity is none or account.days_since_last_activity >= 30 %}style="background-color: #fee2e2;"{% elif account.days_since_last_activity >= 21 %}style="background-color: #fef3c7;"{% endif %}>
+                                {% if urgency_days is not none %}
+                                    {% if urgency_days < 0 %}style="background-color: #fee2e2;"{% elif urgency_days <= 2 %}style="background-color: #fef3c7;"{% endif %}
+                                {% else %}
+                                    {% if fallback_days is none or fallback_days >= 30 %}style="background-color: #fee2e2;"{% elif fallback_days >= 21 %}style="background-color: #fef3c7;"{% endif %}
+                                {% endif %}>
                                 <td style="padding: 0.35rem 0.75rem;">
                                     <span class="entity-name">{{ account.name }}</span>
+                                    {% if account.next_action %}
+                                    <div class="entity-sub">{{ account.next_action }}</div>
+                                    {% endif %}
                                 </td>
                                 <td class="text-end" style="white-space: nowrap; padding: 0.35rem 0.75rem; font-size: 0.8rem;">
-                                    {% if account.days_since_last_activity is not none %}
-                                    <span style="color: {% if account.days_since_last_activity >= 30 %}#dc2626{% elif account.days_since_last_activity >= 21 %}#d97706{% else %}#059669{% endif %};">
-                                        {{ account.days_since_last_activity }}d ago
+                                    {% if urgency_days is not none %}
+                                    <span style="color: {% if urgency_days < 0 %}#dc2626{% elif urgency_days <= 2 %}#d97706{% else %}#059669{% endif %};">
+                                        {% if urgency_days < 0 %}{{ urgency_days|abs }}d overdue{% elif urgency_days == 0 %}Today{% else %}In {{ urgency_days }}d{% endif %}
+                                    </span>
+                                    {% elif fallback_days is not none %}
+                                    <span style="color: {% if fallback_days >= 30 %}#dc2626{% elif fallback_days >= 21 %}#d97706{% else %}#059669{% endif %};">
+                                        {{ fallback_days }}d ago
                                     </span>
                                     {% else %}
                                     <span style="color: #dc2626;">Never</span>
