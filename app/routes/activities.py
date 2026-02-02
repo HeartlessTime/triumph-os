@@ -101,6 +101,12 @@ async def add_standalone_activity(
     activity_date: str = Form(None),
     contact_id: int = Form(None),
     opportunity_id: int = Form(None),
+    requires_estimate: str = Form(None),
+    scope_summary: str = Form(None),
+    estimated_quantity: str = Form(None),
+    complexity_notes: str = Form(None),
+    estimate_needed_by: str = Form(None),
+    assigned_estimator_id: int = Form(None),
     db: Session = Depends(get_db),
 ):
     """Add a standalone activity (not necessarily linked to an opportunity).
@@ -127,6 +133,19 @@ async def add_standalone_activity(
         opportunity_id=opportunity_id if opportunity_id else None,
         created_by_id=current_user.id,
     )
+
+    # Job walk fields (site visits only)
+    if requires_estimate and requires_estimate.lower() in ("true", "1", "on"):
+        activity.requires_estimate = True
+        activity.scope_summary = scope_summary.strip() if scope_summary and scope_summary.strip() else None
+        activity.estimated_quantity = estimated_quantity.strip()[:100] if estimated_quantity and estimated_quantity.strip() else None
+        activity.complexity_notes = complexity_notes.strip() if complexity_notes and complexity_notes.strip() else None
+        if estimate_needed_by and estimate_needed_by.strip():
+            try:
+                activity.estimate_needed_by = datetime.strptime(estimate_needed_by.strip(), "%Y-%m-%d").date()
+            except ValueError:
+                pass
+        activity.assigned_estimator_id = assigned_estimator_id if assigned_estimator_id else None
 
     db.add(activity)
     db.commit()
@@ -460,6 +479,10 @@ async def delete_activity(
 ACTIVITY_COLUMNS = {
     "activity_type", "subject", "description", "activity_date",
     "contact_id", "opportunity_id",
+    # Job walk / estimating fields (site visits)
+    "requires_estimate", "scope_summary", "estimated_quantity",
+    "complexity_notes", "estimate_needed_by", "assigned_estimator_id",
+    "estimate_completed", "estimate_completed_at",
 }
 
 
@@ -536,6 +559,28 @@ async def auto_save_activity(
                     setattr(activity, field, clean_int(value))
                 elif field == "description":
                     activity.description = str(value).strip() if value and str(value).strip() else None
+                elif field in ("requires_estimate", "estimate_completed"):
+                    if isinstance(value, bool):
+                        bool_val = value
+                    elif isinstance(value, list):
+                        # JS sends ["true"] when checked, [] when unchecked
+                        bool_val = len(value) > 0
+                    else:
+                        bool_val = str(value).lower() in ("true", "1", "on")
+                    setattr(activity, field, bool_val)
+                    # Auto-stamp estimate_completed_at when marking complete
+                    if field == "estimate_completed":
+                        activity.estimate_completed_at = date.today() if bool_val else None
+                elif field == "estimate_completed_at":
+                    activity.estimate_completed_at = clean_date(value)
+                elif field in ("scope_summary", "complexity_notes"):
+                    setattr(activity, field, str(value).strip() if value and str(value).strip() else None)
+                elif field == "estimated_quantity":
+                    activity.estimated_quantity = str(value).strip()[:100] if value and str(value).strip() else None
+                elif field == "estimate_needed_by":
+                    activity.estimate_needed_by = clean_date(value)
+                elif field == "assigned_estimator_id":
+                    setattr(activity, field, clean_int(value))
             except Exception:
                 continue
 

@@ -106,6 +106,30 @@ async def mark_meeting_occurred(
     return JSONResponse({"success": True})
 
 
+@router.post("/today/mark-estimate-received/{activity_id}")
+async def mark_estimate_received(
+    request: Request,
+    activity_id: int,
+    db: Session = Depends(get_db),
+):
+    """Quick action: Mark a site visit's estimate as received."""
+    activity = db.query(Activity).filter(Activity.id == activity_id).first()
+    if not activity:
+        raise HTTPException(status_code=404, detail="Activity not found")
+
+    if activity.activity_type != "site_visit" or not activity.requires_estimate:
+        return JSONResponse(
+            {"success": False, "error": "Activity is not a site visit awaiting estimate"},
+            status_code=400,
+        )
+
+    activity.estimate_completed = True
+    activity.estimate_completed_at = date.today()
+    db.commit()
+
+    return JSONResponse({"success": True})
+
+
 @router.get("/today", response_class=HTMLResponse)
 async def today_page(request: Request, db: Session = Depends(get_db)):
     """Today / This Week page showing actionable items.

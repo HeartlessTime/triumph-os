@@ -1,10 +1,13 @@
 {#
-    Site Visit Modal Partial
+    Unified Site Visit Modal Partial
 
-    Required context variables:
-    - opportunity: The opportunity object (optional - when provided, site visit is linked to it)
-    - contacts: List of contacts for the dropdown (optional)
-    - return_url: URL to redirect to after submission (optional, defaults to opportunity detail or /)
+    Context modes (auto-detected):
+    1. opportunity set     → linked to that opportunity, contact dropdown from `contacts`
+    2. account set         → opp dropdown from account.opportunities, contact from sorted_contacts
+    3. neither (dashboard) → searchable opp/contact from all_open_opps / all_contacts
+
+    Optional:
+    - return_url: redirect after submit (defaults to / or opportunity detail)
 
     Usage:
     {% include "partials/site_visit_modal.html" %}
@@ -15,14 +18,25 @@
     <div class="modal-dialog">
         <div class="modal-content">
             {% if opportunity %}
-            <form method="post" action="/activities/opportunity/{{ opportunity.id }}/add">
+            <form method="post" id="siteVisitForm" action="/activities/opportunity/{{ opportunity.id }}/add">
+            {% elif account %}
+            <form method="post" id="siteVisitForm" action="/activities/add?from=/accounts/{{ account.id }}">
             {% else %}
-            <form method="post" action="/activities/add?from={{ return_url | default('/') }}">
+            <form method="post" id="siteVisitForm" action="/activities/add?from={{ return_url | default('/') }}">
             {% endif %}
                 <input type="hidden" name="activity_type" value="site_visit">
                 <input type="hidden" name="update_last_contacted" value="">
+
+                {# Hidden inputs for searchable mode (dashboard) #}
+                {% if not opportunity and not account %}
+                <input type="hidden" id="siteVisitOppId" name="opportunity_id" value="">
+                <input type="hidden" id="siteVisitContactId" name="contact_id" value="">
+                {% endif %}
+
                 <div class="modal-header py-2">
-                    <h6 class="modal-title" id="logSiteVisitModalLabel"><i class="bi bi-geo-alt me-2"></i>Log Site Visit{% if opportunity %} - {{ opportunity.name }}{% endif %}</h6>
+                    <h6 class="modal-title" id="logSiteVisitModalLabel">
+                        <i class="bi bi-geo-alt me-2"></i>Log Site Visit{% if opportunity %} - {{ opportunity.name }}{% elif account %} - {{ account.name }}{% endif %}
+                    </h6>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body py-2">
@@ -30,6 +44,35 @@
                         <label for="siteVisitDate" class="form-label small mb-1">Date & Time <span class="text-danger">*</span></label>
                         <input type="datetime-local" class="form-control form-control-sm" id="siteVisitDate" name="activity_date" required>
                     </div>
+
+                    {# --- Opportunity selection --- #}
+                    {% if opportunity %}
+                        {# Opportunity context: already linked, no selector needed #}
+                    {% elif account %}
+                        <div class="mb-2">
+                            <label for="siteVisitOpportunity" class="form-label small mb-1">Opportunity</label>
+                            <select class="form-select form-select-sm" id="siteVisitOpportunity" name="opportunity_id">
+                                <option value="">-- Select Opportunity --</option>
+                                {% for opp in account.opportunities %}
+                                {% if opp.stage not in ['Won', 'Lost'] %}
+                                <option value="{{ opp.id }}">{{ opp.name }}</option>
+                                {% endif %}
+                                {% endfor %}
+                            </select>
+                        </div>
+                    {% else %}
+                        {# Dashboard: searchable opportunity #}
+                        <div class="mb-2">
+                            <label class="form-label small mb-1">Opportunity</label>
+                            <div class="position-relative">
+                                <input type="text" class="form-control form-control-sm" id="siteVisitOppSearch"
+                                    placeholder="Search opportunities..." autocomplete="off">
+                                <div id="siteVisitOppResults" class="list-group position-absolute w-100" style="z-index: 1050; display: none; max-height: 150px; overflow-y: auto; box-shadow: 0 2px 8px rgba(0,0,0,0.15);"></div>
+                            </div>
+                            <div id="siteVisitOppSelected" class="mt-1"></div>
+                        </div>
+                    {% endif %}
+
                     <div class="mb-2">
                         <label for="siteVisitSubject" class="form-label small mb-1">Purpose <span class="text-danger">*</span></label>
                         <select class="form-select form-select-sm" id="siteVisitSubject" name="subject" required>
@@ -40,20 +83,68 @@
                             <option value="Site Visit">Other</option>
                         </select>
                     </div>
-                    {% if contacts %}
-                    <div class="mb-2">
-                        <label for="siteVisitContact" class="form-label small mb-1">Contact</label>
-                        <select class="form-select form-select-sm" id="siteVisitContact" name="contact_id">
-                            <option value="">-- Select Contact --</option>
-                            {% for contact in contacts %}
-                            <option value="{{ contact.id }}">{{ contact.full_name }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
+
+                    {# --- Contact selection --- #}
+                    {% if opportunity or account %}
+                        {% set contact_list = sorted_contacts if account else contacts %}
+                        {% if contact_list %}
+                        <div class="mb-2">
+                            <label for="siteVisitContact" class="form-label small mb-1">Contact</label>
+                            <select class="form-select form-select-sm" id="siteVisitContact" name="contact_id">
+                                <option value="">-- Select Contact --</option>
+                                {% for contact in contact_list %}
+                                <option value="{{ contact.id }}">{{ contact.full_name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        {% endif %}
+                    {% else %}
+                        {# Dashboard: searchable contact #}
+                        <div class="mb-2">
+                            <label class="form-label small mb-1">Contact</label>
+                            <div class="position-relative">
+                                <input type="text" class="form-control form-control-sm" id="siteVisitContactSearch"
+                                    placeholder="Search contacts..." autocomplete="off">
+                                <div id="siteVisitContactResults" class="list-group position-absolute w-100" style="z-index: 1050; display: none; max-height: 150px; overflow-y: auto; box-shadow: 0 2px 8px rgba(0,0,0,0.15);"></div>
+                            </div>
+                            <div id="siteVisitContactSelected" class="mt-1"></div>
+                        </div>
                     {% endif %}
-                    <div class="mb-0">
+
+                    <div class="mb-2">
                         <label for="siteVisitNotes" class="form-label small mb-1">Notes</label>
                         <textarea class="form-control form-control-sm" id="siteVisitNotes" name="description" rows="2" placeholder="Optional notes..."></textarea>
+                    </div>
+
+                    {# --- Job Walk / Estimating fields --- #}
+                    <div class="mb-2">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="requiresEstimate" name="requires_estimate" value="on">
+                            <label class="form-check-label small" for="requiresEstimate">
+                                <i class="bi bi-clipboard-check me-1"></i>Requires Estimate
+                            </label>
+                        </div>
+                    </div>
+                    <div id="jobWalkFields" style="display: none; border-left: 3px solid #6366f1; padding-left: 0.75rem;">
+                        <div class="mb-2">
+                            <label for="scopeSummary" class="form-label small mb-1">Scope Summary <span class="text-danger">*</span></label>
+                            <textarea class="form-control form-control-sm" id="scopeSummary" name="scope_summary" rows="2" placeholder="What work is being estimated?"></textarea>
+                        </div>
+                        <div class="row g-2 mb-2">
+                            <div class="col-6">
+                                <label for="estimatedQuantity" class="form-label small mb-1">Estimated Qty</label>
+                                <input type="text" class="form-control form-control-sm" id="estimatedQuantity" name="estimated_quantity" placeholder="e.g. 50 doors">
+                            </div>
+                            <div class="col-6">
+                                <label for="estimateNeededBy" class="form-label small mb-1">Estimate Needed By</label>
+                                <input type="date" class="form-control form-control-sm" id="estimateNeededBy" name="estimate_needed_by">
+                            </div>
+                        </div>
+                        <div class="mb-2">
+                            <label for="complexityNotes" class="form-label small mb-1">Complexity Notes</label>
+                            <textarea class="form-control form-control-sm" id="complexityNotes" name="complexity_notes" rows="1" placeholder="Access issues, special requirements..."></textarea>
+                        </div>
+                        <input type="hidden" name="assigned_estimator_id" value="4">
                     </div>
                 </div>
                 <div class="modal-footer py-2">
@@ -66,19 +157,156 @@
 </div>
 
 <script>
-// Site Visit Modal: set default date/time when modal opens
 (function() {
     var modal = document.getElementById('logSiteVisitModal');
-    if (modal) {
-        modal.addEventListener('show.bs.modal', function() {
-            var now = new Date();
-            var year = now.getFullYear();
-            var month = String(now.getMonth() + 1).padStart(2, '0');
-            var day = String(now.getDate()).padStart(2, '0');
-            var hours = String(now.getHours()).padStart(2, '0');
-            var minutes = String(now.getMinutes()).padStart(2, '0');
-            document.getElementById('siteVisitDate').value = year + '-' + month + '-' + day + 'T' + hours + ':' + minutes;
+    if (!modal) return;
+
+    // Set default date/time when modal opens
+    modal.addEventListener('show.bs.modal', function() {
+        var now = new Date();
+        var year = now.getFullYear();
+        var month = String(now.getMonth() + 1).padStart(2, '0');
+        var day = String(now.getDate()).padStart(2, '0');
+        var hours = String(now.getHours()).padStart(2, '0');
+        var minutes = String(now.getMinutes()).padStart(2, '0');
+        document.getElementById('siteVisitDate').value = year + '-' + month + '-' + day + 'T' + hours + ':' + minutes;
+    });
+
+    // Job walk fields toggle
+    var requiresEstimate = document.getElementById('requiresEstimate');
+    var jobWalkFields = document.getElementById('jobWalkFields');
+    if (requiresEstimate && jobWalkFields) {
+        requiresEstimate.addEventListener('change', function() {
+            jobWalkFields.style.display = this.checked ? 'block' : 'none';
         });
     }
+
+    // Reset form on modal close
+    modal.addEventListener('hidden.bs.modal', function() {
+        var form = document.getElementById('siteVisitForm');
+        if (form) {
+            // Reset text inputs and textareas
+            form.querySelectorAll('input[type="text"], textarea').forEach(function(el) { el.value = ''; });
+            // Reset selects to first option
+            form.querySelectorAll('select').forEach(function(el) { el.selectedIndex = 0; });
+            // Reset job walk fields
+            if (requiresEstimate) requiresEstimate.checked = false;
+            if (jobWalkFields) jobWalkFields.style.display = 'none';
+        }
+
+        // Reset searchable fields (dashboard mode)
+        var oppId = document.getElementById('siteVisitOppId');
+        var contactId = document.getElementById('siteVisitContactId');
+        var oppSearch = document.getElementById('siteVisitOppSearch');
+        var contactSearch = document.getElementById('siteVisitContactSearch');
+        var oppSelected = document.getElementById('siteVisitOppSelected');
+        var contactSelected = document.getElementById('siteVisitContactSelected');
+        if (oppId) oppId.value = '';
+        if (contactId) contactId.value = '';
+        if (oppSearch) oppSearch.value = '';
+        if (contactSearch) contactSearch.value = '';
+        if (oppSelected) oppSelected.innerHTML = '';
+        if (contactSelected) contactSelected.innerHTML = '';
+    });
+
+    // --- Searchable selects (dashboard mode only) ---
+    var oppSearch = document.getElementById('siteVisitOppSearch');
+    var contactSearch = document.getElementById('siteVisitContactSearch');
+    if (!oppSearch || !contactSearch) return; // Not in searchable mode
+
+    var oppResults = document.getElementById('siteVisitOppResults');
+    var oppSelected = document.getElementById('siteVisitOppSelected');
+    var oppIdInput = document.getElementById('siteVisitOppId');
+    var contactResults = document.getElementById('siteVisitContactResults');
+    var contactSelected = document.getElementById('siteVisitContactSelected');
+    var contactIdInput = document.getElementById('siteVisitContactId');
+
+    // Grab data injected by the page
+    var opportunities = window._siteVisitOpps || [];
+    var allContacts = window._siteVisitContacts || [];
+
+    oppSearch.addEventListener('input', function() {
+        var query = this.value.toLowerCase().trim();
+        if (query.length < 1) { oppResults.style.display = 'none'; return; }
+        var matches = opportunities.filter(function(o) {
+            return o.name.toLowerCase().includes(query) || o.account.toLowerCase().includes(query);
+        }).slice(0, 8);
+        if (matches.length === 0) {
+            oppResults.innerHTML = '<div class="list-group-item text-muted small">No matches found</div>';
+        } else {
+            oppResults.innerHTML = matches.map(function(o) {
+                return '<button type="button" class="list-group-item list-group-item-action py-1 small" data-opp-id="' + o.id + '">' + o.name + ' <span class="text-muted">(' + o.account + ')</span></button>';
+            }).join('');
+        }
+        oppResults.style.display = 'block';
+    });
+
+    oppResults.addEventListener('click', function(e) {
+        var btn = e.target.closest('[data-opp-id]');
+        if (btn) {
+            var id = parseInt(btn.dataset.oppId, 10);
+            var opp = opportunities.find(function(o) { return o.id === id; });
+            if (opp) {
+                oppIdInput.value = id;
+                oppSearch.value = '';
+                oppResults.style.display = 'none';
+                oppSelected.innerHTML = '<span class="badge bg-primary d-inline-flex align-items-center gap-1">' + opp.name + ' <button type="button" class="btn-close btn-close-white" style="font-size: 0.5rem;" data-clear-opp aria-label="Remove"></button></span>';
+            }
+        }
+    });
+
+    oppSelected.addEventListener('click', function(e) {
+        if (e.target.closest('[data-clear-opp]')) {
+            oppIdInput.value = '';
+            oppSelected.innerHTML = '';
+        }
+    });
+
+    contactSearch.addEventListener('input', function() {
+        var query = this.value.toLowerCase().trim();
+        if (query.length < 1) { contactResults.style.display = 'none'; return; }
+        var matches = allContacts.filter(function(c) {
+            return c.name.toLowerCase().includes(query) || c.account.toLowerCase().includes(query);
+        }).slice(0, 8);
+        if (matches.length === 0) {
+            contactResults.innerHTML = '<div class="list-group-item text-muted small">No matches found</div>';
+        } else {
+            contactResults.innerHTML = matches.map(function(c) {
+                return '<button type="button" class="list-group-item list-group-item-action py-1 small" data-sv-contact-id="' + c.id + '">' + c.name + ' <span class="text-muted">(' + c.account + ')</span></button>';
+            }).join('');
+        }
+        contactResults.style.display = 'block';
+    });
+
+    contactResults.addEventListener('click', function(e) {
+        var btn = e.target.closest('[data-sv-contact-id]');
+        if (btn) {
+            var id = parseInt(btn.dataset.svContactId, 10);
+            var contact = allContacts.find(function(c) { return c.id === id; });
+            if (contact) {
+                contactIdInput.value = id;
+                contactSearch.value = '';
+                contactResults.style.display = 'none';
+                contactSelected.innerHTML = '<span class="badge bg-secondary d-inline-flex align-items-center gap-1">' + contact.name + ' <button type="button" class="btn-close btn-close-white" style="font-size: 0.5rem;" data-clear-contact aria-label="Remove"></button></span>';
+            }
+        }
+    });
+
+    contactSelected.addEventListener('click', function(e) {
+        if (e.target.closest('[data-clear-contact]')) {
+            contactIdInput.value = '';
+            contactSelected.innerHTML = '';
+        }
+    });
+
+    // Hide dropdowns on outside click
+    document.addEventListener('click', function(e) {
+        if (!oppSearch.contains(e.target) && !oppResults.contains(e.target)) {
+            oppResults.style.display = 'none';
+        }
+        if (!contactSearch.contains(e.target) && !contactResults.contains(e.target)) {
+            contactResults.style.display = 'none';
+        }
+    });
 })();
 </script>

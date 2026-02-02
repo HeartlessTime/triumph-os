@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session, selectinload
 
 from app.database import get_db
 from app.models import Account, Contact, Activity, ActivityAttendee
+from sqlalchemy import and_
 from app.services.dashboard_service import get_dashboard_data
 from app.template_config import templates, get_app_tz
 
@@ -88,6 +89,19 @@ async def dashboard(request: Request, db: Session = Depends(get_db)):
         .all()
     )
 
+    # Site visits awaiting estimate (overdue first, then oldest visit)
+    jobs_awaiting_estimate = (
+        db.query(Activity)
+        .options(selectinload(Activity.contact), selectinload(Activity.opportunity))
+        .filter(
+            Activity.activity_type == "site_visit",
+            Activity.requires_estimate == True,
+            Activity.estimate_completed == False,
+        )
+        .order_by(Activity.estimate_needed_by.nulls_last(), Activity.activity_date)
+        .all()
+    )
+
     # Hot accounts — stalest first (oldest last_contacted at top)
     hot_accounts_all = (
         db.query(Account)
@@ -111,5 +125,6 @@ async def dashboard(request: Request, db: Session = Depends(get_db)):
             "meetings_completed": meetings_completed,
             "hot_accounts": hot_accounts,
             "next_action_accounts": next_action_accounts,  # merged into Tasks section in template
+            "jobs_awaiting_estimate": jobs_awaiting_estimate,
         },
     )

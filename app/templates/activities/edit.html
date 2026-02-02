@@ -98,6 +98,47 @@
                     </div>
                     {% endif %}
                     {% endif %}
+                    {# Job walk / estimating fields for site visits #}
+                    {% if activity.activity_type == 'site_visit' %}
+                    <div class="col-12" id="jobWalkSection">
+                        <hr class="my-2">
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="checkbox" id="requires_estimate" name="requires_estimate" value="true"
+                                {% if activity.requires_estimate %}checked{% endif %}>
+                            <label class="form-check-label fw-semibold" for="requires_estimate">Requires Estimate</label>
+                        </div>
+                        <div id="jobWalkFields" {% if not activity.requires_estimate %}style="display:none;"{% endif %}>
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label for="estimate_needed_by" class="form-label">Estimate Needed By</label>
+                                    <input type="date" class="form-control" id="estimate_needed_by" name="estimate_needed_by"
+                                        value="{{ activity.estimate_needed_by.strftime('%Y-%m-%d') if activity.estimate_needed_by else '' }}">
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="estimated_quantity" class="form-label">Estimated Quantity</label>
+                                    <input type="text" class="form-control" id="estimated_quantity" name="estimated_quantity"
+                                        value="{{ activity.estimated_quantity or '' }}" maxlength="100">
+                                </div>
+                                <div class="col-12">
+                                    <label for="scope_summary" class="form-label">Scope Summary</label>
+                                    <textarea class="form-control" id="scope_summary" name="scope_summary" rows="2">{{ activity.scope_summary or '' }}</textarea>
+                                </div>
+                                <div class="col-12">
+                                    <label for="complexity_notes" class="form-label">Complexity Notes</label>
+                                    <textarea class="form-control" id="complexity_notes" name="complexity_notes" rows="2">{{ activity.complexity_notes or '' }}</textarea>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="estimate_completed" name="estimate_completed" value="true"
+                                            {% if activity.estimate_completed %}checked{% endif %}>
+                                        <label class="form-check-label" for="estimate_completed">Estimate Completed</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+
                     {# Follow-up date field - visible when activity has a contact #}
                     {% if activity.contact %}
                     <div class="col-md-6">
@@ -165,6 +206,15 @@
     if (typeSelect && descLabel) {
         typeSelect.addEventListener('change', function() {
             descLabel.textContent = typeSelect.value === 'meeting' ? 'Meeting Summary' : 'Description';
+        });
+    }
+
+    // Toggle job walk fields
+    var reqEst = document.getElementById('requires_estimate');
+    var jwFields = document.getElementById('jobWalkFields');
+    if (reqEst && jwFields) {
+        reqEst.addEventListener('change', function() {
+            jwFields.style.display = reqEst.checked ? '' : 'none';
         });
     }
 })();

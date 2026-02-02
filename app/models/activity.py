@@ -1,5 +1,6 @@
-from datetime import datetime
-from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey
+from datetime import date, datetime
+import sqlalchemy as sa
+from sqlalchemy import Boolean, Column, Date, Integer, String, Text, DateTime, ForeignKey
 from sqlalchemy.orm import relationship
 from app.database import Base
 
@@ -22,15 +23,28 @@ class Activity(Base):
     created_by_id = Column(Integer, ForeignKey("users.id"), nullable=True)
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
 
+    # Job walk / estimating fields (site visits)
+    requires_estimate = Column(Boolean, nullable=False, server_default=sa.text("false"))
+    scope_summary = Column(Text, nullable=True)
+    estimated_quantity = Column(String(100), nullable=True)
+    complexity_notes = Column(Text, nullable=True)
+    estimate_needed_by = Column(Date, nullable=True)
+    assigned_estimator_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+    estimate_completed = Column(Boolean, nullable=False, server_default=sa.text("false"))
+    estimate_completed_at = Column(Date, nullable=True)
+
     # Relationships
     opportunity = relationship("Opportunity", back_populates="activities")
     contact = relationship("Contact", back_populates="activities")
-    created_by = relationship("User", back_populates="created_activities")
     attendee_links = relationship(
         "ActivityAttendee",
         back_populates="activity",
         cascade="all, delete-orphan",
     )
+    created_by = relationship(
+        "User", back_populates="created_activities", foreign_keys=[created_by_id]
+    )
+    assigned_estimator = relationship("User", foreign_keys=[assigned_estimator_id])
 
     # Activity types for logging interactions.
     # "meeting_requested" is used when a meeting has been discussed/proposed but not yet
@@ -101,6 +115,28 @@ class Activity(Base):
     def icon(self):
         """Get icon for activity type."""
         return self.TYPE_ICONS.get(self.activity_type, "📋")
+
+    @property
+    def estimate_status(self):
+        """Derived status for job walk site visits."""
+        if not self.requires_estimate:
+            return None
+        if self.estimate_completed:
+            return "completed"
+        if self.estimate_needed_by and self.estimate_needed_by < date.today():
+            return "overdue"
+        if self.estimate_needed_by and self.estimate_needed_by == date.today():
+            return "due_today"
+        if self.estimate_needed_by and (self.estimate_needed_by - date.today()).days <= 3:
+            return "due_soon"
+        return "pending"
+
+    @property
+    def days_until_estimate_needed(self):
+        """Days until estimate is needed. Negative = overdue."""
+        if self.estimate_needed_by:
+            return (self.estimate_needed_by - date.today()).days
+        return None
 
     def __repr__(self):
         return f"<Activity {self.activity_type}: {self.subject}>"

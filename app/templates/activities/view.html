@@ -79,7 +79,57 @@
 
                         {% if activity.description %}
                         <dt class="tos-entity-sub">{% if activity.activity_type == 'meeting' %}Meeting Summary{% else %}Notes{% endif %}</dt>
-                        <dd class="mb-0" style="white-space: pre-line;">{{ activity.description }}</dd>
+                        <dd class="mb-3" style="white-space: pre-line;">{{ activity.description }}</dd>
+                        {% endif %}
+
+                        {% if activity.requires_estimate %}
+                        <dt class="tos-entity-sub" style="margin-top: 0.5rem; padding-top: 0.5rem; border-top: 1px solid var(--border-default);">
+                            <i class="bi bi-clipboard-check me-1"></i>Estimating Details
+                        </dt>
+                        <dd class="mb-2">
+                            <span class="badge {% if activity.estimate_status in ('overdue', 'due_today') %}bg-danger{% elif activity.estimate_status == 'completed' %}bg-success{% elif activity.estimate_status == 'due_soon' %}bg-warning text-dark{% else %}bg-secondary{% endif %}">
+                                {% if activity.estimate_status == 'overdue' %}Overdue{% elif activity.estimate_status == 'due_today' %}Due Today{% elif activity.estimate_status == 'completed' %}Estimate Completed{% elif activity.estimate_status == 'due_soon' %}Due Soon{% else %}Pending Estimate{% endif %}
+                            </span>
+                        </dd>
+
+                        {% if activity.scope_summary %}
+                        <dt class="tos-entity-sub">Scope Summary</dt>
+                        <dd class="mb-2" style="white-space: pre-line;">{{ activity.scope_summary }}</dd>
+                        {% endif %}
+
+                        {% if activity.estimated_quantity %}
+                        <dt class="tos-entity-sub">Estimated Quantity</dt>
+                        <dd class="mb-2">{{ activity.estimated_quantity }}</dd>
+                        {% endif %}
+
+                        {% if activity.complexity_notes %}
+                        <dt class="tos-entity-sub">Complexity Notes</dt>
+                        <dd class="mb-2" style="white-space: pre-line;">{{ activity.complexity_notes }}</dd>
+                        {% endif %}
+
+                        {% if activity.estimate_needed_by %}
+                        <dt class="tos-entity-sub">Estimate Needed By</dt>
+                        <dd class="mb-2">
+                            <span class="{% if activity.estimate_status in ('overdue', 'due_today') %}text-danger fw-bold{% elif activity.estimate_status == 'due_soon' %}text-warning{% endif %}">
+                                {{ activity.estimate_needed_by.strftime('%b %d, %Y') }}
+                            </span>
+                            {% if activity.days_until_estimate_needed is not none and not activity.estimate_completed %}
+                            <span class="text-muted small ms-1">
+                                ({% if activity.days_until_estimate_needed < 0 %}{{ activity.days_until_estimate_needed|abs }}d overdue{% elif activity.days_until_estimate_needed == 0 %}due today{% else %}in {{ activity.days_until_estimate_needed }}d{% endif %})
+                            </span>
+                            {% endif %}
+                        </dd>
+                        {% endif %}
+
+                        {% if activity.estimate_completed_at %}
+                        <dt class="tos-entity-sub">Estimate Received</dt>
+                        <dd class="mb-2 text-success">{{ activity.estimate_completed_at.strftime('%b %d, %Y') }}</dd>
+                        {% endif %}
+
+                        {% if activity.assigned_estimator %}
+                        <dt class="tos-entity-sub">Assigned Estimator</dt>
+                        <dd class="mb-0">{{ activity.assigned_estimator.full_name }}</dd>
+                        {% endif %}
                         {% endif %}
                     </dl>
                 </div>

@@ -29,7 +29,9 @@ class User(Base):
     )
     created_accounts = relationship("Account", back_populates="created_by")
     created_estimates = relationship("Estimate", back_populates="created_by")
-    created_activities = relationship("Activity", back_populates="created_by")
+    created_activities = relationship(
+        "Activity", back_populates="created_by", foreign_keys="Activity.created_by_id"
+    )
     assigned_tasks = relationship(
         "Task", back_populates="assigned_to", foreign_keys="Task.assigned_to_id"
     )

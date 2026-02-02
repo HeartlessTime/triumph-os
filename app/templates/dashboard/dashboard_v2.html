@@ -712,42 +712,66 @@
             </div>
             {% endif %}
 
-            <!-- SECTION 4: Upcoming Bids (compact) -->
+            <!-- SECTION 4: Jobs Walked — Awaiting Estimate -->
             <div class="section-card section-full section--pipeline">
                 <div class="section-header">
-                    <i class="bi bi-calendar-event me-1"></i>Upcoming Bids (Next 14 Days)
-                    <span class="badge bg-primary ms-2">{{ upcoming_bids|length }}</span>
+                    <i class="bi bi-clipboard-check me-1"></i>Jobs I Walked — Awaiting Estimate
+                    <span class="badge bg-primary ms-2">{{ jobs_awaiting_estimate|length }}</span>
                 </div>
-                <div class="section-body">
-                    {% if upcoming_bids %}
+                <div class="section-body" style="max-height: 320px; overflow-y: auto;">
+                    {% if jobs_awaiting_estimate %}
                     <table class="dense-table">
                         <thead>
                             <tr>
-                                <th>Opportunity</th>
                                 <th>Account</th>
-                                <th>Bid Date</th>
-                                <th class="text-end">Value</th>
+                                <th>Scope</th>
+                                <th>Needed By</th>
+                                <th>Status</th>
                                 <th></th>
                             </tr>
                         </thead>
                         <tbody>
-                            {% for opp in upcoming_bids %}
-                            <tr>
+                            {% for sv in jobs_awaiting_estimate %}
+                            <tr data-href="/activities/{{ sv.id }}"
+                                {% if sv.estimate_status in ('overdue', 'due_today') %}style="background-color: var(--danger-bg, #fee2e2);"
+                                {% elif sv.estimate_status == 'due_soon' %}style="background-color: var(--warning-bg, #fef3c7);"
+                                {% endif %}>
                                 <td>
-                                    <a href="/opportunities/{{ opp.id }}" class="row-link entity-name">{{ opp.name }}</a>
+                                    {% if sv.contact and sv.contact.account %}
+                                    <a href="/accounts/{{ sv.contact.account.id }}" class="row-link entity-name">{{ sv.contact.account.name }}</a>
+                                    {% elif sv.opportunity and sv.opportunity.primary_account %}
+                                    <a href="/accounts/{{ sv.opportunity.primary_account.id }}" class="row-link entity-name">{{ sv.opportunity.primary_account.name }}</a>
+                                    {% else %}
+                                    <span class="entity-name">{{ sv.subject }}</span>
+                                    {% endif %}
                                 </td>
-                                <td class="entity-sub">{{ opp.primary_account.name if opp.primary_account else '—' }}</td>
                                 <td>
-                                    <span class="{% if opp.days_until_bid <= 3 %}text-danger fw-bold{% elif opp.days_until_bid <= 7 %}text-warning{% endif %}">
-                                        {{ opp.bid_date.strftime('%b %d') }}
+                                    <span class="entity-sub text-truncate d-inline-block" style="max-width: 200px;">{{ sv.scope_summary or '—' }}</span>
+                                </td>
+                                <td style="white-space: nowrap;">
+                                    {% if sv.estimate_needed_by %}
+                                    <span class="{% if sv.estimate_status in ('overdue', 'due_today') %}text-danger fw-bold{% elif sv.estimate_status == 'due_soon' %}text-warning{% else %}text-muted{% endif %}" style="font-size: 0.8rem;">
+                                        {{ sv.estimate_needed_by.strftime('%b %d') }}
+                                        {% if sv.days_until_estimate_needed is not none %}
+                                        <span style="font-size: 0.7rem;">({% if sv.days_until_estimate_needed < 0 %}{{ sv.days_until_estimate_needed|abs }}d late{% elif sv.days_until_estimate_needed == 0 %}today{% else %}{{ sv.days_until_estimate_needed }}d{% endif %})</span>
+                                        {% endif %}
                                     </span>
-                                    <span class="text-muted" style="font-size: 0.7rem;">({{ opp.days_until_bid }}d)</span>
+                                    {% else %}
+                                    <span class="text-muted" style="font-size: 0.75rem; font-style: italic;">No deadline set</span>
+                                    {% endif %}
                                 </td>
-                                <td class="text-end">
-                                    <span class="currency" style="font-size: 0.85rem;">{{ opp.value or 0 }}</span>
+                                <td>
+                                    <span class="badge {% if sv.estimate_status in ('overdue', 'due_today') %}bg-danger{% elif sv.estimate_status == 'due_soon' %}bg-warning text-dark{% else %}bg-secondary{% endif %}" style="font-size: 0.65rem;">
+                                        {% if sv.estimate_status == 'overdue' %}Overdue{% elif sv.estimate_status == 'due_today' %}Due Today{% elif sv.estimate_status == 'due_soon' %}Due Soon{% else %}Pending{% endif %}
+                                    </span>
                                 </td>
-                                <td class="text-end">
-                                    <a href="/opportunities/{{ opp.id }}" class="tos-btn tos-btn-sm btn-view"><i class="bi bi-eye"></i></a>
+                                <td class="text-end" style="white-space: nowrap;">
+                                    <button type="button"
+                                            class="tos-btn tos-btn-sm btn-log mark-estimate-btn"
+                                            data-activity-id="{{ sv.id }}"
+                                            title="Mark Estimate Received">
+                                        <i class="bi bi-check-lg me-1"></i>Received
+                                    </button>
                                 </td>
                             </tr>
                             {% endfor %}
@@ -755,8 +779,8 @@
                     </table>
                     {% else %}
                     <div class="empty-state">
-                        <i class="bi bi-calendar"></i>
-                        <div>No bids in the next 14 days.</div>
+                        <i class="bi bi-clipboard-check"></i>
+                        <div>No jobs awaiting estimate.</div>
                     </div>
                     {% endif %}
                 </div>
@@ -807,64 +831,21 @@
     </div>
 </div>
 
-<!-- Log Site Visit Modal -->
-<div class="modal fade" id="logSiteVisitModal" tabindex="-1" aria-labelledby="logSiteVisitModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <form method="post" id="siteVisitForm" action="/activities/add?from=/">
-                <input type="hidden" name="activity_type" value="site_visit">
-                <input type="hidden" id="siteVisitOppId" name="opportunity_id" value="">
-                <input type="hidden" id="siteVisitContactId" name="contact_id" value="">
-                <div class="modal-header py-2">
-                    <h6 class="modal-title" id="logSiteVisitModalLabel"><i class="bi bi-geo-alt me-2"></i>Log Site Visit</h6>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body py-2">
-                    <div class="mb-2">
-                        <label for="siteVisitDate" class="form-label small mb-1">Date & Time <span class="text-danger">*</span></label>
-                        <input type="datetime-local" class="form-control form-control-sm" id="siteVisitDate" name="activity_date" required>
-                    </div>
-                    <div class="mb-2">
-                        <label class="form-label small mb-1">Opportunity</label>
-                        <div class="position-relative">
-                            <input type="text" class="form-control form-control-sm" id="siteVisitOppSearch"
-                                placeholder="Search opportunities..." autocomplete="off">
-                            <div id="siteVisitOppResults" class="list-group position-absolute w-100" style="z-index: 1050; display: none; max-height: 150px; overflow-y: auto; box-shadow: 0 2px 8px rgba(0,0,0,0.15);"></div>
-                        </div>
-                        <div id="siteVisitOppSelected" class="mt-1"></div>
-                    </div>
-                    <div class="mb-2">
-                        <label for="siteVisitSubject" class="form-label small mb-1">Purpose <span class="text-danger">*</span></label>
-                        <select class="form-select form-select-sm" id="siteVisitSubject" name="subject" required>
-                            <option value="Pre-bid walkthrough">Pre-bid walkthrough</option>
-                            <option value="Existing site evaluation">Existing site evaluation</option>
-                            <option value="Post-install check">Post-install check</option>
-                            <option value="Relationship visit">Relationship visit</option>
-                            <option value="Site Visit">Other</option>
-                        </select>
-                    </div>
-                    <div class="mb-2">
-                        <label class="form-label small mb-1">Contact</label>
-                        <div class="position-relative">
-                            <input type="text" class="form-control form-control-sm" id="siteVisitContactSearch"
-                                placeholder="Search contacts..." autocomplete="off">
-                            <div id="siteVisitContactResults" class="list-group position-absolute w-100" style="z-index: 1050; display: none; max-height: 150px; overflow-y: auto; box-shadow: 0 2px 8px rgba(0,0,0,0.15);"></div>
-                        </div>
-                        <div id="siteVisitContactSelected" class="mt-1"></div>
-                    </div>
-                    <div class="mb-0">
-                        <label for="siteVisitNotes" class="form-label small mb-1">Notes</label>
-                        <textarea class="form-control form-control-sm" id="siteVisitNotes" name="description" rows="2" placeholder="Optional notes..."></textarea>
-                    </div>
-                </div>
-                <div class="modal-footer py-2">
-                    <button type="button" class="tos-btn tos-btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="tos-btn tos-btn-primary"><i class="bi bi-geo-alt"></i> Log Site Visit</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
+<script>
+// Site Visit Modal: inject data for searchable selects (used by shared partial)
+window._siteVisitOpps = [
+    {% for opp in all_open_opps %}
+    { id: {{ opp.id }}, name: "{{ opp.name | replace('"', '\\"') }}", account: "{{ (opp.primary_account.name if opp.primary_account else 'No Account') | replace('"', '\\"') }}" },
+    {% endfor %}
+];
+window._siteVisitContacts = [
+    {% for contact in all_contacts %}
+    { id: {{ contact.id }}, name: "{{ contact.full_name | replace('"', '\\"') }}", account: "{{ (contact.account.name if contact.account else 'No Account') | replace('"', '\\"') }}" },
+    {% endfor %}
+];
+</script>
+
+{% include "partials/site_visit_modal.html" %}
 
 {% endblock %}
 
@@ -901,6 +882,36 @@ document.querySelectorAll('.mark-meeting-btn').forEach(function(btn) {
     });
 });
 
+// Mark estimate as received (AJAX)
+document.querySelectorAll('.mark-estimate-btn').forEach(function(btn) {
+    btn.addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+
+        const activityId = this.dataset.activityId;
+        const row = this.closest('tr');
+
+        fetch('/today/mark-estimate-received/' + activityId, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                row.style.transition = 'opacity 0.3s';
+                row.style.opacity = '0';
+                setTimeout(() => row.remove(), 300);
+            } else {
+                alert(data.error || 'Failed to mark estimate received');
+            }
+        })
+        .catch(err => {
+            console.error('Error:', err);
+            alert('Failed to mark estimate received');
+        });
+    });
+});
+
 // Clickable rows handler - navigates to detail page when row is clicked
 // Does not interfere with buttons, forms, or links inside the row
 document.addEventListener('click', function(e) {
@@ -914,152 +925,6 @@ document.addEventListener('click', function(e) {
     window.location.href = clickable.dataset.href;
 });
 
-// Site Visit Modal: set default date/time when modal opens
-document.getElementById('logSiteVisitModal').addEventListener('show.bs.modal', function() {
-    const now = new Date();
-    const year = now.getFullYear();
-    const month = String(now.getMonth() + 1).padStart(2, '0');
-    const day = String(now.getDate()).padStart(2, '0');
-    const hours = String(now.getHours()).padStart(2, '0');
-    const minutes = String(now.getMinutes()).padStart(2, '0');
-    document.getElementById('siteVisitDate').value = `${year}-${month}-${day}T${hours}:${minutes}`;
-});
-
-// Site Visit Modal: Searchable selects
-(function() {
-    // Data from server
-    const opportunities = [
-        {% for opp in all_open_opps %}
-        { id: {{ opp.id }}, name: "{{ opp.name | replace('"', '\\"') }}", account: "{{ (opp.primary_account.name if opp.primary_account else 'No Account') | replace('"', '\\"') }}" },
-        {% endfor %}
-    ];
-    const contacts = [
-        {% for contact in all_contacts %}
-        { id: {{ contact.id }}, name: "{{ contact.full_name | replace('"', '\\"') }}", account: "{{ (contact.account.name if contact.account else 'No Account') | replace('"', '\\"') }}" },
-        {% endfor %}
-    ];
-
-    // Opportunity search
-    const oppSearch = document.getElementById('siteVisitOppSearch');
-    const oppResults = document.getElementById('siteVisitOppResults');
-    const oppSelected = document.getElementById('siteVisitOppSelected');
-    const oppIdInput = document.getElementById('siteVisitOppId');
-    let selectedOppId = null;
-
-    oppSearch.addEventListener('input', function() {
-        const query = this.value.toLowerCase().trim();
-        if (query.length < 1) {
-            oppResults.style.display = 'none';
-            return;
-        }
-        const matches = opportunities.filter(o =>
-            o.name.toLowerCase().includes(query) || o.account.toLowerCase().includes(query)
-        ).slice(0, 8);
-
-        if (matches.length === 0) {
-            oppResults.innerHTML = '<div class="list-group-item text-muted small">No matches found</div>';
-        } else {
-            oppResults.innerHTML = matches.map(o =>
-                `<button type="button" class="list-group-item list-group-item-action py-1 small" data-opp-id="${o.id}">${o.name} <span class="text-muted">(${o.account})</span></button>`
-            ).join('');
-        }
-        oppResults.style.display = 'block';
-    });
-
-    oppResults.addEventListener('click', function(e) {
-        const btn = e.target.closest('[data-opp-id]');
-        if (btn) {
-            const id = parseInt(btn.dataset.oppId, 10);
-            const opp = opportunities.find(o => o.id === id);
-            if (opp) {
-                selectedOppId = id;
-                oppIdInput.value = id;
-                oppSearch.value = '';
-                oppResults.style.display = 'none';
-                oppSelected.innerHTML = `<span class="badge bg-primary d-inline-flex align-items-center gap-1">${opp.name} <button type="button" class="btn-close btn-close-white" style="font-size: 0.5rem;" data-clear-opp aria-label="Remove"></button></span>`;
-            }
-        }
-    });
-
-    oppSelected.addEventListener('click', function(e) {
-        if (e.target.closest('[data-clear-opp]')) {
-            selectedOppId = null;
-            oppIdInput.value = '';
-            oppSelected.innerHTML = '';
-        }
-    });
-
-    // Contact search
-    const contactSearch = document.getElementById('siteVisitContactSearch');
-    const contactResults = document.getElementById('siteVisitContactResults');
-    const contactSelected = document.getElementById('siteVisitContactSelected');
-    const contactIdInput = document.getElementById('siteVisitContactId');
-    let selectedContactId = null;
-
-    contactSearch.addEventListener('input', function() {
-        const query = this.value.toLowerCase().trim();
-        if (query.length < 1) {
-            contactResults.style.display = 'none';
-            return;
-        }
-        const matches = contacts.filter(c =>
-            c.name.toLowerCase().includes(query) || c.account.toLowerCase().includes(query)
-        ).slice(0, 8);
-
-        if (matches.length === 0) {
-            contactResults.innerHTML = '<div class="list-group-item text-muted small">No matches found</div>';
-        } else {
-            contactResults.innerHTML = matches.map(c =>
-                `<button type="button" class="list-group-item list-group-item-action py-1 small" data-contact-id="${c.id}">${c.name} <span class="text-muted">(${c.account})</span></button>`
-            ).join('');
-        }
-        contactResults.style.display = 'block';
-    });
-
-    contactResults.addEventListener('click', function(e) {
-        const btn = e.target.closest('[data-contact-id]');
-        if (btn) {
-            const id = parseInt(btn.dataset.contactId, 10);
-            const contact = contacts.find(c => c.id === id);
-            if (contact) {
-                selectedContactId = id;
-                contactIdInput.value = id;
-                contactSearch.value = '';
-                contactResults.style.display = 'none';
-                contactSelected.innerHTML = `<span class="badge bg-secondary d-inline-flex align-items-center gap-1">${contact.name} <button type="button" class="btn-close btn-close-white" style="font-size: 0.5rem;" data-clear-contact aria-label="Remove"></button></span>`;
-            }
-        }
-    });
-
-    contactSelected.addEventListener('click', function(e) {
-        if (e.target.closest('[data-clear-contact]')) {
-            selectedContactId = null;
-            contactIdInput.value = '';
-            contactSelected.innerHTML = '';
-        }
-    });
-
-    // Hide dropdowns on outside click
-    document.addEventListener('click', function(e) {
-        if (!oppSearch.contains(e.target) && !oppResults.contains(e.target)) {
-            oppResults.style.display = 'none';
-        }
-        if (!contactSearch.contains(e.target) && !contactResults.contains(e.target)) {
-            contactResults.style.display = 'none';
-        }
-    });
-
-    // Reset form on modal close
-    document.getElementById('logSiteVisitModal').addEventListener('hidden.bs.modal', function() {
-        selectedOppId = null;
-        selectedContactId = null;
-        oppIdInput.value = '';
-        contactIdInput.value = '';
-        oppSearch.value = '';
-        contactSearch.value = '';
-        oppSelected.innerHTML = '';
-        contactSelected.innerHTML = '';
-    });
-})();
+// Site Visit data + searchable selects are injected before the partial in content block
 </script>
 {% endblock %}
