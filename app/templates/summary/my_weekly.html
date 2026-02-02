@@ -174,22 +174,16 @@
                     </div>
                     {% endif %}
                 </div>
-                <div style="padding: 0.5rem 0.75rem; background: #f8fafc; border-top: 1px solid #e2e8f0;">
-                    <label class="form-label small text-muted mb-1"><i class="bi bi-pencil me-1"></i>Notes</label>
-                    <textarea class="form-control form-control-sm auto-save-note" rows="2"
-                        data-section="outreach" data-note-type="personal"
-                        placeholder="Add notes about outreach...">{{ section_notes.get('outreach', '') }}</textarea>
-                </div>
             </div>
         </div>
 
         <!-- Meetings This Week -->
         <div class="col-lg-6 d-flex">
-            <div class="tos-card w-100 section--meetings">
+            <div class="tos-card w-100 d-flex flex-column section--meetings">
                 <div class="tos-section-header">
                     <i class="bi bi-calendar-event me-2"></i>Meetings This Week ({{ meetings_count }})
                 </div>
-                <div class="summary-card-body">
+                <div class="summary-card-body flex-grow-1" style="overflow-y: auto;">
                     {% if meetings %}
                     <table class="tos-table">
                         <thead>

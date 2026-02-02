@@ -373,9 +373,19 @@
                         <select class="form-select" id="activity_type" name="activity_type">
                             <option value="call">Phone Call</option>
                             <option value="email" selected>Email</option>
-                            <option value="meeting">Meeting</option>
                             <option value="other">Other</option>
                         </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Follow-up In</label>
+                        <div class="d-flex gap-2 flex-wrap mb-2" id="followupPresets">
+                            <button type="button" class="tos-btn tos-btn-secondary followup-preset" data-days="3">3 days</button>
+                            <button type="button" class="tos-btn tos-btn-secondary followup-preset" data-days="7">7 days</button>
+                            <button type="button" class="tos-btn tos-btn-primary followup-preset active" data-days="30">30 days</button>
+                            <button type="button" class="tos-btn tos-btn-secondary followup-preset" data-days="60">60 days</button>
+                        </div>
+                        <input type="date" class="form-control" name="next_followup" id="next_followup_input" style="max-width: 200px;">
+                        <div class="form-text" id="followupDatePreview"></div>
                     </div>
                     <div class="mb-3">
                         <label for="contact_notes" class="form-label">Notes <span class="text-muted">(optional)</span></label>
@@ -515,6 +525,72 @@
         AutoSave.init(nextActionForm, endpoint);
     }
 
+    // Follow-up preset logic
+    const presets = document.querySelectorAll('.followup-preset');
+    const dateInput = document.getElementById('next_followup_input');
+    const preview = document.getElementById('followupDatePreview');
+
+    function calculateFollowupDate(days) {
+        const d = new Date();
+        d.setDate(d.getDate() + days);
+        return normalizeToBusinessDay(d);
+    }
+    function normalizeToBusinessDay(d) {
+        const dayOfWeek = d.getDay();
+        if (dayOfWeek === 6) d.setDate(d.getDate() + 2);
+        if (dayOfWeek === 0) d.setDate(d.getDate() + 1);
+        return d;
+    }
+    function formatDateISO(d) {
+        return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+    }
+    function formatDateDisplay(d) {
+        return d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+    }
+    function updatePreview() {
+        if (dateInput.value) {
+            const d = new Date(dateInput.value + 'T12:00:00');
+            preview.textContent = 'Follow-up: ' + formatDateDisplay(d);
+        } else {
+            preview.textContent = '';
+        }
+    }
+    function clearPresetSelection() {
+        presets.forEach(function(p) {
+            p.classList.remove('active', 'tos-btn-primary');
+            p.classList.add('tos-btn-secondary');
+        });
+    }
+    function setFollowupFromPreset(days, btn) {
+        dateInput.value = formatDateISO(calculateFollowupDate(days));
+        updatePreview();
+        clearPresetSelection();
+        btn.classList.remove('tos-btn-secondary');
+        btn.classList.add('active', 'tos-btn-primary');
+    }
+    dateInput.addEventListener('change', function() {
+        if (this.value) {
+            const selected = new Date(this.value + 'T12:00:00');
+            const normalized = normalizeToBusinessDay(new Date(selected));
+            const normalizedISO = formatDateISO(normalized);
+            if (this.value !== normalizedISO) {
+                this.value = normalizedISO;
+                preview.textContent = 'Follow-up: ' + formatDateDisplay(normalized) + ' (moved from weekend)';
+            } else {
+                updatePreview();
+            }
+        }
+        clearPresetSelection();
+    });
+    presets.forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            setFollowupFromPreset(parseInt(this.dataset.days, 10), this);
+        });
+    });
+    // Initialize with 30-day default
+    const defaultBtn = document.querySelector('.followup-preset[data-days="30"]');
+    if (defaultBtn) setFollowupFromPreset(30, defaultBtn);
+
     const modal = document.getElementById('logContactModal');
     const form = document.getElementById('logContactForm');
     const modalTitle = document.getElementById('logContactModalLabel');
@@ -530,9 +606,10 @@
         // Update modal title with contact name
         modalTitle.innerHTML = '<i class="bi bi-telephone me-2"></i>Log Contact with ' + contactName;
 
-        // Clear previous notes
+        // Reset form fields
         document.getElementById('contact_notes').value = '';
         document.getElementById('activity_type').value = 'email';
+        if (defaultBtn) setFollowupFromPreset(30, defaultBtn);
     });
 
     // Meeting Modal: set default date/time when modal opens

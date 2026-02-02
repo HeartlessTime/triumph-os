@@ -323,12 +323,20 @@
                             <option value="email">Email</option>
                             <option value="other">Other</option>
                         </select>
-                        <p class="form-text text-muted mb-0">
-                            <i class="bi bi-info-circle me-1"></i>For meetings, use the "Log Meeting" button on the contact page.
-                        </p>
                     </div>
                     <div class="mb-3">
-                        <label for="notes" class="form-label">Notes</label>
+                        <label class="form-label">Follow-up In</label>
+                        <div class="d-flex gap-2 flex-wrap mb-2" id="followupPresets">
+                            <button type="button" class="tos-btn tos-btn-secondary followup-preset" data-days="3">3 days</button>
+                            <button type="button" class="tos-btn tos-btn-secondary followup-preset" data-days="7">7 days</button>
+                            <button type="button" class="tos-btn tos-btn-primary followup-preset active" data-days="30">30 days</button>
+                            <button type="button" class="tos-btn tos-btn-secondary followup-preset" data-days="60">60 days</button>
+                        </div>
+                        <input type="date" class="form-control" name="next_followup" id="next_followup_input" style="max-width: 200px;">
+                        <div class="form-text" id="followupDatePreview"></div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="notes" class="form-label">Notes <span class="text-muted">(optional)</span></label>
                         <textarea class="form-control" id="notes" name="notes" rows="3" placeholder="Optional notes..."></textarea>
                     </div>
                 </div>
@@ -344,15 +352,85 @@
 </div>
 
 <script>
-// Handle Log Contact modal for Contact follow-ups
-document.getElementById('logContactModal').addEventListener('show.bs.modal', function(event) {
-    const button = event.relatedTarget;
-    const contactId = button.getAttribute('data-contact-id');
-    const contactName = button.getAttribute('data-contact-name');
+// Follow-up preset logic
+(function() {
+    var presets = document.querySelectorAll('.followup-preset');
+    var dateInput = document.getElementById('next_followup_input');
+    var preview = document.getElementById('followupDatePreview');
 
-    document.getElementById('logContactForm').action = '/contacts/' + contactId + '/log-contact';
-    document.getElementById('contactNameDisplay').textContent = 'Contact: ' + contactName;
-});
+    function calculateFollowupDate(days) {
+        var d = new Date();
+        d.setDate(d.getDate() + days);
+        return normalizeToBusinessDay(d);
+    }
+    function normalizeToBusinessDay(d) {
+        var dow = d.getDay();
+        if (dow === 6) d.setDate(d.getDate() + 2);
+        if (dow === 0) d.setDate(d.getDate() + 1);
+        return d;
+    }
+    function formatDateISO(d) {
+        return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+    }
+    function formatDateDisplay(d) {
+        return d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+    }
+    function updatePreview() {
+        if (dateInput.value) {
+            var d = new Date(dateInput.value + 'T12:00:00');
+            preview.textContent = 'Follow-up: ' + formatDateDisplay(d);
+        } else {
+            preview.textContent = '';
+        }
+    }
+    function clearPresetSelection() {
+        presets.forEach(function(p) {
+            p.classList.remove('active', 'tos-btn-primary');
+            p.classList.add('tos-btn-secondary');
+        });
+    }
+    function setFollowupFromPreset(days, btn) {
+        dateInput.value = formatDateISO(calculateFollowupDate(days));
+        updatePreview();
+        clearPresetSelection();
+        btn.classList.remove('tos-btn-secondary');
+        btn.classList.add('active', 'tos-btn-primary');
+    }
+    dateInput.addEventListener('change', function() {
+        if (this.value) {
+            var selected = new Date(this.value + 'T12:00:00');
+            var normalized = normalizeToBusinessDay(new Date(selected));
+            var normalizedISO = formatDateISO(normalized);
+            if (this.value !== normalizedISO) {
+                this.value = normalizedISO;
+                preview.textContent = 'Follow-up: ' + formatDateDisplay(normalized) + ' (moved from weekend)';
+            } else {
+                updatePreview();
+            }
+        }
+        clearPresetSelection();
+    });
+    presets.forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            setFollowupFromPreset(parseInt(this.dataset.days, 10), this);
+        });
+    });
+    var defaultBtn = document.querySelector('.followup-preset[data-days="30"]');
+    if (defaultBtn) setFollowupFromPreset(30, defaultBtn);
+
+    // Handle Log Contact modal for Contact follow-ups
+    document.getElementById('logContactModal').addEventListener('show.bs.modal', function(event) {
+        var button = event.relatedTarget;
+        var contactId = button.getAttribute('data-contact-id');
+        var contactName = button.getAttribute('data-contact-name');
+
+        document.getElementById('logContactForm').action = '/contacts/' + contactId + '/log-contact';
+        document.getElementById('contactNameDisplay').textContent = 'Contact: ' + contactName;
+        document.getElementById('notes').value = '';
+        document.getElementById('activityType').value = 'email';
+        if (defaultBtn) setFollowupFromPreset(30, defaultBtn);
+    });
+})();
 
 // ROW CLICK: Navigate to activity edit when clicking on meeting-pending rows
 // Note: Button clicks use stopPropagation to prevent this navigation
