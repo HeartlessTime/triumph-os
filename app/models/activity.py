@@ -27,6 +27,8 @@ class Activity(Base):
     walk_notes = Column(Text, nullable=True)
     job_walk_status = Column(String(50), nullable=True)  # open, sent_to_estimator, complete
     estimate_due_by = Column(Date, nullable=True)
+    technicians_needed = Column(Integer, nullable=True)
+    estimated_man_hours = Column(Integer, nullable=True)
 
     # Job walk / estimating fields (job_walk activities only)
     requires_estimate = Column(Boolean, nullable=False, server_default=sa.text("false"))

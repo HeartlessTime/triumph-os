@@ -72,6 +72,8 @@ async def start_job_walk(
     activity_date: str = Form(None),
     contact_id: int = Form(None),
     description: str = Form(None),
+    technicians_needed: int = Form(None),
+    estimated_man_hours: int = Form(None),
     db: Session = Depends(get_db),
 ):
     """Create a job walk activity and redirect to the walk page."""
@@ -97,6 +99,8 @@ async def start_job_walk(
         contact_id=contact_id if contact_id else None,
         created_by_id=current_user.id,
         job_walk_status="open",
+        technicians_needed=technicians_needed if technicians_needed else None,
+        estimated_man_hours=estimated_man_hours if estimated_man_hours else None,
     )
 
     db.add(activity)
@@ -342,6 +346,10 @@ def _build_summary_text(activity):
     if activity.contact:
         lines.append(f"Contact: {activity.contact.full_name}")
     lines.append(f"Purpose: {activity.subject}")
+    if activity.technicians_needed:
+        lines.append(f"Technicians Needed: {activity.technicians_needed}")
+    if activity.estimated_man_hours:
+        lines.append(f"Estimated Man Hours: {activity.estimated_man_hours}")
     lines.append("")
 
     # Walk notes (main content)

@@ -482,6 +482,7 @@ ACTIVITY_COLUMNS = {
     "contact_id", "opportunity_id",
     # Job walk fields
     "walk_notes", "job_walk_status", "estimate_due_by",
+    "technicians_needed", "estimated_man_hours",
     # Job walk / estimating fields
     "requires_estimate", "scope_summary", "estimated_quantity",
     "complexity_notes", "estimate_needed_by", "assigned_estimator_id",
@@ -584,6 +585,8 @@ async def auto_save_activity(
                         activity.job_walk_status = val
                 elif field == "estimate_due_by":
                     activity.estimate_due_by = clean_date(value)
+                elif field in ("technicians_needed", "estimated_man_hours"):
+                    setattr(activity, field, clean_int(value))
                 elif field in ("scope_summary", "complexity_notes"):
                     setattr(activity, field, str(value).strip() if value and str(value).strip() else None)
                 elif field == "estimated_quantity":

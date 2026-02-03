@@ -180,6 +180,18 @@
                            value="{{ activity.estimate_due_by.strftime('%Y-%m-%d') if activity.estimate_due_by else '' }}">
                 </div>
                 <div class="jw-field">
+                    <label>Technicians</label>
+                    <input type="number" class="form-control form-control-sm jw-auto"
+                           name="technicians_needed" min="1"
+                           value="{{ activity.technicians_needed or '' }}" placeholder="#">
+                </div>
+                <div class="jw-field">
+                    <label>Man Hours</label>
+                    <input type="number" class="form-control form-control-sm jw-auto"
+                           name="estimated_man_hours" min="1"
+                           value="{{ activity.estimated_man_hours or '' }}" placeholder="#">
+                </div>
+                <div class="jw-field">
                     <label>Areas</label>
                     <div class="jw-field-static" id="jwAreaCount">{{ segments|length }}</div>
                 </div>
