@@ -115,37 +115,6 @@
                         <label for="siteVisitNotes" class="form-label small mb-1">Notes</label>
                         <textarea class="form-control form-control-sm" id="siteVisitNotes" name="description" rows="2" placeholder="Optional notes..."></textarea>
                     </div>
-
-                    {# --- Job Walk / Estimating fields --- #}
-                    <div class="mb-2">
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox" id="requiresEstimate" name="requires_estimate" value="on">
-                            <label class="form-check-label small" for="requiresEstimate">
-                                <i class="bi bi-clipboard-check me-1"></i>Requires Estimate
-                            </label>
-                        </div>
-                    </div>
-                    <div id="jobWalkFields" style="display: none; border-left: 3px solid #6366f1; padding-left: 0.75rem;">
-                        <div class="mb-2">
-                            <label for="scopeSummary" class="form-label small mb-1">Scope Summary <span class="text-danger">*</span></label>
-                            <textarea class="form-control form-control-sm" id="scopeSummary" name="scope_summary" rows="2" placeholder="What work is being estimated?"></textarea>
-                        </div>
-                        <div class="row g-2 mb-2">
-                            <div class="col-6">
-                                <label for="estimatedQuantity" class="form-label small mb-1">Estimated Qty</label>
-                                <input type="text" class="form-control form-control-sm" id="estimatedQuantity" name="estimated_quantity" placeholder="e.g. 50 doors">
-                            </div>
-                            <div class="col-6">
-                                <label for="estimateNeededBy" class="form-label small mb-1">Estimate Needed By</label>
-                                <input type="date" class="form-control form-control-sm" id="estimateNeededBy" name="estimate_needed_by">
-                            </div>
-                        </div>
-                        <div class="mb-2">
-                            <label for="complexityNotes" class="form-label small mb-1">Complexity Notes</label>
-                            <textarea class="form-control form-control-sm" id="complexityNotes" name="complexity_notes" rows="1" placeholder="Access issues, special requirements..."></textarea>
-                        </div>
-                        <input type="hidden" name="assigned_estimator_id" value="4">
-                    </div>
                 </div>
                 <div class="modal-footer py-2">
                     <button type="button" class="tos-btn tos-btn-secondary" data-bs-dismiss="modal">Cancel</button>
@@ -172,15 +141,6 @@
         document.getElementById('siteVisitDate').value = year + '-' + month + '-' + day + 'T' + hours + ':' + minutes;
     });
 
-    // Job walk fields toggle
-    var requiresEstimate = document.getElementById('requiresEstimate');
-    var jobWalkFields = document.getElementById('jobWalkFields');
-    if (requiresEstimate && jobWalkFields) {
-        requiresEstimate.addEventListener('change', function() {
-            jobWalkFields.style.display = this.checked ? 'block' : 'none';
-        });
-    }
-
     // Reset form on modal close
     modal.addEventListener('hidden.bs.modal', function() {
         var form = document.getElementById('siteVisitForm');
@@ -189,9 +149,6 @@
             form.querySelectorAll('input[type="text"], textarea').forEach(function(el) { el.value = ''; });
             // Reset selects to first option
             form.querySelectorAll('select').forEach(function(el) { el.selectedIndex = 0; });
-            // Reset job walk fields
-            if (requiresEstimate) requiresEstimate.checked = false;
-            if (jobWalkFields) jobWalkFields.style.display = 'none';
         }
 
         // Reset searchable fields (dashboard mode)

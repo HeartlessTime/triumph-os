@@ -228,6 +228,15 @@ def get_executive_summary(
     site_visits.sort(key=lambda a: a.activity_date, reverse=True)
 
     # ----------------------------
+    # JOB WALKS (from activities)
+    # ----------------------------
+    job_walks = [
+        a for a in activities_logged
+        if a.activity_type == "job_walk"
+    ]
+    job_walks.sort(key=lambda a: a.activity_date, reverse=True)
+
+    # ----------------------------
     # PIPELINE CHANGES (from activities)
     # ----------------------------
     pipeline_activities = [
@@ -269,6 +278,7 @@ def get_executive_summary(
         # Lists
         "outreach_activities": outreach_activities,  # Activity records (editable)
         "site_visits": site_visits,  # Site visit activities (separate section)
+        "job_walks": job_walks,
         "pipeline_changes": pipeline_changes,
         "tasks_completed": tasks_completed,
         "new_accounts": new_accounts,
@@ -574,16 +584,6 @@ async def my_weekly_summary(
     # Personal notes for this user
     section_notes = load_notes_for_week(db, week_start, user_id=user_id)
 
-    # Get suppressed opportunity IDs for this user
-    suppressed_ids = get_suppressed_opportunity_ids(db, user_id)
-
-    # Filter pipeline_changes to exclude suppressed opportunities
-    # (unless they have new activity after suppression - handled in get_suppressed_opportunity_ids)
-    filtered_pipeline = [
-        opp for opp in summary["pipeline_changes"]
-        if opp.id not in suppressed_ids
-    ]
-
     return templates.TemplateResponse(
         "summary/my_weekly.html",
         {
@@ -597,8 +597,8 @@ async def my_weekly_summary(
             "summary_sentence": summary_sentence,
             # Notes
             "section_notes": section_notes,
-            # Spread all summary data (with filtered pipeline)
-            **{**summary, "pipeline_changes": filtered_pipeline},
+            # Spread all summary data
+            **summary,
         },
     )
 

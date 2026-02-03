@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+
+{% block title %}Job Walk Summary — {{ activity.subject }} - Triumph OS{% endblock %}
+
+{% block extra_css %}
+<style>
+    .fws-page { padding: 1rem; max-width: 700px; }
+    .fws-header {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        margin-bottom: 1rem;
+        padding-bottom: 0.75rem;
+        border-bottom: 1px solid var(--border-default);
+    }
+    .fws-header a { color: var(--text-secondary); text-decoration: none; font-size: 1.1rem; }
+    .fws-header h1 { font-size: 1rem; font-weight: 600; margin: 0; color: var(--text-heading); }
+
+    .fws-copy-bar {
+        display: flex;
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+    }
+
+    .fws-summary {
+        background: var(--bg-surface);
+        border: 1px solid var(--border-default);
+        border-radius: 0.5rem;
+        padding: 1rem;
+        font-family: 'Courier New', Courier, monospace;
+        font-size: 0.8rem;
+        white-space: pre-wrap;
+        word-wrap: break-word;
+        color: var(--text-primary);
+        line-height: 1.5;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="fws-page">
+    <div class="fws-header">
+        <a href="/job-walks/{{ activity.id }}"><i class="bi bi-arrow-left"></i></a>
+        <h1>Estimator Summary</h1>
+    </div>
+
+    <div class="fws-copy-bar">
+        <button type="button" class="tos-btn tos-btn-primary" id="fwsCopyBtn">
+            <i class="bi bi-clipboard me-1"></i>Copy to Clipboard
+        </button>
+        <a href="/job-walks/{{ activity.id }}" class="tos-btn tos-btn-secondary">
+            <i class="bi bi-arrow-left me-1"></i>Back to Walk
+        </a>
+    </div>
+
+    <div class="fws-summary" id="fwsSummaryText">{{ summary_text }}</div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.getElementById('fwsCopyBtn').addEventListener('click', function() {
+    var text = document.getElementById('fwsSummaryText').textContent;
+    var btn = this;
+    navigator.clipboard.writeText(text).then(function() {
+        btn.innerHTML = '<i class="bi bi-check-lg me-1"></i>Copied!';
+        setTimeout(function() {
+            btn.innerHTML = '<i class="bi bi-clipboard me-1"></i>Copy to Clipboard';
+        }, 2000);
+    });
+});
+</script>
+{% endblock %}

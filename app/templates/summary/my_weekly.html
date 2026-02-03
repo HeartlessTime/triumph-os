@@ -283,62 +283,51 @@
             </div>
         </div>
 
-        <!-- Pipeline Movement -->
+        <!-- Jobs I Walked -->
         <div class="col-lg-6">
-            <div class="tos-card h-100 d-flex flex-column section--pipeline">
+            <div class="tos-card h-100 d-flex flex-column section--job-walks">
                 <div class="tos-section-header">
-                    <i class="bi bi-arrow-left-right me-2"></i>Pipeline Movement
+                    <i class="bi bi-signpost-2 me-2"></i>Jobs I Walked
                 </div>
                 <div class="summary-card-body flex-grow-1" style="overflow-y: auto;">
-                    {% if pipeline_changes %}
+                    {% if job_walks %}
                     <table class="tos-table">
                         <thead>
                             <tr>
-                                <th>Opportunity</th>
-                                <th>Stage</th>
-                                <th>Updated</th>
-                                <th style="width: 40px;"></th>
+                                <th>Account</th>
+                                <th>Name</th>
+                                <th>Status</th>
+                                <th>Due</th>
                             </tr>
                         </thead>
                         <tbody>
-                            {% for opp in pipeline_changes %}
-                            <tr data-href="/opportunities/{{ opp.id }}" style="cursor: pointer;">
+                            {% for jw in job_walks %}
+                            <tr data-href="/job-walks/{{ jw.id }}" style="cursor: pointer;">
                                 <td>
-                                    <a href="/opportunities/{{ opp.id }}" class="tos-row-link tos-entity-name">
-                                        {{ opp.name }}
-                                    </a>
-                                    <div class="tos-entity-sub">{{ opp.primary_account.name if opp.primary_account else 'No Account' }}</div>
+                                    <span class="tos-entity-name">{{ jw.contact.account.name if jw.contact and jw.contact.account else 'No Account' }}</span>
+                                    <div class="tos-entity-sub">{{ jw.activity_date.strftime('%b %d') }}</div>
                                 </td>
+                                <td>{{ jw.subject }}</td>
                                 <td>
-                                    <span class="badge badge-stage badge-{{ opp.stage|lower|replace(' ', '-') }}">
-                                        {{ opp.stage }}
-                                    </span>
+                                    {% if jw.job_walk_status == 'sent_to_estimator' %}
+                                    <span class="badge bg-info" style="font-size: 0.65rem;">Sent to Estimator</span>
+                                    {% elif jw.job_walk_status == 'complete' %}
+                                    <span class="badge bg-success" style="font-size: 0.65rem;">Complete</span>
+                                    {% else %}
+                                    <span class="badge bg-secondary" style="font-size: 0.65rem;">Open</span>
+                                    {% endif %}
                                 </td>
-                                <td class="tos-entity-sub">{{ opp.updated_at.strftime('%b %d') }}</td>
-                                <td data-no-row-click>
-                                    <form action="/summary/suppress-opportunity/{{ opp.id }}" method="post" style="display: inline;">
-                                        <input type="hidden" name="week_start" value="{{ week_start }}">
-                                        <button type="submit" class="tos-btn tos-btn-sm tos-btn-secondary p-0" title="Remove from My Summary" onclick="event.stopPropagation();">
-                                            <i class="bi bi-x-lg"></i>
-                                        </button>
-                                    </form>
-                                </td>
+                                <td class="tos-entity-sub">{{ jw.estimate_due_by.strftime('%b %d') if jw.estimate_due_by else '—' }}</td>
                             </tr>
                             {% endfor %}
                         </tbody>
                     </table>
                     {% else %}
                     <div class="tos-empty-state">
-                        <i class="bi bi-inbox"></i>
-                        <p>No pipeline changes this period</p>
+                        <i class="bi bi-signpost-2"></i>
+                        <p>No job walks this period</p>
                     </div>
                     {% endif %}
-                </div>
-                <div style="padding: 0.5rem 0.75rem; background: #f8fafc; border-top: 1px solid #e2e8f0;">
-                    <label class="form-label small text-muted mb-1"><i class="bi bi-pencil me-1"></i>Notes</label>
-                    <textarea class="form-control form-control-sm auto-save-note" rows="2"
-                        data-section="pipeline" data-note-type="personal"
-                        placeholder="Add notes about pipeline...">{{ section_notes.get('pipeline', '') }}</textarea>
                 </div>
             </div>
         </div>
@@ -469,54 +458,6 @@
             </div>
         </div>
 
-        <!-- Recent Activity Timeline -->
-        <div class="col-12">
-            <div class="tos-card section--activity">
-                <div class="tos-section-header">
-                    <i class="bi bi-clock-history me-2"></i>Recent Activity Timeline
-                </div>
-                <div class="summary-card-body" style="max-height: 320px; padding: 0.75rem; overflow-y: auto;">
-                    {% if activities_logged %}
-                    <div class="activity-timeline">
-                        {% for activity in activities_logged %}
-                        <div class="activity-item" data-href="/activities/{{ activity.id }}?from=/summary/my-weekly%3Fweek_start%3D{{ week_start }}">
-                            <div class="d-flex justify-content-between align-items-start">
-                                <div>
-                                    <span class="me-2">{{ activity.icon }}</span>
-                                    <strong>{{ activity.subject }}</strong>
-                                    {% if activity.contact %}
-                                    <span class="text-muted">with
-                                        <a href="/contacts/{{ activity.contact.id }}" class="text-decoration-none">{{ activity.contact.full_name }}</a>
-                                    </span>
-                                    {% endif %}
-                                </div>
-                                <div class="text-end">
-                                    <small class="text-muted">{{ activity.activity_date | localtime('%b %d, %I:%M %p') }}</small>
-                                </div>
-                            </div>
-                            {% if activity.opportunity %}
-                            <div class="mt-1">
-                                <a href="/opportunities/{{ activity.opportunity_id }}" class="text-muted small text-decoration-none">
-                                    <i class="bi bi-bullseye me-1"></i>{{ activity.opportunity.name }}
-                                </a>
-                            </div>
-                            {% endif %}
-                            {% if activity.description %}
-                            <p class="text-muted small mb-0 mt-1" style="max-width: 600px;">{{ activity.description[:150] }}{% if activity.description|length > 150 %}...{% endif %}</p>
-                            {% endif %}
-                        </div>
-                        {% endfor %}
-                    </div>
-                    {% else %}
-                    <div class="tos-empty-state">
-                        <i class="bi bi-journal-x"></i>
-                        <p>No activities logged this period</p>
-                    </div>
-                    {% endif %}
-                </div>
-            </div>
-        </div>
-
         <!-- Other Notes -->
         <div class="col-12">
             <div class="tos-card section--notes">
@@ -540,8 +481,8 @@
     <div id="outreachData">{% for activity in outreach_activities %}
 - {{ activity.contact.full_name if activity.contact else activity.subject }} ({{ activity.contact.account.name if activity.contact and activity.contact.account else 'N/A' }}) - {{ activity.activity_date.strftime('%b %d') }}{% endfor %}</div>
 
-    <div id="pipelineData">{% for opp in pipeline_changes %}
-- {{ opp.name }} ({{ opp.primary_account.name if opp.primary_account else 'No Account' }}) - {{ opp.stage }}{% endfor %}</div>
+    <div id="jobWalksData">{% for jw in job_walks %}
+- {{ jw.contact.account.name if jw.contact and jw.contact.account else 'No Account' }} — {{ jw.subject }} ({{ jw.job_walk_status or 'open' }}){% if jw.estimate_due_by %} — Due {{ jw.estimate_due_by.strftime('%b %d') }}{% endif %}{% endfor %}</div>
 
     <div id="tasksData">{% for task in tasks_completed %}
 - {{ task.title }}{% if task.opportunity %} ({{ task.opportunity.name }}){% endif %}{% endfor %}</div>
@@ -552,7 +493,6 @@ Contacts: {% for contact in new_contacts %}{{ contact.full_name }}{% if not loop
 Opportunities: {% for opp in new_opportunities %}{{ opp.name }}{% if not loop.last %}, {% endif %}{% else %}None{% endfor %}</div>
 
     <div id="outreachNotes">{{ section_notes.get('outreach', '') }}</div>
-    <div id="pipelineNotes">{{ section_notes.get('pipeline', '') }}</div>
     <div id="tasksNotes">{{ section_notes.get('tasks', '') }}</div>
     <div id="newRecordsNotes">{{ section_notes.get('new_records', '') }}</div>
     <div id="otherNotes">{{ section_notes.get('other', '') }}</div>
@@ -600,12 +540,11 @@ document.querySelectorAll('a[href^="/"]').forEach(function(link) {
 document.getElementById('copyToClipboard')?.addEventListener('click', function() {
     const weekRange = document.getElementById('weekRange').textContent.trim();
     const outreach = document.getElementById('outreachData').textContent.trim();
-    const pipeline = document.getElementById('pipelineData').textContent.trim();
+    const jobWalks = document.getElementById('jobWalksData').textContent.trim();
     const tasks = document.getElementById('tasksData').textContent.trim();
     const newRecords = document.getElementById('newRecordsData').textContent.trim();
 
     const outreachNotes = document.getElementById('outreachNotes').textContent.trim();
-    const pipelineNotes = document.getElementById('pipelineNotes').textContent.trim();
     const tasksNotes = document.getElementById('tasksNotes').textContent.trim();
     const newRecordsNotes = document.getElementById('newRecordsNotes').textContent.trim();
     const otherNotes = document.getElementById('otherNotes').textContent.trim();
@@ -622,13 +561,10 @@ document.getElementById('copyToClipboard')?.addEventListener('click', function()
     }
     summary += '\n';
 
-    summary += `PIPELINE MOVEMENT\n`;
+    summary += `JOBS I WALKED\n`;
     summary += '-'.repeat(30) + '\n';
-    summary += pipeline || 'No pipeline changes this period';
+    summary += jobWalks || 'No job walks this period';
     summary += '\n';
-    if (pipelineNotes) {
-        summary += `\nNotes: ${pipelineNotes}\n`;
-    }
     summary += '\n';
 
     summary += `TASKS COMPLETED\n`;

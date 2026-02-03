@@ -117,9 +117,9 @@ async def mark_estimate_received(
     if not activity:
         raise HTTPException(status_code=404, detail="Activity not found")
 
-    if activity.activity_type != "site_visit" or not activity.requires_estimate:
+    if activity.activity_type != "job_walk" or not activity.requires_estimate:
         return JSONResponse(
-            {"success": False, "error": "Activity is not a site visit awaiting estimate"},
+            {"success": False, "error": "Activity is not a job walk awaiting estimate"},
             status_code=400,
         )
 

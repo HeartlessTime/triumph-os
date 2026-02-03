@@ -97,11 +97,6 @@
                         <dd class="mb-2" style="white-space: pre-line;">{{ activity.scope_summary }}</dd>
                         {% endif %}
 
-                        {% if activity.estimated_quantity %}
-                        <dt class="tos-entity-sub">Estimated Quantity</dt>
-                        <dd class="mb-2">{{ activity.estimated_quantity }}</dd>
-                        {% endif %}
-
                         {% if activity.complexity_notes %}
                         <dt class="tos-entity-sub">Complexity Notes</dt>
                         <dd class="mb-2" style="white-space: pre-line;">{{ activity.complexity_notes }}</dd>
@@ -130,6 +125,30 @@
                         <dt class="tos-entity-sub">Assigned Estimator</dt>
                         <dd class="mb-0">{{ activity.assigned_estimator.full_name }}</dd>
                         {% endif %}
+                        {% endif %}
+
+                        {% if activity.activity_type == 'job_walk' %}
+                        <dt class="tos-entity-sub" style="margin-top: 0.5rem; padding-top: 0.5rem; border-top: 1px solid var(--border-default);">
+                            <i class="bi bi-signpost-2 me-1"></i>Areas ({{ activity.walk_segments|length }})
+                        </dt>
+                        {% if activity.walk_segments %}
+                        <dd class="mb-2">
+                            {% for seg in activity.walk_segments %}
+                            <div style="padding: 0.35rem 0; {% if not loop.last %}border-bottom: 1px solid var(--border-subtle);{% endif %}">
+                                <span style="font-size: 0.75rem; color: var(--text-muted);">{{ loop.index }}.</span>
+                                <strong style="font-size: 0.85rem;">{{ seg.location_name }}</strong>
+                                {% if seg.quantity_label %}<span style="font-size: 0.8rem; color: var(--text-secondary); margin-left: 0.25rem;">{{ seg.quantity_label }}</span>{% endif %}
+                                {% if seg.estimated_cable_length %}<span style="font-size: 0.8rem; color: var(--text-secondary); margin-left: 0.25rem;">· {{ seg.estimated_cable_length }} ft</span>{% endif %}
+                                {% if seg.description %}<div style="font-size: 0.8rem; color: var(--text-muted);">{{ seg.description }}</div>{% endif %}
+                            </div>
+                            {% endfor %}
+                        </dd>
+                        {% endif %}
+                        <dd>
+                            <a href="/job-walks/{{ activity.id }}?from=/activities/{{ activity.id }}" class="tos-btn tos-btn-sm tos-btn-secondary">
+                                <i class="bi bi-signpost-2 me-1"></i>Open Job Walk
+                            </a>
+                        </dd>
                         {% endif %}
                     </dl>
                 </div>

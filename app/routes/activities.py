@@ -240,6 +240,7 @@ async def view_activity(
             sl(Activity.contact).selectinload(Contact.account),
             sl(Activity.opportunity),
             sl(Activity.attendee_links).selectinload(ActivityAttendee.contact).selectinload(Contact.account),
+            sl(Activity.walk_segments),
         )
         .filter(Activity.id == activity_id)
         .first()
@@ -479,7 +480,9 @@ async def delete_activity(
 ACTIVITY_COLUMNS = {
     "activity_type", "subject", "description", "activity_date",
     "contact_id", "opportunity_id",
-    # Job walk / estimating fields (site visits)
+    # Job walk fields
+    "walk_notes", "job_walk_status", "estimate_due_by",
+    # Job walk / estimating fields
     "requires_estimate", "scope_summary", "estimated_quantity",
     "complexity_notes", "estimate_needed_by", "assigned_estimator_id",
     "estimate_completed", "estimate_completed_at",
@@ -573,6 +576,14 @@ async def auto_save_activity(
                         activity.estimate_completed_at = date.today() if bool_val else None
                 elif field == "estimate_completed_at":
                     activity.estimate_completed_at = clean_date(value)
+                elif field == "walk_notes":
+                    activity.walk_notes = str(value) if value else None
+                elif field == "job_walk_status":
+                    val = str(value).strip() if value else ""
+                    if val in ("open", "sent_to_estimator", "complete"):
+                        activity.job_walk_status = val
+                elif field == "estimate_due_by":
+                    activity.estimate_due_by = clean_date(value)
                 elif field in ("scope_summary", "complexity_notes"):
                     setattr(activity, field, str(value).strip() if value and str(value).strip() else None)
                 elif field == "estimated_quantity":

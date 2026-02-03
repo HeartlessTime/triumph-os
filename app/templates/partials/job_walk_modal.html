@@ -1,0 +1,219 @@
+{#
+    Job Walk Modal Partial
+
+    Requires window._jobWalkAccounts and window._siteVisitContacts data.
+    Posts to /job-walks/start → redirects to walk-in-progress page.
+
+    Usage:
+    {% include "partials/job_walk_modal.html" %}
+#}
+
+<!-- Start Job Walk Modal -->
+<div class="modal fade" id="startJobWalkModal" tabindex="-1" aria-labelledby="startJobWalkModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="post" id="jobWalkForm" action="/job-walks/start">
+                <input type="hidden" id="jwAccountId" name="account_id" value="">
+                <input type="hidden" id="jwContactId" name="contact_id" value="">
+
+                <div class="modal-header py-2">
+                    <h6 class="modal-title" id="startJobWalkModalLabel">
+                        <i class="bi bi-signpost-2 me-2"></i>Start Job Walk
+                    </h6>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body py-2">
+                    {# Account (required, searchable) #}
+                    <div class="mb-2">
+                        <label class="form-label small mb-1">Account <span class="text-danger">*</span></label>
+                        <div class="position-relative">
+                            <input type="text" class="form-control form-control-sm" id="jwAccountSearch"
+                                placeholder="Search accounts..." autocomplete="off">
+                            <div id="jwAccountResults" class="list-group position-absolute w-100" style="z-index: 1050; display: none; max-height: 150px; overflow-y: auto; box-shadow: 0 2px 8px rgba(0,0,0,0.15);"></div>
+                        </div>
+                        <div id="jwAccountSelected" class="mt-1"></div>
+                    </div>
+
+                    <div class="mb-2">
+                        <label for="jwDate" class="form-label small mb-1">Date & Time <span class="text-danger">*</span></label>
+                        <input type="datetime-local" class="form-control form-control-sm" id="jwDate" name="activity_date" required>
+                    </div>
+
+                    <div class="mb-2">
+                        <label for="jwSubject" class="form-label small mb-1">Name <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control form-control-sm" id="jwSubject" name="subject"
+                            list="jwSubjectSuggestions" placeholder="e.g. Building A pre-bid" required>
+                        <datalist id="jwSubjectSuggestions">
+                            <option value="Pre-bid walkthrough">
+                            <option value="Existing site evaluation">
+                            <option value="Post-install check">
+                        </datalist>
+                    </div>
+
+                    {# Searchable contact (optional) #}
+                    <div class="mb-2">
+                        <label class="form-label small mb-1">Contact</label>
+                        <div class="position-relative">
+                            <input type="text" class="form-control form-control-sm" id="jwContactSearch"
+                                placeholder="Search contacts..." autocomplete="off">
+                            <div id="jwContactResults" class="list-group position-absolute w-100" style="z-index: 1050; display: none; max-height: 150px; overflow-y: auto; box-shadow: 0 2px 8px rgba(0,0,0,0.15);"></div>
+                        </div>
+                        <div id="jwContactSelected" class="mt-1"></div>
+                    </div>
+
+                    <div class="mb-2">
+                        <label for="jwNotes" class="form-label small mb-1">Notes</label>
+                        <textarea class="form-control form-control-sm" id="jwNotes" name="description" rows="2" placeholder="Optional notes..."></textarea>
+                    </div>
+
+                </div>
+                <div class="modal-footer py-2">
+                    <button type="button" class="tos-btn tos-btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="tos-btn tos-btn-primary"><i class="bi bi-signpost-2 me-1"></i>Start Walk</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+(function() {
+    var modal = document.getElementById('startJobWalkModal');
+    if (!modal) return;
+
+    // Set default date/time when modal opens
+    modal.addEventListener('show.bs.modal', function() {
+        var now = new Date();
+        var year = now.getFullYear();
+        var month = String(now.getMonth() + 1).padStart(2, '0');
+        var day = String(now.getDate()).padStart(2, '0');
+        var hours = String(now.getHours()).padStart(2, '0');
+        var minutes = String(now.getMinutes()).padStart(2, '0');
+        document.getElementById('jwDate').value = year + '-' + month + '-' + day + 'T' + hours + ':' + minutes;
+    });
+
+    // Prevent submit if no account selected
+    document.getElementById('jobWalkForm').addEventListener('submit', function(e) {
+        if (!document.getElementById('jwAccountId').value) {
+            e.preventDefault();
+            document.getElementById('jwAccountSearch').focus();
+            document.getElementById('jwAccountSearch').classList.add('is-invalid');
+        }
+    });
+
+    // Reset form on modal close
+    modal.addEventListener('hidden.bs.modal', function() {
+        var form = document.getElementById('jobWalkForm');
+        if (form) {
+            form.querySelectorAll('input[type="text"], textarea').forEach(function(el) { el.value = ''; el.classList.remove('is-invalid'); });
+            form.querySelectorAll('select').forEach(function(el) { el.selectedIndex = 0; });
+        }
+        document.getElementById('jwAccountId').value = '';
+        document.getElementById('jwContactId').value = '';
+        document.getElementById('jwAccountSelected').innerHTML = '';
+        document.getElementById('jwContactSelected').innerHTML = '';
+    });
+
+    // Searchable account
+    var accounts = window._jobWalkAccounts || [];
+    var allContacts = window._siteVisitContacts || [];
+
+    var acctSearch = document.getElementById('jwAccountSearch');
+    var acctResults = document.getElementById('jwAccountResults');
+    var acctSelected = document.getElementById('jwAccountSelected');
+    var acctIdInput = document.getElementById('jwAccountId');
+
+    acctSearch.addEventListener('input', function() {
+        this.classList.remove('is-invalid');
+        var query = this.value.toLowerCase().trim();
+        if (query.length < 1) { acctResults.style.display = 'none'; return; }
+        var matches = accounts.filter(function(a) {
+            return a.name.toLowerCase().includes(query);
+        }).slice(0, 8);
+        if (matches.length === 0) {
+            acctResults.innerHTML = '<div class="list-group-item text-muted small">No matches</div>';
+        } else {
+            acctResults.innerHTML = matches.map(function(a) {
+                return '<button type="button" class="list-group-item list-group-item-action py-1 small" data-jw-acct-id="' + a.id + '">' + a.name + '</button>';
+            }).join('');
+        }
+        acctResults.style.display = 'block';
+    });
+
+    acctResults.addEventListener('click', function(e) {
+        var btn = e.target.closest('[data-jw-acct-id]');
+        if (btn) {
+            var id = parseInt(btn.dataset.jwAcctId, 10);
+            var acct = accounts.find(function(a) { return a.id === id; });
+            if (acct) {
+                acctIdInput.value = id;
+                acctSearch.value = '';
+                acctResults.style.display = 'none';
+                acctSelected.innerHTML = '<span class="badge bg-primary d-inline-flex align-items-center gap-1">' + acct.name + ' <button type="button" class="btn-close btn-close-white" style="font-size: 0.5rem;" data-jw-clear-acct aria-label="Remove"></button></span>';
+            }
+        }
+    });
+
+    acctSelected.addEventListener('click', function(e) {
+        if (e.target.closest('[data-jw-clear-acct]')) {
+            acctIdInput.value = '';
+            acctSelected.innerHTML = '';
+            contactIdInput.value = '';
+            contactSelected.innerHTML = '';
+        }
+    });
+
+    // Searchable contact
+    var contactSearch = document.getElementById('jwContactSearch');
+    var contactResults = document.getElementById('jwContactResults');
+    var contactSelected = document.getElementById('jwContactSelected');
+    var contactIdInput = document.getElementById('jwContactId');
+
+    function showContactDropdown() {
+        var query = contactSearch.value.toLowerCase().trim();
+        var selectedAcctId = parseInt(acctIdInput.value, 10) || null;
+        var matches = allContacts.filter(function(c) {
+            if (selectedAcctId && c.account_id !== selectedAcctId) return false;
+            if (query.length > 0) {
+                return c.name.toLowerCase().includes(query) || c.account.toLowerCase().includes(query);
+            }
+            return true;
+        }).slice(0, 12);
+        if (matches.length === 0) {
+            contactResults.innerHTML = '<div class="list-group-item text-muted small">' + (selectedAcctId ? 'No contacts for this account' : 'No contacts found') + '</div>';
+        } else {
+            contactResults.innerHTML = matches.map(function(c) {
+                return '<button type="button" class="list-group-item list-group-item-action py-1 small" data-jw-contact-id="' + c.id + '">' + c.name + ' <span class="text-muted">(' + c.account + ')</span></button>';
+            }).join('');
+        }
+        contactResults.style.display = 'block';
+    }
+
+    contactSearch.addEventListener('input', showContactDropdown);
+    contactSearch.addEventListener('focus', showContactDropdown);
+
+    contactResults.addEventListener('click', function(e) {
+        var btn = e.target.closest('[data-jw-contact-id]');
+        if (btn) {
+            var id = parseInt(btn.dataset.jwContactId, 10);
+            var contact = allContacts.find(function(c) { return c.id === id; });
+            if (contact) {
+                contactIdInput.value = id;
+                contactSearch.value = '';
+                contactResults.style.display = 'none';
+                contactSelected.innerHTML = '<span class="badge bg-secondary d-inline-flex align-items-center gap-1">' + contact.name + ' <button type="button" class="btn-close btn-close-white" style="font-size: 0.5rem;" data-jw-clear-contact aria-label="Remove"></button></span>';
+            }
+        }
+    });
+
+    contactSelected.addEventListener('click', function(e) {
+        if (e.target.closest('[data-jw-clear-contact]')) { contactIdInput.value = ''; contactSelected.innerHTML = ''; }
+    });
+
+    // Hide dropdowns on outside click
+    document.addEventListener('click', function(e) {
+        if (!acctSearch.contains(e.target) && !acctResults.contains(e.target)) acctResults.style.display = 'none';
+        if (!contactSearch.contains(e.target) && !contactResults.contains(e.target)) contactResults.style.display = 'none';
+    });
+})();
+</script>

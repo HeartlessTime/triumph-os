@@ -1,0 +1,191 @@
+{% extends "base.html" %}
+
+{% block title %}Job Walks - Triumph OS{% endblock %}
+
+{% block extra_css %}
+<style>
+    .jw-list { padding: 1rem 1.5rem; }
+    .jw-list h1 { font-size: 1.25rem; margin-bottom: 1rem; color: var(--text-heading); }
+    .jw-section {
+        background: var(--bg-surface);
+        border-radius: 0.5rem;
+        box-shadow: var(--shadow-card-sm);
+        margin-bottom: 1rem;
+        overflow: hidden;
+    }
+    .jw-section-header {
+        background: var(--bg-elevated);
+        padding: 0.5rem 0.75rem;
+        border-bottom: 1px solid var(--border-default);
+        font-weight: 600;
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+        color: var(--text-secondary);
+    }
+    .jw-table {
+        width: 100%;
+        font-size: 0.85rem;
+        margin: 0;
+    }
+    .jw-table th {
+        background: var(--bg-elevated);
+        padding: 0.4rem 0.75rem;
+        font-weight: 500;
+        font-size: 0.7rem;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+        color: var(--text-secondary);
+        border-bottom: 1px solid var(--border-default);
+    }
+    .jw-table td {
+        padding: 0.5rem 0.75rem;
+        border-bottom: 1px solid var(--border-subtle);
+        vertical-align: middle;
+        color: var(--text-primary);
+    }
+    .jw-table tr:last-child td { border-bottom: none; }
+    .jw-table tr:hover { background: var(--bg-hover); }
+    .jw-table tr[data-href] { cursor: pointer; }
+    .jw-empty {
+        padding: 1.5rem;
+        text-align: center;
+        color: var(--text-muted);
+        font-size: 0.85rem;
+    }
+    .jw-entity-name { font-weight: 500; color: var(--text-heading); }
+    .jw-entity-sub { font-size: 0.75rem; color: var(--text-muted); }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="jw-list">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h1>Job Walks</h1>
+        <button type="button" class="tos-btn tos-btn-primary" data-bs-toggle="modal" data-bs-target="#startJobWalkModal">
+            <i class="bi bi-signpost-2 me-1"></i>New Job Walk
+        </button>
+    </div>
+
+    <!-- Open Job Walks -->
+    <div class="jw-section">
+        <div class="jw-section-header">
+            <i class="bi bi-clipboard-check me-1"></i>Open
+            <span class="badge bg-primary ms-2">{{ open_walks|length }}</span>
+        </div>
+        {% if open_walks %}
+        <table class="jw-table">
+            <thead>
+                <tr>
+                    <th>Account</th>
+                    <th>Name</th>
+                    <th>Date</th>
+                    <th>Areas</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for w in open_walks %}
+                <tr data-href="/job-walks/{{ w.id }}">
+                    <td>
+                        {% if w.contact and w.contact.account %}
+                        <span class="jw-entity-name">{{ w.contact.account.name }}</span>
+                        {% else %}
+                        <span class="jw-entity-name">{{ w.subject }}</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ w.subject }}</td>
+                    <td style="white-space: nowrap;">{{ w.activity_date.strftime('%b %d, %Y') }}</td>
+                    <td>{{ w.walk_segments|length }}</td>
+                    <td>
+                        {% if w.job_walk_status == 'sent_to_estimator' %}
+                        <span class="badge bg-info" style="font-size: 0.65rem;">Sent to Estimator</span>
+                        {% else %}
+                        <span class="badge bg-secondary" style="font-size: 0.65rem;">Open</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="jw-empty">
+            <i class="bi bi-signpost-2" style="font-size: 1.5rem; display: block; margin-bottom: 0.5rem;"></i>
+            No open job walks.
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Completed Job Walks -->
+    {% if completed_walks %}
+    <div class="jw-section">
+        <div class="jw-section-header">
+            <i class="bi bi-check-circle me-1"></i>Completed
+            <span class="badge bg-success ms-2">{{ completed_walks|length }}</span>
+        </div>
+        <table class="jw-table">
+            <thead>
+                <tr>
+                    <th>Account</th>
+                    <th>Name</th>
+                    <th>Date</th>
+                    <th>Areas</th>
+                    <th>Completed</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for w in completed_walks %}
+                <tr data-href="/job-walks/{{ w.id }}">
+                    <td>
+                        {% if w.contact and w.contact.account %}
+                        <span class="jw-entity-name">{{ w.contact.account.name }}</span>
+                        {% else %}
+                        <span class="jw-entity-name">{{ w.subject }}</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ w.subject }}</td>
+                    <td style="white-space: nowrap;">{{ w.activity_date.strftime('%b %d, %Y') }}</td>
+                    <td>{{ w.walk_segments|length }}</td>
+                    <td>
+                        {% if w.estimate_completed_at %}
+                        <span class="text-success" style="font-size: 0.8rem;">{{ w.estimate_completed_at.strftime('%b %d') }}</span>
+                        {% else %}
+                        <span class="badge bg-success" style="font-size: 0.65rem;">Done</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+</div>
+
+{# Inject data for job walk modal #}
+<script>
+window._jobWalkAccounts = [
+    {% for account in all_accounts %}
+    { id: {{ account.id }}, name: "{{ account.name | replace('"', '\\"') }}" },
+    {% endfor %}
+];
+window._siteVisitContacts = [
+    {% for contact in all_contacts %}
+    { id: {{ contact.id }}, name: "{{ contact.full_name | replace('"', '\\"') }}", account: "{{ (contact.account.name if contact.account else 'No Account') | replace('"', '\\"') }}", account_id: {{ contact.account_id or 'null' }} },
+    {% endfor %}
+];
+</script>
+
+{% include "partials/job_walk_modal.html" %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Clickable rows
+document.addEventListener('click', function(e) {
+    var clickable = e.target.closest('tr[data-href]');
+    if (!clickable) return;
+    if (e.target.closest('a, button, input, textarea, select, form')) return;
+    window.location.href = clickable.dataset.href;
+});
+</script>
+{% endblock %}

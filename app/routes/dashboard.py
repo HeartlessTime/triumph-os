@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session, selectinload
 
 from app.database import get_db
 from app.models import Account, Contact, Activity, ActivityAttendee
+import sqlalchemy as sa
 from sqlalchemy import and_
 from app.services.dashboard_service import get_dashboard_data
 from app.template_config import templates, get_app_tz
@@ -89,16 +90,21 @@ async def dashboard(request: Request, db: Session = Depends(get_db)):
         .all()
     )
 
-    # Site visits awaiting estimate (overdue first, then oldest visit)
+    # Job walks not yet complete
     jobs_awaiting_estimate = (
         db.query(Activity)
-        .options(selectinload(Activity.contact), selectinload(Activity.opportunity))
-        .filter(
-            Activity.activity_type == "site_visit",
-            Activity.requires_estimate == True,
-            Activity.estimate_completed == False,
+        .options(
+            selectinload(Activity.contact).selectinload(Contact.account),
+            selectinload(Activity.walk_segments),
         )
-        .order_by(Activity.estimate_needed_by.nulls_last(), Activity.activity_date)
+        .filter(
+            Activity.activity_type == "job_walk",
+            sa.or_(
+                Activity.job_walk_status.in_(["open", "sent_to_estimator"]),
+                Activity.job_walk_status.is_(None),
+            ),
+        )
+        .order_by(Activity.estimate_due_by.asc().nullslast(), Activity.activity_date.desc())
         .all()
     )
 
@@ -115,6 +121,13 @@ async def dashboard(request: Request, db: Session = Depends(get_db)):
     )
     hot_accounts = hot_accounts_all
 
+    # All accounts for job walk modal search
+    all_accounts = (
+        db.query(Account)
+        .order_by(Account.name)
+        .all()
+    )
+
     return templates.TemplateResponse(
         "dashboard/dashboard_v2.html",
         {
@@ -126,5 +139,7 @@ async def dashboard(request: Request, db: Session = Depends(get_db)):
             "hot_accounts": hot_accounts,
             "next_action_accounts": next_action_accounts,  # merged into Tasks section in template
             "jobs_awaiting_estimate": jobs_awaiting_estimate,
+            "all_accounts": all_accounts,
+            "today_date": date.today(),
         },
     )

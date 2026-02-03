@@ -23,7 +23,12 @@ class Activity(Base):
     created_by_id = Column(Integer, ForeignKey("users.id"), nullable=True)
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
 
-    # Job walk / estimating fields (site visits)
+    # Job walk fields
+    walk_notes = Column(Text, nullable=True)
+    job_walk_status = Column(String(50), nullable=True)  # open, sent_to_estimator, complete
+    estimate_due_by = Column(Date, nullable=True)
+
+    # Job walk / estimating fields (job_walk activities only)
     requires_estimate = Column(Boolean, nullable=False, server_default=sa.text("false"))
     scope_summary = Column(Text, nullable=True)
     estimated_quantity = Column(String(100), nullable=True)
@@ -45,6 +50,12 @@ class Activity(Base):
         "User", back_populates="created_activities", foreign_keys=[created_by_id]
     )
     assigned_estimator = relationship("User", foreign_keys=[assigned_estimator_id])
+    walk_segments = relationship(
+        "WalkSegment",
+        back_populates="activity",
+        cascade="all, delete-orphan",
+        order_by="WalkSegment.sort_order",
+    )
 
     # Activity types for logging interactions.
     # "meeting_requested" is used when a meeting has been discussed/proposed but not yet
@@ -57,6 +68,7 @@ class Activity(Base):
         ("email", "Email"),
         ("note", "Note"),
         ("site_visit", "Site Visit"),
+        ("job_walk", "Job Walk"),
         ("task_completed", "Task Completed"),
         ("other", "Other"),
     ]
@@ -68,6 +80,7 @@ class Activity(Base):
         "email": "✉️",
         "note": "📝",
         "site_visit": "🏗️",
+        "job_walk": "🚶",
         "task_completed": "✅",
         "other": "📋",
     }
@@ -118,7 +131,7 @@ class Activity(Base):
 
     @property
     def estimate_status(self):
-        """Derived status for job walk site visits."""
+        """Derived status for job walks."""
         if not self.requires_estimate:
             return None
         if self.estimate_completed:

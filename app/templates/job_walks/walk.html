@@ -1,0 +1,371 @@
+{% extends "base.html" %}
+
+{% block title %}Job Walk — {{ activity.subject }} - Triumph OS{% endblock %}
+
+{% block extra_css %}
+<style>
+    .jw-page { padding: 1rem 1.5rem; max-width: 900px; }
+    .jw-header {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        margin-bottom: 1.25rem;
+        padding-bottom: 0.75rem;
+        border-bottom: 1px solid var(--border-default);
+    }
+    .jw-header .back-link { color: var(--text-secondary); text-decoration: none; font-size: 1.1rem; }
+    .jw-header h1 { font-size: 1.2rem; font-weight: 600; margin: 0; flex: 1; color: var(--text-heading); }
+
+    .jw-section {
+        background: var(--bg-surface);
+        border: 1px solid var(--border-default);
+        border-radius: 0.5rem;
+        margin-bottom: 1rem;
+        overflow: hidden;
+    }
+    .jw-section-header {
+        background: var(--bg-elevated);
+        padding: 0.5rem 0.75rem;
+        border-bottom: 1px solid var(--border-default);
+        font-weight: 600;
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+        color: var(--text-secondary);
+    }
+    .jw-section-body { padding: 0.75rem; }
+
+    /* Overview grid */
+    .jw-overview {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 0.6rem 1rem;
+    }
+    .jw-field label {
+        display: block;
+        font-size: 0.7rem;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+        color: var(--text-muted);
+        margin-bottom: 0.15rem;
+    }
+    .jw-field-static {
+        font-size: 0.85rem;
+        color: var(--text-heading);
+        font-weight: 500;
+    }
+
+    /* Walk notes */
+    .jw-notes {
+        width: 100%;
+        min-height: 300px;
+        font-size: 0.9rem;
+        line-height: 1.6;
+        font-family: inherit;
+        border: 1px solid var(--border-default);
+        border-radius: 0.375rem;
+        padding: 0.75rem;
+        background: var(--bg-surface);
+        color: var(--text-primary);
+        resize: vertical;
+    }
+    .jw-notes:focus {
+        outline: none;
+        border-color: var(--primary);
+        box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.15);
+    }
+    .jw-notes-hint {
+        font-size: 0.75rem;
+        color: var(--text-muted);
+        margin-top: 0.25rem;
+    }
+
+    /* Areas */
+    .jw-area {
+        border: 1px solid var(--border-default);
+        border-radius: 0.375rem;
+        padding: 0.6rem;
+        margin-bottom: 0.5rem;
+        background: var(--bg-surface);
+    }
+    .jw-area-grid {
+        display: grid;
+        grid-template-columns: 2fr 1fr 1fr auto;
+        gap: 0.4rem;
+        align-items: center;
+    }
+    .jw-area-notes {
+        margin-top: 0.4rem;
+    }
+    .jw-area-remove {
+        background: none;
+        border: none;
+        color: var(--text-muted);
+        cursor: pointer;
+        padding: 0.25rem;
+        font-size: 0.85rem;
+    }
+    .jw-area-remove:hover { color: var(--danger-text); }
+
+    .jw-save-indicator {
+        font-size: 0.7rem;
+        color: var(--text-muted);
+        opacity: 0;
+        transition: opacity 0.3s;
+    }
+    .jw-save-indicator.visible { opacity: 1; }
+
+    .jw-footer {
+        display: flex;
+        gap: 0.5rem;
+        margin-top: 1.25rem;
+        padding-top: 0.75rem;
+        border-top: 1px solid var(--border-default);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="jw-page">
+    <div class="jw-header">
+        <a href="{{ return_to }}" class="back-link"><i class="bi bi-arrow-left"></i></a>
+        <h1>{{ activity.subject }}</h1>
+        <span class="jw-save-indicator" id="jwSaveIndicator">Saved</span>
+    </div>
+
+    <!-- SECTION 1: Overview -->
+    <div class="jw-section">
+        <div class="jw-section-header"><i class="bi bi-info-circle me-1"></i>Overview</div>
+        <div class="jw-section-body">
+            <div class="jw-overview">
+                <div class="jw-field">
+                    <label>Account</label>
+                    <div class="jw-field-static">
+                        {% if activity.contact and activity.contact.account %}
+                        {{ activity.contact.account.name }}
+                        {% else %}—{% endif %}
+                    </div>
+                </div>
+                <div class="jw-field">
+                    <label>Date</label>
+                    <input type="datetime-local" class="form-control form-control-sm jw-auto"
+                           name="activity_date"
+                           value="{{ activity.activity_date.strftime('%Y-%m-%dT%H:%M') }}">
+                </div>
+                <div class="jw-field">
+                    <label>Name</label>
+                    <input type="text" class="form-control form-control-sm jw-auto"
+                           name="subject"
+                           value="{{ activity.subject }}">
+                </div>
+                <div class="jw-field">
+                    <label>Contact</label>
+                    <div class="jw-field-static">
+                        {% if activity.contact %}{{ activity.contact.full_name }}{% else %}—{% endif %}
+                    </div>
+                </div>
+                <div class="jw-field">
+                    <label>Status</label>
+                    <select class="form-select form-select-sm" id="jwStatus">
+                        <option value="open" {% if (activity.job_walk_status or 'open') == 'open' %}selected{% endif %}>Open</option>
+                        <option value="sent_to_estimator" {% if activity.job_walk_status == 'sent_to_estimator' %}selected{% endif %}>Sent to Estimator</option>
+                        <option value="complete" {% if activity.job_walk_status == 'complete' %}selected{% endif %}>Complete</option>
+                    </select>
+                </div>
+                <div class="jw-field">
+                    <label>Estimator Due By</label>
+                    <input type="date" class="form-control form-control-sm jw-auto"
+                           name="estimate_due_by"
+                           value="{{ activity.estimate_due_by.strftime('%Y-%m-%d') if activity.estimate_due_by else '' }}">
+                </div>
+                <div class="jw-field">
+                    <label>Areas</label>
+                    <div class="jw-field-static" id="jwAreaCount">{{ segments|length }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SECTION 2: Walk Notes -->
+    <div class="jw-section">
+        <div class="jw-section-header"><i class="bi bi-journal-text me-1"></i>Walk Notes / Transcript</div>
+        <div class="jw-section-body">
+            <textarea class="jw-notes jw-auto" name="walk_notes"
+                      placeholder="Paste voice transcript or type walk notes here...&#10;&#10;This is the primary input — describe what you saw, what's needed, anything unusual.">{{ activity.walk_notes or '' }}</textarea>
+            <div class="jw-notes-hint">Auto-saves as you type</div>
+        </div>
+    </div>
+
+    <!-- SECTION 3: Areas -->
+    <div class="jw-section">
+        <div class="jw-section-header"><i class="bi bi-list-ul me-1"></i>Areas for Estimating <span style="font-weight: 400; text-transform: none;">(optional)</span></div>
+        <div class="jw-section-body">
+            <div id="jwAreaList">
+                {% for seg in segments %}
+                <div class="jw-area" data-area-id="{{ seg.id }}">
+                    <div class="jw-area-grid">
+                        <input type="text" class="form-control form-control-sm area-field" data-field="location_name"
+                               value="{{ seg.location_name }}" placeholder="Area name">
+                        <input type="text" class="form-control form-control-sm area-field" data-field="quantity_label"
+                               value="{{ seg.quantity_label or '' }}" placeholder="Qty (e.g. 48 drops)">
+                        <input type="number" class="form-control form-control-sm area-field" data-field="estimated_cable_length"
+                               value="{{ seg.estimated_cable_length if seg.estimated_cable_length is not none else '' }}" placeholder="Cable (ft)">
+                        <button type="button" class="jw-area-remove" onclick="removeArea(this)" title="Remove"><i class="bi bi-x-lg"></i></button>
+                    </div>
+                    <textarea class="form-control form-control-sm area-field jw-area-notes" data-field="description"
+                              rows="1" placeholder="Short notes (optional)">{{ seg.description or '' }}</textarea>
+                </div>
+                {% endfor %}
+            </div>
+            <button type="button" class="tos-btn tos-btn-secondary tos-btn-sm mt-2" onclick="addArea()">
+                <i class="bi bi-plus-lg me-1"></i>Add Area
+            </button>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="jw-footer">
+        <a href="/job-walks/{{ activity.id }}/summary" class="tos-btn tos-btn-secondary">
+            <i class="bi bi-file-text me-1"></i>Generate Summary
+        </a>
+        <div style="flex: 1;"></div>
+        <button type="button" class="tos-btn tos-btn-sm" style="background: var(--danger-bg); color: var(--danger-text); border: 1px solid var(--danger-text);" onclick="deleteJobWalk()">
+            <i class="bi bi-trash me-1"></i>Delete
+        </button>
+        <a href="{{ return_to }}" class="tos-btn tos-btn-primary">
+            <i class="bi bi-check-lg me-1"></i>Done
+        </a>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+var ACTIVITY_ID = {{ activity.id }};
+var saveIndicator = document.getElementById('jwSaveIndicator');
+var debounceTimers = {};
+
+function showSaved() {
+    saveIndicator.classList.add('visible');
+    setTimeout(function() { saveIndicator.classList.remove('visible'); }, 1500);
+}
+
+// Auto-save activity fields (debounce for textarea, blur/change for inputs)
+function saveActivityField(name, value) {
+    var body = {};
+    body[name] = value;
+    fetch('/activities/' + ACTIVITY_ID + '/auto-save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+    }).then(function() { showSaved(); });
+}
+
+document.querySelectorAll('.jw-auto').forEach(function(el) {
+    if (el.tagName === 'TEXTAREA') {
+        el.addEventListener('input', function() {
+            var name = el.name;
+            clearTimeout(debounceTimers[name]);
+            debounceTimers[name] = setTimeout(function() {
+                saveActivityField(name, el.value);
+            }, 1000);
+        });
+        el.addEventListener('blur', function() {
+            var name = el.name;
+            clearTimeout(debounceTimers[name]);
+            saveActivityField(name, el.value);
+        });
+    } else {
+        el.addEventListener('change', function() {
+            saveActivityField(el.name, el.value);
+        });
+    }
+});
+
+// Status dropdown
+document.getElementById('jwStatus').addEventListener('change', function() {
+    fetch('/job-walks/' + ACTIVITY_ID + '/update-status', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: this.value })
+    }).then(function() { showSaved(); });
+});
+
+// Area auto-save on blur
+function saveAreaField(areaId, field, value) {
+    var body = {};
+    body[field] = value;
+    fetch('/job-walks/' + ACTIVITY_ID + '/segments/' + areaId, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+    }).then(function() { showSaved(); });
+}
+
+document.addEventListener('blur', function(e) {
+    if (!e.target.classList.contains('area-field')) return;
+    var area = e.target.closest('.jw-area');
+    if (!area || !area.dataset.areaId) return;
+    saveAreaField(area.dataset.areaId, e.target.dataset.field, e.target.value);
+}, true);
+
+function updateAreaCount() {
+    document.getElementById('jwAreaCount').textContent =
+        document.querySelectorAll('#jwAreaList .jw-area').length;
+}
+
+function addArea() {
+    fetch('/job-walks/' + ACTIVITY_ID + '/segments', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ location_name: 'New Area' })
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+        if (!data.success) return;
+        var seg = data.segment;
+        var div = document.createElement('div');
+        div.className = 'jw-area';
+        div.dataset.areaId = seg.id;
+        div.innerHTML =
+            '<div class="jw-area-grid">' +
+                '<input type="text" class="form-control form-control-sm area-field" data-field="location_name" value="' + (seg.location_name || '') + '" placeholder="Area name">' +
+                '<input type="text" class="form-control form-control-sm area-field" data-field="quantity_label" value="" placeholder="Qty (e.g. 48 drops)">' +
+                '<input type="number" class="form-control form-control-sm area-field" data-field="estimated_cable_length" value="" placeholder="Cable (ft)">' +
+                '<button type="button" class="jw-area-remove" onclick="removeArea(this)" title="Remove"><i class="bi bi-x-lg"></i></button>' +
+            '</div>' +
+            '<textarea class="form-control form-control-sm area-field jw-area-notes" data-field="description" rows="1" placeholder="Short notes (optional)"></textarea>';
+        document.getElementById('jwAreaList').appendChild(div);
+        updateAreaCount();
+        div.querySelector('input[data-field="location_name"]').focus();
+        div.querySelector('input[data-field="location_name"]').select();
+    });
+}
+
+function removeArea(btn) {
+    var area = btn.closest('.jw-area');
+    var areaId = area.dataset.areaId;
+    fetch('/job-walks/' + ACTIVITY_ID + '/segments/' + areaId + '/delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+        if (data.success) {
+            area.remove();
+            updateAreaCount();
+        }
+    });
+}
+
+function deleteJobWalk() {
+    if (!confirm('Delete this job walk? This cannot be undone.')) return;
+    var form = document.createElement('form');
+    form.method = 'POST';
+    form.action = '/activities/' + ACTIVITY_ID + '/delete?from=/job-walks';
+    document.body.appendChild(form);
+    form.submit();
+}
+</script>
+{% endblock %}

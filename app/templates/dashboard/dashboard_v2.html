@@ -327,6 +327,9 @@
                 <button type="button" class="tos-btn tos-btn-primary" data-bs-toggle="modal" data-bs-target="#logSiteVisitModal">
                     <i class="bi bi-geo-alt"></i> Site Visit
                 </button>
+                <button type="button" class="tos-btn tos-btn-primary" data-bs-toggle="modal" data-bs-target="#startJobWalkModal">
+                    <i class="bi bi-signpost-2"></i> Job Walk
+                </button>
                 <a href="/opportunities/intake" class="tos-btn tos-btn-primary">
                     <i class="bi bi-plus-lg"></i> Opportunity
                 </a>
@@ -724,53 +727,49 @@
                         <thead>
                             <tr>
                                 <th>Account</th>
-                                <th>Scope</th>
-                                <th>Needed By</th>
+                                <th>Name</th>
+                                <th>Due</th>
                                 <th>Status</th>
                                 <th></th>
                             </tr>
                         </thead>
                         <tbody>
                             {% for sv in jobs_awaiting_estimate %}
-                            <tr data-href="/activities/{{ sv.id }}"
-                                {% if sv.estimate_status in ('overdue', 'due_today') %}style="background-color: var(--danger-bg, #fee2e2);"
-                                {% elif sv.estimate_status == 'due_soon' %}style="background-color: var(--warning-bg, #fef3c7);"
+                            {% set days_left = (sv.estimate_due_by - today_date).days if sv.estimate_due_by else none %}
+                            <tr data-href="/job-walks/{{ sv.id }}"
+                                {% if days_left is not none and days_left <= 0 %}style="background-color: var(--danger-bg, #fee2e2);"
+                                {% elif days_left is not none and days_left <= 3 %}style="background-color: var(--warning-bg, #fef3c7);"
                                 {% endif %}>
                                 <td>
                                     {% if sv.contact and sv.contact.account %}
                                     <a href="/accounts/{{ sv.contact.account.id }}" class="row-link entity-name">{{ sv.contact.account.name }}</a>
-                                    {% elif sv.opportunity and sv.opportunity.primary_account %}
-                                    <a href="/accounts/{{ sv.opportunity.primary_account.id }}" class="row-link entity-name">{{ sv.opportunity.primary_account.name }}</a>
                                     {% else %}
                                     <span class="entity-name">{{ sv.subject }}</span>
                                     {% endif %}
                                 </td>
-                                <td>
-                                    <span class="entity-sub text-truncate d-inline-block" style="max-width: 200px;">{{ sv.scope_summary or '—' }}</span>
-                                </td>
-                                <td style="white-space: nowrap;">
-                                    {% if sv.estimate_needed_by %}
-                                    <span class="{% if sv.estimate_status in ('overdue', 'due_today') %}text-danger fw-bold{% elif sv.estimate_status == 'due_soon' %}text-warning{% else %}text-muted{% endif %}" style="font-size: 0.8rem;">
-                                        {{ sv.estimate_needed_by.strftime('%b %d') }}
-                                        {% if sv.days_until_estimate_needed is not none %}
-                                        <span style="font-size: 0.7rem;">({% if sv.days_until_estimate_needed < 0 %}{{ sv.days_until_estimate_needed|abs }}d late{% elif sv.days_until_estimate_needed == 0 %}today{% else %}{{ sv.days_until_estimate_needed }}d{% endif %})</span>
-                                        {% endif %}
+                                <td>{{ sv.subject }}</td>
+                                <td style="white-space: nowrap; font-size: 0.8rem;">
+                                    {% if sv.estimate_due_by %}
+                                    <span class="{% if days_left <= 0 %}text-danger fw-bold{% elif days_left <= 3 %}text-warning{% else %}text-muted{% endif %}">
+                                        {{ sv.estimate_due_by.strftime('%b %d') }}
                                     </span>
                                     {% else %}
-                                    <span class="text-muted" style="font-size: 0.75rem; font-style: italic;">No deadline set</span>
+                                    <span class="text-muted" style="font-size: 0.75rem;">—</span>
                                     {% endif %}
                                 </td>
                                 <td>
-                                    <span class="badge {% if sv.estimate_status in ('overdue', 'due_today') %}bg-danger{% elif sv.estimate_status == 'due_soon' %}bg-warning text-dark{% else %}bg-secondary{% endif %}" style="font-size: 0.65rem;">
-                                        {% if sv.estimate_status == 'overdue' %}Overdue{% elif sv.estimate_status == 'due_today' %}Due Today{% elif sv.estimate_status == 'due_soon' %}Due Soon{% else %}Pending{% endif %}
-                                    </span>
+                                    {% if sv.job_walk_status == 'sent_to_estimator' %}
+                                    <span class="badge bg-info" style="font-size: 0.65rem;">Sent</span>
+                                    {% else %}
+                                    <span class="badge bg-secondary" style="font-size: 0.65rem;">Open</span>
+                                    {% endif %}
                                 </td>
                                 <td class="text-end" style="white-space: nowrap;">
                                     <button type="button"
                                             class="tos-btn tos-btn-sm btn-log mark-estimate-btn"
                                             data-activity-id="{{ sv.id }}"
-                                            title="Mark Estimate Received">
-                                        <i class="bi bi-check-lg me-1"></i>Received
+                                            title="Mark Complete">
+                                        <i class="bi bi-check-lg me-1"></i>Complete
                                     </button>
                                 </td>
                             </tr>
@@ -780,7 +779,7 @@
                     {% else %}
                     <div class="empty-state">
                         <i class="bi bi-clipboard-check"></i>
-                        <div>No jobs awaiting estimate.</div>
+                        <div>No open job walks.</div>
                     </div>
                     {% endif %}
                 </div>
@@ -840,12 +839,18 @@ window._siteVisitOpps = [
 ];
 window._siteVisitContacts = [
     {% for contact in all_contacts %}
-    { id: {{ contact.id }}, name: "{{ contact.full_name | replace('"', '\\"') }}", account: "{{ (contact.account.name if contact.account else 'No Account') | replace('"', '\\"') }}" },
+    { id: {{ contact.id }}, name: "{{ contact.full_name | replace('"', '\\"') }}", account: "{{ (contact.account.name if contact.account else 'No Account') | replace('"', '\\"') }}", account_id: {{ contact.account_id or 'null' }} },
+    {% endfor %}
+];
+window._jobWalkAccounts = [
+    {% for account in all_accounts %}
+    { id: {{ account.id }}, name: "{{ account.name | replace('"', '\\"') }}" },
     {% endfor %}
 ];
 </script>
 
 {% include "partials/site_visit_modal.html" %}
+{% include "partials/job_walk_modal.html" %}
 
 {% endblock %}
 
@@ -891,9 +896,10 @@ document.querySelectorAll('.mark-estimate-btn').forEach(function(btn) {
         const activityId = this.dataset.activityId;
         const row = this.closest('tr');
 
-        fetch('/today/mark-estimate-received/' + activityId, {
+        fetch('/job-walks/' + activityId + '/update-status', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' }
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ status: 'complete' })
         })
         .then(response => response.json())
         .then(data => {
@@ -902,12 +908,12 @@ document.querySelectorAll('.mark-estimate-btn').forEach(function(btn) {
                 row.style.opacity = '0';
                 setTimeout(() => row.remove(), 300);
             } else {
-                alert(data.error || 'Failed to mark estimate received');
+                alert('Failed to mark complete');
             }
         })
         .catch(err => {
             console.error('Error:', err);
-            alert('Failed to mark estimate received');
+            alert('Failed to mark complete');
         });
     });
 });
