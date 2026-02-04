@@ -376,7 +376,7 @@
                         {#- Account next actions (already sorted by due date ASC from query) -#}
                         {% for account in next_action_accounts %}
                         <tr class="task-row-account" data-href="/accounts/{{ account.id }}"
-                            {% if account.days_until_next_action is not none and account.days_until_next_action < 0 %}style="background-color: #fee2e2;"{% elif account.days_until_next_action is not none and account.days_until_next_action <= 2 %}style="background-color: #fef3c7;"{% endif %}>
+                            {% if account.days_until_next_action is not none and account.days_until_next_action <= 1 %}style="background-color: #fee2e2;"{% elif account.days_until_next_action is not none and account.days_until_next_action <= 3 %}style="background-color: #fef3c7;"{% endif %}>
                             <td style="width: 1.5rem; padding-right: 0;">
                                 <button type="button"
                                     class="task-check"
@@ -391,7 +391,7 @@
                             </td>
                             <td class="text-end" style="white-space: nowrap;">
                                 {% if account.days_until_next_action is not none %}
-                                <span class="ms-1 {% if account.days_until_next_action < 0 %}text-danger{% elif account.days_until_next_action <= 2 %}text-warning{% else %}text-muted{% endif %}" style="font-size: 0.75rem;">
+                                <span class="ms-1 {% if account.days_until_next_action <= 1 %}text-danger{% elif account.days_until_next_action <= 3 %}text-warning{% else %}text-muted{% endif %}" style="font-size: 0.75rem;">
                                     {{ account.next_action_due_date.strftime('%b %d') }}
                                 </span>
                                 {% endif %}
@@ -403,7 +403,7 @@
                         {% for task in my_tasks %}
                         <tr data-href="/tasks/{{ task.id }}/edit?from=/"
                             {% if task.status != 'Completed' and task.due_date %}
-                            {% if task.is_overdue or (task.days_until_due is not none and task.days_until_due <= 1) %}style="background-color: #fee2e2;"{% elif task.days_until_due is not none and task.days_until_due <= 2 %}style="background-color: #fef3c7;"{% endif %}
+                            {% if task.is_overdue or (task.days_until_due is not none and task.days_until_due <= 1) %}style="background-color: #fee2e2;"{% elif task.days_until_due is not none and task.days_until_due <= 3 %}style="background-color: #fef3c7;"{% endif %}
                             {% endif %}>
                             <td style="width: 1.5rem; padding-right: 0;">
                                 <button type="button"
@@ -425,7 +425,7 @@
                                     {{ task.priority }}
                                 </span>
                                 {% if task.due_date %}
-                                <span class="ms-1 {% if task.is_overdue or (task.days_until_due is not none and task.days_until_due <= 1) %}text-danger{% elif task.days_until_due is not none and task.days_until_due <= 2 %}text-warning{% else %}text-muted{% endif %}" style="font-size: 0.75rem;">
+                                <span class="ms-1 {% if task.is_overdue or (task.days_until_due is not none and task.days_until_due <= 1) %}text-danger{% elif task.days_until_due is not none and task.days_until_due <= 3 %}text-warning{% else %}text-muted{% endif %}" style="font-size: 0.75rem;">
                                     {{ task.due_date.strftime('%b %d') }}
                                 </span>
                                 {% endif %}
