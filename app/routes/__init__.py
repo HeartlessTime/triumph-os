@@ -11,6 +11,7 @@ from app.routes.summary import router as summary_router
 from app.routes.today import router as today_router
 from app.routes.audit_log import router as audit_log_router
 from app.routes.job_walks import router as job_walks_router
+from app.routes.commissions import router as commissions_router
 
 __all__ = [
     "dashboard_router",
@@ -26,4 +27,5 @@ __all__ = [
     "today_router",
     "audit_log_router",
     "job_walks_router",
+    "commissions_router",
 ]

@@ -1,0 +1,264 @@
+{% extends "base.html" %}
+
+{% block title %}Commissions - Triumph OS{% endblock %}
+
+{% block extra_css %}
+<style>
+    .month-nav { display: flex; align-items: center; gap: 0.5rem; }
+    .month-nav input[type="month"] {
+        background: var(--bg-input);
+        color: var(--text-primary);
+        border: 1px solid var(--border-default);
+        border-radius: 6px;
+        padding: 0.25rem 0.5rem;
+        font-size: 0.85rem;
+    }
+    .template-status {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        font-size: 0.8rem;
+        padding: 0.2rem 0.6rem;
+        border-radius: 4px;
+    }
+    .template-status.uploaded {
+        background: #d1fae5;
+        color: #065f46;
+    }
+    .template-status.missing {
+        background: #fee2e2;
+        color: #991b1b;
+    }
+    .commission-total {
+        font-weight: 600;
+        font-size: 0.95rem;
+        color: var(--text-primary);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="content-area">
+    <div class="tos-page-header d-flex justify-content-between align-items-center">
+        <div>
+            <h1>Commission Tracker</h1>
+            <p>Track and export commission entries</p>
+        </div>
+        <button type="button" class="tos-btn tos-btn-primary" data-bs-toggle="modal" data-bs-target="#commissionModal" onclick="openAddModal()">
+            <i class="bi bi-plus-lg"></i> Add Entry
+        </button>
+    </div>
+
+    <!-- Controls -->
+    <div class="tos-controls">
+        <div class="d-flex flex-wrap gap-3 align-items-center">
+            <!-- Month Selector -->
+            <div class="month-nav">
+                <span class="text-muted small">Month:</span>
+                <input type="month" id="monthPicker" value="{{ selected_month }}" onchange="navigateMonth(this.value)">
+            </div>
+
+            <!-- Template Upload -->
+            <form action="/commissions/upload-template?month={{ selected_month }}" method="post" enctype="multipart/form-data" class="d-flex align-items-center gap-2">
+                <label class="tos-btn tos-btn-secondary" style="cursor:pointer; margin:0;">
+                    <i class="bi bi-upload"></i> Upload Template
+                    <input type="file" name="file" accept=".xlsx" style="display:none;" onchange="this.form.submit()">
+                </label>
+                {% if has_template %}
+                <span class="template-status uploaded"><i class="bi bi-check-circle-fill"></i> Template ready</span>
+                {% else %}
+                <span class="template-status missing"><i class="bi bi-exclamation-circle-fill"></i> No template</span>
+                {% endif %}
+            </form>
+
+            <!-- Export -->
+            <div class="ms-auto d-flex align-items-center gap-3">
+                {% set total_commission = entries | map(attribute='commission_amount') | select('ne', None) | map('float') | sum %}
+                {% if entries %}
+                <span class="commission-total">
+                    Total: ${{ "{:,.2f}".format(total_commission) }}
+                </span>
+                {% endif %}
+                <form action="/commissions/export" method="post" style="margin:0;">
+                    <input type="hidden" name="export_month" value="{{ selected_month }}">
+                    <button type="submit" class="tos-btn tos-btn-primary" {% if not has_template or not entries %}disabled{% endif %}>
+                        <i class="bi bi-file-earmark-spreadsheet"></i> Export to Excel
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Commissions Table -->
+    <div class="tos-card">
+        {% if entries %}
+        <div class="table-responsive">
+            <table class="tos-table">
+                <thead>
+                    <tr>
+                        <th>Account</th>
+                        <th>Job Name</th>
+                        <th>Job #</th>
+                        <th>Contact</th>
+                        <th style="text-align:right;">Job Amount</th>
+                        <th style="text-align:right;">Commission</th>
+                        <th>Notes</th>
+                        <th>Status</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for entry in entries %}
+                    <tr>
+                        <td><span class="tos-entity-name">{{ entry.account_name }}</span></td>
+                        <td>{{ entry.job_name }}</td>
+                        <td class="tos-entity-sub">{{ entry.job_number or '—' }}</td>
+                        <td class="tos-entity-sub">{{ entry.contact or '—' }}</td>
+                        <td style="text-align:right;">
+                            {% if entry.job_amount is not none %}
+                            <span class="currency">{{ entry.job_amount }}</span>
+                            {% else %}—{% endif %}
+                        </td>
+                        <td style="text-align:right;">
+                            {% if entry.commission_amount is not none %}
+                            <span class="currency">{{ entry.commission_amount }}</span>
+                            {% else %}—{% endif %}
+                        </td>
+                        <td class="tos-entity-sub" style="max-width:200px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="{{ entry.notes or '' }}">
+                            {{ entry.notes or '—' }}
+                        </td>
+                        <td>
+                            {% if entry.status == 'exported' %}
+                            <span class="tos-badge-info">Exported</span>
+                            {% else %}
+                            <span class="tos-badge-neutral">Draft</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-end" style="white-space:nowrap;">
+                            <button type="button" class="tos-btn tos-btn-secondary" title="Edit"
+                                onclick="openEditModal({{ entry.id }}, '{{ entry.month }}', '{{ entry.account_name | e }}', '{{ entry.job_name | e }}', '{{ (entry.job_number or '') | e }}', '{{ (entry.contact or '') | e }}', '{{ entry.job_amount if entry.job_amount is not none else '' }}', '{{ entry.commission_amount if entry.commission_amount is not none else '' }}', {{ entry.notes | tojson }})">
+                                <i class="bi bi-pencil"></i>
+                            </button>
+                            <form action="/commissions/{{ entry.id }}/delete" method="post" style="display:inline;" onsubmit="return confirm('Delete this entry?')">
+                                <button type="submit" class="tos-btn tos-btn-secondary" title="Delete">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="tos-empty-state">
+            <i class="bi bi-cash-coin"></i>
+            <p>No commission entries for this month</p>
+            <button type="button" class="tos-btn tos-btn-primary" data-bs-toggle="modal" data-bs-target="#commissionModal" onclick="openAddModal()">
+                <i class="bi bi-plus-lg"></i> Add Entry
+            </button>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Add/Edit Commission Modal -->
+<div class="modal fade" id="commissionModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="commissionForm" method="post">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="commissionModalTitle">Add Commission Entry</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <label class="form-label">Month <span style="color:#dc2626;">*</span></label>
+                            <input type="month" class="form-control form-control-sm" name="month" id="entryMonth" value="{{ selected_month }}" required>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Account Name <span style="color:#dc2626;">*</span></label>
+                            <input type="text" class="form-control form-control-sm" name="account_name" id="entryAccountName" required>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Job Name <span style="color:#dc2626;">*</span></label>
+                            <input type="text" class="form-control form-control-sm" name="job_name" id="entryJobName" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Job Number</label>
+                            <input type="text" class="form-control form-control-sm" name="job_number" id="entryJobNumber">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Contact</label>
+                            <input type="text" class="form-control form-control-sm" name="contact" id="entryContact">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Job Amount</label>
+                            <input type="number" step="0.01" min="0" class="form-control form-control-sm" name="job_amount" id="entryJobAmount">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Commission Amount</label>
+                            <input type="number" step="0.01" min="0" class="form-control form-control-sm" name="commission_amount" id="entryCommissionAmount">
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Notes</label>
+                            <textarea class="form-control form-control-sm" name="notes" id="entryNotes" rows="2"></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="tos-btn tos-btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="tos-btn tos-btn-primary" id="commissionSubmitBtn">Add Entry</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function navigateMonth(val) {
+    window.location.href = '/commissions?month=' + val;
+}
+
+function openAddModal() {
+    var form = document.getElementById('commissionForm');
+    form.action = '/commissions/add';
+    document.getElementById('commissionModalTitle').textContent = 'Add Commission Entry';
+    document.getElementById('commissionSubmitBtn').textContent = 'Add Entry';
+    document.getElementById('entryMonth').value = '{{ selected_month }}';
+    document.getElementById('entryAccountName').value = '';
+    document.getElementById('entryJobName').value = '';
+    document.getElementById('entryJobNumber').value = '';
+    document.getElementById('entryContact').value = '';
+    document.getElementById('entryJobAmount').value = '';
+    document.getElementById('entryCommissionAmount').value = '';
+    document.getElementById('entryNotes').value = '';
+}
+
+function openEditModal(id, month, accountName, jobName, jobNumber, contact, jobAmount, commissionAmount, notes) {
+    var form = document.getElementById('commissionForm');
+    form.action = '/commissions/' + id + '/edit';
+    document.getElementById('commissionModalTitle').textContent = 'Edit Commission Entry';
+    document.getElementById('commissionSubmitBtn').textContent = 'Save Changes';
+    document.getElementById('entryMonth').value = month;
+    document.getElementById('entryAccountName').value = accountName;
+    document.getElementById('entryJobName').value = jobName;
+    document.getElementById('entryJobNumber').value = jobNumber;
+    document.getElementById('entryContact').value = contact;
+    document.getElementById('entryJobAmount').value = jobAmount;
+    document.getElementById('entryCommissionAmount').value = commissionAmount;
+    document.getElementById('entryNotes').value = notes || '';
+
+    var modal = new bootstrap.Modal(document.getElementById('commissionModal'));
+    modal.show();
+}
+
+// Reset form on modal close
+document.getElementById('commissionModal').addEventListener('hidden.bs.modal', function () {
+    openAddModal();
+});
+</script>
+{% endblock %}

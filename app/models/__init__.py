@@ -12,6 +12,7 @@ from app.models.task import Task
 from app.models.vendor import Vendor, VendorQuoteRequest
 from app.models.weekly_summary_note import WeeklySummaryNote
 from app.models.user_summary_suppression import UserSummarySuppression
+from app.models.commission_entry import CommissionEntry
 
 __all__ = [
     "User",
@@ -31,4 +32,5 @@ __all__ = [
     "VendorQuoteRequest",
     "WeeklySummaryNote",
     "UserSummarySuppression",
+    "CommissionEntry",
 ]
