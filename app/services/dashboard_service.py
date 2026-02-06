@@ -84,10 +84,10 @@ def get_dashboard_data(db: Session, today: date) -> dict:
         .all()
     )
 
-    # Eager load opportunity for template rendering (task.opportunity.name)
+    # Eager load opportunity and account for template rendering
     my_tasks = (
         db.query(Task)
-        .options(selectinload(Task.opportunity))
+        .options(selectinload(Task.opportunity), selectinload(Task.account))
         .filter(Task.status == "Open")
         .order_by(Task.due_date.nullslast())
         .limit(10)

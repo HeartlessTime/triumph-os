@@ -411,8 +411,13 @@
                             </td>
                             <td>
                                 <span class="entity-name {% if task.status == 'Completed' %}text-decoration-line-through text-muted{% endif %}">{{ task.title }}</span>
+                                {% if task.account %}
+                                <span class="badge-account">Account</span>
+                                {% endif %}
                                 {% if task.opportunity %}
                                 <div class="entity-sub">{{ task.opportunity.name }}</div>
+                                {% elif task.account %}
+                                <div class="entity-sub">{{ task.account.name }}</div>
                                 {% endif %}
                             </td>
                             <td class="text-end" style="white-space: nowrap;">
