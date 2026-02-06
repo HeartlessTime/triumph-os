@@ -255,7 +255,6 @@
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 1rem;
-            align-items: start;
         }
 
         .dashboard-v2 .section-full {
@@ -634,7 +633,6 @@
 
                     {% if meetings_completed %}
                     <div class="sub-header"><i class="bi bi-check-circle me-1"></i>Completed (this week)</div>
-                    <div style="max-height: 200px; overflow-y: auto;">
                     <table class="dense-table">
                         <tbody>
                             {% for activity in meetings_completed %}
@@ -658,7 +656,6 @@
                             {% endfor %}
                         </tbody>
                     </table>
-                    </div>
                     {% endif %}
 
                     {% if not meetings_pending and not meetings_completed %}
