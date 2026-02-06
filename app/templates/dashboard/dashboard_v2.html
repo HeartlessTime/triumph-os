@@ -396,7 +396,7 @@
 
                         {#- Regular tasks -#}
                         {% for task in my_tasks %}
-                        <tr data-href="/tasks/{{ task.id }}/edit?from=/"
+                        <tr class="{% if task.account %}task-row-account{% endif %}" data-href="/tasks/{{ task.id }}/edit?from=/"
                             {% if task.status != 'Completed' and task.due_date %}
                             {% if task.is_overdue or (task.days_until_due is not none and task.days_until_due <= 1) %}style="background-color: #fee2e2;"{% elif task.days_until_due is not none and task.days_until_due <= 3 %}style="background-color: #fef3c7;"{% endif %}
                             {% endif %}>
