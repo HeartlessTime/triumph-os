@@ -264,10 +264,32 @@
 {% block content %}
 <div class="daily-summary">
     <div class="content-area">
-        <!-- Header -->
-        <div class="page-header">
-            <h1><i class="bi bi-sunrise me-2"></i>Daily Summary</h1>
-            <small class="text-muted">{{ today.strftime('%A, %B %d, %Y') }}</small>
+        <!-- Header with date navigation -->
+        <div class="page-header d-flex justify-content-between align-items-center">
+            <div>
+                <h1><i class="bi bi-sunrise me-2"></i>Daily Summary</h1>
+                <small class="text-muted">{{ selected_date.strftime('%A, %B %d, %Y') }}{% if is_today %} — Today{% endif %}</small>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+                <a href="/daily-summary?date={{ prev_date }}" class="tos-btn tos-btn-sm btn-view" title="Previous day">
+                    <i class="bi bi-chevron-left"></i>
+                </a>
+                <div style="position: relative; display: inline-block;">
+                    <input type="date" id="datePicker" value="{{ selected_date.isoformat() }}"
+                           style="position: absolute; opacity: 0; width: 0; height: 0; pointer-events: none;">
+                    <button type="button" class="tos-btn tos-btn-sm btn-view" id="calendarBtn" title="Pick a date">
+                        <i class="bi bi-calendar3"></i>
+                    </button>
+                </div>
+                {% if not is_today %}
+                <a href="/daily-summary?date={{ next_date }}" class="tos-btn tos-btn-sm btn-view" title="Next day">
+                    <i class="bi bi-chevron-right"></i>
+                </a>
+                <a href="/daily-summary" class="tos-btn tos-btn-sm btn-view" title="Back to today" style="font-size: 0.7rem;">
+                    Today
+                </a>
+                {% endif %}
+            </div>
         </div>
 
         <!-- AI Briefing (collapsed by default, expanded if has content) -->
@@ -281,9 +303,6 @@
                     <span class="briefing-preview" id="briefingPreview">{% if briefing_notes and not briefing_notes.strip() == '' %}{{ briefing_notes[:80] }}{% if briefing_notes|length > 80 %}...{% endif %}{% endif %}</span>
                 </span>
                 <span>
-                    <button type="button" class="tos-btn tos-btn-sm btn-view" id="clearBriefing" title="Clear briefing" style="font-size: 0.65rem; padding: 0.15rem 0.35rem; margin-right: 0.5rem;" onclick="event.stopPropagation();">
-                        <i class="bi bi-x-lg"></i>
-                    </button>
                     <i class="bi bi-chevron-down briefing-toggle"></i>
                 </span>
             </div>
@@ -451,13 +470,26 @@ document.addEventListener('click', function(e) {
     window.location.href = clickable.dataset.href;
 });
 
+// Date picker — calendar button opens native date input
+(function() {
+    var picker = document.getElementById('datePicker');
+    var btn = document.getElementById('calendarBtn');
+    btn.addEventListener('click', function() {
+        picker.showPicker ? picker.showPicker() : picker.click();
+    });
+    picker.addEventListener('change', function() {
+        if (picker.value) {
+            window.location.href = '/daily-summary?date=' + picker.value;
+        }
+    });
+})();
+
 // AI Briefing — collapsible + auto-save to database
 (function() {
-    var today = '{{ today.isoformat() }}';
+    var selectedDate = '{{ selected_date.isoformat() }}';
     var card = document.getElementById('briefingCard');
     var toggle = document.getElementById('briefingToggle');
     var textarea = document.getElementById('aiBriefing');
-    var clearBtn = document.getElementById('clearBriefing');
     var saveStatus = document.getElementById('saveStatus');
     var preview = document.getElementById('briefingPreview');
     var debounceTimer = null;
@@ -485,7 +517,7 @@ document.addEventListener('click', function(e) {
         fetch('/daily-summary/auto-save', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({date: today, notes: notes})
+            body: JSON.stringify({date: selectedDate, notes: notes})
         }).then(function() {
             showStatus('Saved');
         }).catch(function() {
@@ -500,14 +532,6 @@ document.addEventListener('click', function(e) {
         debounceTimer = setTimeout(function() {
             saveBriefing(textarea.value);
         }, 1000);
-    });
-
-    // Clear button
-    clearBtn.addEventListener('click', function() {
-        textarea.value = '';
-        clearTimeout(debounceTimer);
-        updatePreview('');
-        saveBriefing('');
     });
 })();
 </script>

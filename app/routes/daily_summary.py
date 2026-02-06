@@ -4,8 +4,8 @@ Daily Summary Route
 Surfaces all actionable CRM items for today in a single scanning page.
 """
 
-from datetime import datetime
-from fastapi import APIRouter, Request, Depends
+from datetime import datetime, timedelta
+from fastapi import APIRouter, Request, Depends, Query
 from fastapi.responses import HTMLResponse, JSONResponse
 from sqlalchemy.orm import Session
 
@@ -18,22 +18,48 @@ router = APIRouter(tags=["daily_summary"])
 
 
 @router.get("/daily-summary", response_class=HTMLResponse)
-async def daily_summary(request: Request, db: Session = Depends(get_db)):
-    """Daily summary page — surfaces all actionable items for today."""
-    today = datetime.now(get_app_tz()).date()
-    data = get_daily_summary_data(db, today)
+async def daily_summary(
+    request: Request,
+    db: Session = Depends(get_db),
+    date: str = Query(None, description="Date in YYYY-MM-DD format"),
+):
+    """Daily summary page — surfaces all actionable items for a given date (defaults to today)."""
+    actual_today = datetime.now(get_app_tz()).date()
 
-    # Load saved briefing for today
+    # Parse requested date or default to today
+    if date:
+        try:
+            selected_date = datetime.strptime(date, "%Y-%m-%d").date()
+        except ValueError:
+            selected_date = actual_today
+    else:
+        selected_date = actual_today
+
+    is_today = selected_date == actual_today
+    prev_date = (selected_date - timedelta(days=1)).isoformat()
+    next_date = (selected_date + timedelta(days=1)).isoformat()
+
+    data = get_daily_summary_data(db, selected_date)
+
+    # Load saved briefing for selected date
     briefing = (
         db.query(DailyBriefing)
-        .filter(DailyBriefing.summary_date == today)
+        .filter(DailyBriefing.summary_date == selected_date)
         .first()
     )
     briefing_notes = briefing.notes if briefing else ""
 
     return templates.TemplateResponse(
         "daily_summary/index.html",
-        {"request": request, "briefing_notes": briefing_notes, **data},
+        {
+            "request": request,
+            "briefing_notes": briefing_notes,
+            "selected_date": selected_date,
+            "is_today": is_today,
+            "prev_date": prev_date,
+            "next_date": next_date,
+            **data,
+        },
     )
 
 
