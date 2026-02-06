@@ -246,9 +246,6 @@
                                 </div>
                             </div>
                             <div class="text-end">
-                                <span class="badge" style="background-color: {{ task.priority_color }}20; color: {{ task.priority_color }}">
-                                    {{ task.priority }}
-                                </span>
                                 {% if task.due_date %}
                                 <div class="small {% if task.is_overdue %}text-danger{% else %}text-muted{% endif %}">
                                     {{ task.due_date.strftime('%b %d') }}
@@ -435,14 +432,6 @@ document.addEventListener('DOMContentLoaded', function() {
                         <div class="col-6">
                             <label for="taskDueDate" class="form-label">Due Date</label>
                             <input type="date" class="form-control" id="taskDueDate" name="due_date">
-                        </div>
-                        <div class="col-6">
-                            <label for="taskPriority" class="form-label">Priority</label>
-                            <select class="form-select" id="taskPriority" name="priority">
-                                <option value="Low">Low</option>
-                                <option value="Medium" selected>Medium</option>
-                                <option value="High">High</option>
-                            </select>
                         </div>
                     </div>
                     <div class="mb-3">

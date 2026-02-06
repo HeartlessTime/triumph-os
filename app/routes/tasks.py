@@ -17,7 +17,6 @@ async def quick_add_task(
     title: str = Form(...),
     due_date: str = Form(None),
     description: str = Form(None),
-    priority: str = Form("Medium"),
     db: Session = Depends(get_db),
 ):
     """Quick add a standalone task (no opportunity)."""
@@ -25,16 +24,11 @@ async def quick_add_task(
     if not current_user:
         raise HTTPException(status_code=401, detail="Not authenticated")
 
-    # Validate priority
-    if priority not in Task.PRIORITIES:
-        priority = "Medium"
-
     task = Task(
         opportunity_id=None,
         title=title,
         description=description or None,
         due_date=datetime.strptime(due_date, "%Y-%m-%d").date() if due_date else None,
-        priority=priority,
         assigned_to_id=current_user.id,
         created_by_id=current_user.id,
     )
@@ -56,7 +50,6 @@ async def add_task(
     title: str = Form(...),
     description: str = Form(None),
     due_date: str = Form(None),
-    priority: str = Form("Medium"),
     assigned_to_id: int = Form(None),
     db: Session = Depends(get_db),
 ):
@@ -71,7 +64,6 @@ async def add_task(
         title=title,
         description=description or None,
         due_date=datetime.strptime(due_date, "%Y-%m-%d").date() if due_date else None,
-        priority=priority,
         assigned_to_id=assigned_to_id if assigned_to_id else current_user.id,
         created_by_id=current_user.id,
     )
@@ -84,7 +76,7 @@ async def add_task(
 
 # Column names for Task model (only these can be set)
 TASK_COLUMNS = {
-    "title", "description", "due_date", "priority", "status",
+    "title", "description", "due_date", "status",
     "assigned_to_id", "opportunity_id", "completed_at", "completed_by_id",
 }
 
@@ -153,15 +145,6 @@ async def quick_update_task(
                     ))
                 else:
                     task.reopen()
-            except Exception:
-                pass
-
-        # Handle priority change
-        if "priority" in payload:
-            try:
-                priority_val = payload["priority"]
-                if priority_val in Task.PRIORITIES:
-                    task.priority = priority_val
             except Exception:
                 pass
 
@@ -299,7 +282,7 @@ async def edit_task_form(request: Request, task_id: int, db: Session = Depends(g
             "request": request,
             "task": task,
             "users": users,
-            "priorities": Task.PRIORITIES,
+            "priorities": [],
         },
     )
 
@@ -311,7 +294,6 @@ async def update_task(
     title: str = Form(...),
     description: str = Form(None),
     due_date: str = Form(None),
-    priority: str = Form("Medium"),
     assigned_to_id: int = Form(None),
     db: Session = Depends(get_db),
 ):
@@ -329,7 +311,6 @@ async def update_task(
     task.title = title
     task.description = description or None
     task.due_date = datetime.strptime(due_date, "%Y-%m-%d").date() if due_date else None
-    task.priority = priority
     task.assigned_to_id = assigned_to_id if assigned_to_id else None
 
     db.commit()

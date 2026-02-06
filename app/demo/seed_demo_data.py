@@ -529,7 +529,6 @@ DEMO_TASKS = [
         "title": "Demo - Schedule site visit with Mike",
         "description": "Coordinate with Turner PM for site walkthrough",
         "due_date": days_from_now(3),
-        "priority": "High",
         "status": "Open",
     },
     {
@@ -537,7 +536,6 @@ DEMO_TASKS = [
         "title": "Demo - Get fiber pricing from CommScope",
         "description": "Need OM4 and single-mode pricing for data center",
         "due_date": days_from_now(5),
-        "priority": "Medium",
         "status": "Open",
     },
     {
@@ -545,7 +543,6 @@ DEMO_TASKS = [
         "title": "Demo - Review bid documents",
         "description": "Initial review of drawings and specs",
         "due_date": days_ago(2),
-        "priority": "High",
         "status": "Complete",
         "completed_at": datetime_ago(1),
     },
@@ -555,7 +552,6 @@ DEMO_TASKS = [
         "title": "Demo - Nurse call vendor coordination",
         "description": "Meeting with Rauland rep for pricing",
         "due_date": days_from_now(2),
-        "priority": "High",
         "status": "Open",
     },
     {
@@ -563,7 +559,6 @@ DEMO_TASKS = [
         "title": "Demo - Floor-by-floor breakdown",
         "description": "Jennifer needs detailed estimate per floor",
         "due_date": days_from_now(7),
-        "priority": "Medium",
         "status": "Open",
     },
     {
@@ -571,7 +566,6 @@ DEMO_TASKS = [
         "title": "Demo - RTLS system research",
         "description": "Compare Versus and CenTrak options",
         "due_date": days_ago(5),
-        "priority": "Medium",
         "status": "Complete",
         "completed_at": datetime_ago(3),
     },
@@ -581,7 +575,6 @@ DEMO_TASKS = [
         "title": "Demo - Industrial networking proposal",
         "description": "Finalize Cisco IE switch configuration",
         "due_date": days_from_now(1),
-        "priority": "Urgent",
         "status": "Open",
     },
     {
@@ -589,7 +582,6 @@ DEMO_TASKS = [
         "title": "Demo - CCTV camera count verification",
         "description": "Review drawings for camera locations",
         "due_date": days_from_now(3),
-        "priority": "High",
         "status": "Open",
     },
     # Tasks for Austin ISD Elementary (opp 4)
@@ -598,7 +590,6 @@ DEMO_TASKS = [
         "title": "Demo - Follow up on bid results",
         "description": "Call Lisa for status update",
         "due_date": days_ago(1),
-        "priority": "High",
         "status": "Open",
     },  # Overdue
     # Tasks for UT Research Building (opp 6)
@@ -607,7 +598,6 @@ DEMO_TASKS = [
         "title": "Demo - Value engineering options",
         "description": "Prepare 3 scope reduction alternatives",
         "due_date": days_from_now(4),
-        "priority": "High",
         "status": "Open",
     },
     {
@@ -615,7 +605,6 @@ DEMO_TASKS = [
         "title": "Demo - Clean room cabling specs",
         "description": "Research plenum-rated options",
         "due_date": days_ago(7),
-        "priority": "Medium",
         "status": "Complete",
         "completed_at": datetime_ago(5),
     },
@@ -625,7 +614,6 @@ DEMO_TASKS = [
         "title": "Demo - Kickoff meeting prep",
         "description": "Prepare project schedule and team assignments",
         "due_date": days_from_now(2),
-        "priority": "High",
         "status": "Open",
     },
     {
@@ -633,7 +621,6 @@ DEMO_TASKS = [
         "title": "Demo - Submittals preparation",
         "description": "Start compiling product submittals",
         "due_date": days_from_now(14),
-        "priority": "Medium",
         "status": "Open",
     },
     {
@@ -641,7 +628,6 @@ DEMO_TASKS = [
         "title": "Demo - Contract review complete",
         "description": "Legal review of subcontract",
         "due_date": days_ago(10),
-        "priority": "Urgent",
         "status": "Complete",
         "completed_at": datetime_ago(8),
     },
@@ -651,7 +637,6 @@ DEMO_TASKS = [
         "title": "Demo - Update insurance certificates",
         "description": "Annual renewal due",
         "due_date": days_from_now(10),
-        "priority": "Medium",
         "status": "Open",
     },
     {
@@ -659,7 +644,6 @@ DEMO_TASKS = [
         "title": "Demo - Safety training renewal",
         "description": "OSHA 30 refresher",
         "due_date": days_from_now(30),
-        "priority": "Low",
         "status": "Open",
     },
 ]

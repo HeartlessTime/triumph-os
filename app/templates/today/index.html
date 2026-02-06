@@ -137,9 +137,6 @@
                                     {% endif %}
                                 </div>
                                 <div class="text-end">
-                                    <span class="badge" style="background-color: {{ task.priority_color }}20; color: {{ task.priority_color }}">
-                                        {{ task.priority }}
-                                    </span>
                                     {% if task.due_date %}
                                     <div class="small {% if task.is_overdue %}text-danger{% elif task.due_date == today %}text-warning{% endif %}">
                                         {% if task.due_date < today %}

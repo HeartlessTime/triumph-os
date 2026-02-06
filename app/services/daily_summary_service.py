@@ -33,7 +33,7 @@ def get_daily_summary_data(db: Session, today: date) -> dict:
             Task.due_date.isnot(None),
             Task.due_date <= today,
         )
-        .order_by(Task.due_date.nullslast(), Task.priority.desc())
+        .order_by(Task.due_date.nullslast())
         .all()
     )
 

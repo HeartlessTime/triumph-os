@@ -195,7 +195,7 @@ async def today_page(request: Request, db: Session = Depends(get_db)):
         db.query(Task)
         .options(selectinload(Task.opportunity))
         .filter(Task.due_date <= week_from_now, Task.status == "Open")
-        .order_by(Task.due_date, Task.priority.desc())
+        .order_by(Task.due_date)
         .all()
     )
 

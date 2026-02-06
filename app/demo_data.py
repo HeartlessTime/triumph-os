@@ -433,7 +433,6 @@ def get_demo_tasks():
     t1.title = "Request fire alarm quotes from vendors"
     t1.description = "Get quotes from Johnson Controls and Simplex for FA system"
     t1.status = "Open"
-    t1.priority = "High"
     t1.due_date = today + timedelta(days=3)
     t1.assigned_to_id = 1
     t1.created_by_id = 1
@@ -445,7 +444,6 @@ def get_demo_tasks():
     t2.title = "Complete labor estimate for cabling"
     t2.description = "Calculate man-hours for structured cabling installation"
     t2.status = "Open"
-    t2.priority = "High"
     t2.due_date = today + timedelta(days=5)
     t2.assigned_to_id = 1
     t2.created_by_id = 1
@@ -457,7 +455,6 @@ def get_demo_tasks():
     t3.title = "Follow up with Jennifer on drawings"
     t3.description = "Check if updated MEP drawings are available"
     t3.status = "Open"
-    t3.priority = "Medium"
     t3.due_date = today + timedelta(days=1)
     t3.assigned_to_id = 1
     t3.created_by_id = 1
@@ -469,7 +466,6 @@ def get_demo_tasks():
     t4.title = "Schedule site visit for Valley Schools project"
     t4.description = "Coordinate with Robert for site access next week"
     t4.status = "Open"
-    t4.priority = "Medium"
     t4.due_date = today + timedelta(days=2)
     t4.assigned_to_id = 1
     t4.created_by_id = 1
@@ -481,7 +477,6 @@ def get_demo_tasks():
     t5.title = "Prepare bid presentation"
     t5.description = "Create PowerPoint for bid review meeting"
     t5.status = "Complete"
-    t5.priority = "High"
     t5.due_date = today - timedelta(days=2)
     t5.completed_date = today - timedelta(days=3)
     t5.assigned_to_id = 1

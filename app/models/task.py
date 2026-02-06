@@ -40,15 +40,7 @@ class Task(Base):
         "User", back_populates="created_tasks", foreign_keys=[created_by_id]
     )
 
-    PRIORITIES = ["Low", "Medium", "High", "Urgent"]
     STATUSES = ["Open", "Completed"]
-
-    PRIORITY_COLORS = {
-        "Low": "#6c757d",
-        "Medium": "#0d6efd",
-        "High": "#fd7e14",
-        "Urgent": "#dc3545",
-    }
 
     @property
     def is_overdue(self):
@@ -66,10 +58,6 @@ class Task(Base):
             delta = self.due_date - date.today()
             return delta.days
         return None
-
-    @property
-    def priority_color(self):
-        return self.PRIORITY_COLORS.get(self.priority, "#6c757d")
 
     def complete(self, completed_by_user_id: int = None):
         """Mark task as complete."""

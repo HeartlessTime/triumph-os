@@ -211,9 +211,6 @@
                                 </div>
                             </div>
                             <div>
-                                <span class="badge" style="background-color: {{ task.priority_color }}20; color: {{ task.priority_color }}">
-                                    {{ task.priority }}
-                                </span>
                                 {% if task.due_date %}
                                 <span class="ms-2 small {% if task.is_overdue %}text-danger{% endif %}">
                                     {{ task.due_date.strftime('%b %d') }}
@@ -482,15 +479,6 @@
                         <div class="col-6">
                             <label for="task_due_date" class="form-label">Due Date</label>
                             <input type="date" class="form-control" id="task_due_date" name="due_date">
-                        </div>
-                        <div class="col-6">
-                            <label for="task_priority" class="form-label">Priority</label>
-                            <select class="form-select" id="task_priority" name="priority">
-                                <option value="Low">Low</option>
-                                <option value="Medium" selected>Medium</option>
-                                <option value="High">High</option>
-                                <option value="Urgent">Urgent</option>
-                            </select>
                         </div>
                     </div>
                     <div class="mt-3">

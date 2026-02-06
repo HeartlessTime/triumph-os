@@ -117,12 +117,6 @@
         font-weight: 500;
     }
 
-    /* Priority badges */
-    .daily-summary .priority-high { color: var(--text-danger-inline); }
-    .daily-summary .priority-urgent { color: var(--text-danger-inline); font-weight: 600; }
-    .daily-summary .priority-medium { color: var(--text-warning-inline); }
-    .daily-summary .priority-low { color: var(--text-muted); }
-
     /* Empty state */
     .daily-summary .empty-state {
         padding: 1.5rem;
@@ -392,11 +386,6 @@
                                 {% if task.opportunity %}
                                 <div class="entity-sub">{{ task.opportunity.name }}</div>
                                 {% endif %}
-                            </td>
-                            <td>
-                                <span class="priority-{{ task.priority|lower }}" style="font-size: 0.7rem; font-weight: 500;">
-                                    {{ task.priority }}
-                                </span>
                             </td>
                             <td class="text-end" style="white-space: nowrap;">
                                 {% if task.due_date %}

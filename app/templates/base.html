@@ -507,12 +507,6 @@
             border: 2px solid var(--primary);
         }
 
-        /* Priority Colors */
-        .priority-low { color: #6b7280; }
-        .priority-medium { color: #2563eb; }
-        .priority-high { color: #f97316; }
-        .priority-urgent { color: #dc2626; }
-
         /* Checklist */
         .checklist-item {
             display: flex;
@@ -1808,26 +1802,6 @@
             });
         }
 
-        // Priority dropdown change
-        function bindPrioritySelect(el) {
-            if (el.dataset.optimisticBound) return;
-            el.dataset.optimisticBound = 'true';
-
-            const originalValue = el.value;
-            el.addEventListener('change', function(e) {
-                e.stopPropagation();
-                const taskId = el.dataset.taskId;
-                const newPriority = el.value;
-
-                post('/tasks/' + taskId + '/quick-update', { priority: newPriority })
-                    .then(function() { flash(el, true); })
-                    .catch(function() {
-                        el.value = originalValue;
-                        flash(el, false);
-                    });
-            });
-        }
-
         // Inline text field (blur to save)
         function bindInlineText(el) {
             if (el.dataset.optimisticBound) return;
@@ -1902,7 +1876,7 @@
         function init() {
             document.querySelectorAll('[data-task-complete]').forEach(bindTaskComplete);
             document.querySelectorAll('[data-account-next-action-complete]').forEach(bindAccountNextActionComplete);
-            document.querySelectorAll('[data-task-priority]').forEach(bindPrioritySelect);
+
             document.querySelectorAll('[data-task-inline]').forEach(bindInlineText);
         }
 

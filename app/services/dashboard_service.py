@@ -89,7 +89,7 @@ def get_dashboard_data(db: Session, today: date) -> dict:
         db.query(Task)
         .options(selectinload(Task.opportunity))
         .filter(Task.status == "Open")
-        .order_by(Task.due_date.nullslast(), Task.priority.desc())
+        .order_by(Task.due_date.nullslast())
         .limit(10)
         .all()
     )

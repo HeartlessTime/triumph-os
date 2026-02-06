@@ -156,11 +156,6 @@
         font-weight: 500;
     }
 
-    /* Priority badges - muted */
-    .dashboard-v2 .priority-high { color: var(--text-danger-inline); }
-    .dashboard-v2 .priority-medium { color: var(--text-warning-inline); }
-    .dashboard-v2 .priority-low { color: var(--text-muted); }
-
     /* Compact action buttons - match tos-btn-sm sizing */
     .dashboard-v2 .btn-action {
         padding: 0.2rem 0.4rem;
@@ -421,9 +416,6 @@
                                 {% endif %}
                             </td>
                             <td class="text-end" style="white-space: nowrap;">
-                                <span class="priority-{{ task.priority|lower }}" style="font-size: 0.7rem; font-weight: 500;">
-                                    {{ task.priority }}
-                                </span>
                                 {% if task.due_date %}
                                 <span class="ms-1 {% if task.is_overdue or (task.days_until_due is not none and task.days_until_due <= 1) %}text-danger{% elif task.days_until_due is not none and task.days_until_due <= 3 %}text-warning{% else %}text-muted{% endif %}" style="font-size: 0.75rem;">
                                     {{ task.due_date.strftime('%b %d') }}
@@ -804,14 +796,6 @@
                         <div class="col-6">
                             <label for="taskDueDate" class="form-label small mb-1">Due Date</label>
                             <input type="date" class="form-control form-control-sm" id="taskDueDate" name="due_date">
-                        </div>
-                        <div class="col-6">
-                            <label for="taskPriority" class="form-label small mb-1">Priority</label>
-                            <select class="form-select form-select-sm" id="taskPriority" name="priority">
-                                <option value="Low">Low</option>
-                                <option value="Medium" selected>Medium</option>
-                                <option value="High">High</option>
-                            </select>
                         </div>
                     </div>
                     <div class="mb-0">
