@@ -6,10 +6,11 @@ Surfaces all actionable CRM items for today in a single scanning page.
 
 from datetime import datetime
 from fastapi import APIRouter, Request, Depends
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, JSONResponse
 from sqlalchemy.orm import Session
 
 from app.database import get_db
+from app.models import DailyBriefing
 from app.services.daily_summary_service import get_daily_summary_data
 from app.template_config import templates, get_app_tz
 
@@ -22,7 +23,55 @@ async def daily_summary(request: Request, db: Session = Depends(get_db)):
     today = datetime.now(get_app_tz()).date()
     data = get_daily_summary_data(db, today)
 
+    # Load saved briefing for today
+    briefing = (
+        db.query(DailyBriefing)
+        .filter(DailyBriefing.summary_date == today)
+        .first()
+    )
+    briefing_notes = briefing.notes if briefing else ""
+
     return templates.TemplateResponse(
         "daily_summary/index.html",
-        {"request": request, **data},
+        {"request": request, "briefing_notes": briefing_notes, **data},
     )
+
+
+@router.post("/daily-summary/auto-save", response_class=JSONResponse)
+async def auto_save_briefing(request: Request, db: Session = Depends(get_db)):
+    """Auto-save briefing text to database. Never raises — always returns success."""
+    try:
+        try:
+            payload = await request.json()
+        except Exception:
+            return {"status": "saved"}
+
+        date_str = str(payload.get("date", "")).strip()
+        notes = payload.get("notes", "") or ""
+
+        if not date_str:
+            return {"status": "saved"}
+
+        try:
+            summary_date = datetime.strptime(date_str, "%Y-%m-%d").date()
+        except Exception:
+            return {"status": "saved"}
+
+        # Upsert: find existing or create new
+        briefing = (
+            db.query(DailyBriefing)
+            .filter(DailyBriefing.summary_date == summary_date)
+            .first()
+        )
+
+        if briefing:
+            briefing.notes = notes
+        else:
+            briefing = DailyBriefing(summary_date=summary_date, notes=notes)
+            db.add(briefing)
+
+        db.commit()
+    except Exception:
+        db.rollback()
+
+    return {"status": "saved"}
