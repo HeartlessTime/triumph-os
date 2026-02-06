@@ -1,6 +1,6 @@
 import os
 import uuid
-from decimal import Decimal
+from decimal import Decimal, InvalidOperation
 from fastapi import APIRouter, Request, Depends, Form, HTTPException
 from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy.orm import Session
@@ -18,6 +18,16 @@ from app.template_config import templates
 router = APIRouter(prefix="/estimates", tags=["estimates"])
 
 UPLOAD_DIR = os.getenv("UPLOAD_DIR", "./uploads")
+
+
+def _safe_decimal(val, default="0"):
+    """Parse a string to Decimal, stripping $, commas, whitespace. Returns default on failure."""
+    if not val:
+        return Decimal(default)
+    try:
+        return Decimal(str(val).strip().replace(",", "").replace("$", ""))
+    except (InvalidOperation, ValueError):
+        return Decimal(default)
 
 
 @router.get("/opportunity/{opp_id}/new", response_class=HTMLResponse)
@@ -66,7 +76,7 @@ async def create_estimate(
         opportunity_id=opp_id,
         version=next_version,
         name=name or None,
-        margin_percent=Decimal(margin_percent) if margin_percent else Decimal("20"),
+        margin_percent=_safe_decimal(margin_percent, "20"),
         notes=notes or None,
     )
 
@@ -85,12 +95,19 @@ async def view_estimate(
     if not estimate:
         raise HTTPException(status_code=404, detail="Estimate not found")
 
+    opportunity = estimate.opportunity
+    if not opportunity:
+        raise HTTPException(
+            status_code=404,
+            detail="The opportunity linked to this estimate no longer exists.",
+        )
+
     return templates.TemplateResponse(
         "estimates/view.html",
         {
             "request": request,
             "estimate": estimate,
-            "opportunity": estimate.opportunity,
+            "opportunity": opportunity,
             "line_types": EstimateLineItem.LINE_TYPES,
             "units": EstimateLineItem.UNITS,
             "statuses": Estimate.STATUSES,
@@ -118,9 +135,7 @@ async def update_estimate(
     if status is not None:
         estimate.status = status
     if margin_percent is not None:
-        estimate.margin_percent = (
-            Decimal(margin_percent) if margin_percent else Decimal("20")
-        )
+        estimate.margin_percent = _safe_decimal(margin_percent, "20")
     if notes is not None:
         estimate.notes = notes or None
 
@@ -159,8 +174,8 @@ async def add_line_item(
     next_sort = (max_sort[0] + 1) if max_sort else 0
 
     # Parse values
-    qty = Decimal(quantity) if quantity else Decimal("1")
-    cost = Decimal(unit_cost) if unit_cost else Decimal("0")
+    qty = _safe_decimal(quantity, "1")
+    cost = _safe_decimal(unit_cost, "0")
 
     line_item = EstimateLineItem(
         estimate_id=estimate_id,
@@ -216,9 +231,9 @@ async def update_line_item(
     # Update fields
     line_item.line_type = line_type
     line_item.description = description
-    line_item.quantity = Decimal(quantity) if quantity else Decimal("1")
+    line_item.quantity = _safe_decimal(quantity, "1")
     line_item.unit = unit or None
-    line_item.unit_cost = Decimal(unit_cost) if unit_cost else Decimal("0")
+    line_item.unit_cost = _safe_decimal(unit_cost, "0")
     line_item.notes = notes or None
     line_item.total = line_item.quantity * line_item.unit_cost
 
@@ -286,6 +301,11 @@ async def generate_proposal(
         raise HTTPException(status_code=404, detail="Estimate not found")
 
     opportunity = estimate.opportunity
+    if not opportunity:
+        raise HTTPException(
+            status_code=404,
+            detail="The opportunity linked to this estimate no longer exists. Cannot generate proposal.",
+        )
 
     # Create uploads directory if needed
     os.makedirs(UPLOAD_DIR, exist_ok=True)

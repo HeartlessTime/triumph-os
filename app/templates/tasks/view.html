@@ -5,6 +5,11 @@
 {% block content %}
 <div class="content-area">
     <div class="page-header">
+        <div class="mb-2">
+            <a href="{{ request.query_params.get('from', '/opportunities/' ~ task.opportunity_id if task.opportunity else '/opportunities') }}" class="tos-btn tos-btn-secondary">
+                <i class="bi bi-arrow-left me-1"></i> Back{% if task.opportunity %} to {{ task.opportunity.name }}{% endif %}
+            </a>
+        </div>
         <nav aria-label="breadcrumb">
             <ol class="breadcrumb">
                 <li class="breadcrumb-item"><a href="/opportunities">Opportunities</a></li>

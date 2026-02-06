@@ -5,6 +5,11 @@
 {% block content %}
 <div class="content-area">
     <div class="page-header">
+        <div class="mb-2">
+            <a href="{{ request.query_params.get('from', '/contacts/' ~ contact.id if not is_new else '/contacts') }}" class="tos-btn tos-btn-secondary">
+                <i class="bi bi-arrow-left me-1"></i> Back to {% if is_new %}Contacts{% else %}{{ contact.full_name }}{% endif %}
+            </a>
+        </div>
         <nav aria-label="breadcrumb">
             <ol class="breadcrumb">
                 <li class="breadcrumb-item"><a href="/contacts">Contacts</a></li>

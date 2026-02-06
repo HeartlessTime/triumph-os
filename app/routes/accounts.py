@@ -10,6 +10,7 @@ from app.database import get_db
 from app.models import Account, Opportunity, Contact, Activity, ActivityAttendee
 from app.services.validators import validate_account
 from app.template_config import templates
+from app.utils.safe_redirect import safe_redirect_url
 
 router = APIRouter(prefix="/accounts", tags=["accounts"])
 
@@ -305,7 +306,7 @@ async def view_account(
         )
 
     # Get return URL from query params (for back navigation with sort preserved)
-    return_to = request.query_params.get("from")
+    return_to = safe_redirect_url(request.query_params.get("from"), None) if request.query_params.get("from") else None
 
     return templates.TemplateResponse(
         "accounts/view.html",
@@ -588,7 +589,7 @@ async def toggle_awaiting_response(
         return {"success": True, "awaiting_response": account.awaiting_response}
 
     # Redirect back to referring page or account detail for form submissions
-    redirect_url = request.query_params.get("from") or f"/accounts/{account_id}"
+    redirect_url = safe_redirect_url(request.query_params.get("from"), f"/accounts/{account_id}")
     return RedirectResponse(url=redirect_url, status_code=303)
 
 
@@ -610,7 +611,7 @@ async def toggle_hot(
     if "application/json" in accept_header:
         return {"success": True, "is_hot": account.is_hot}
 
-    redirect_url = request.query_params.get("from") or f"/accounts/{account_id}"
+    redirect_url = safe_redirect_url(request.query_params.get("from"), f"/accounts/{account_id}")
     return RedirectResponse(url=redirect_url, status_code=303)
 
 

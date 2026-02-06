@@ -1,5 +1,5 @@
 from datetime import date, datetime, timedelta
-from decimal import Decimal
+from decimal import Decimal, InvalidOperation
 from fastapi import APIRouter, Request, Depends, Form, HTTPException
 from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
 from sqlalchemy.orm import Session, selectinload
@@ -26,6 +26,7 @@ from app.services.validators import (
     validate_opportunity_update,
 )
 from app.template_config import templates, utc_now
+from app.utils.safe_redirect import safe_redirect_url
 
 router = APIRouter(prefix="/opportunities", tags=["opportunities"])
 
@@ -243,7 +244,12 @@ async def create_opportunity(
     db: Session = Depends(get_db),
 ):
     def clean_num(val: Optional[str]):
-        return Decimal(val.replace(",", "")) if val else None
+        if not val:
+            return None
+        try:
+            return Decimal(str(val).strip().replace(",", "").replace("$", ""))
+        except (InvalidOperation, ValueError):
+            return None
 
     current_user = request.state.current_user
 
@@ -583,7 +589,7 @@ async def push_followup(request: Request, opp_id: int, db: Session = Depends(get
     db.commit()
 
     # Redirect back to where we came from (Dashboard by default)
-    redirect_to = request.query_params.get("from", "/")
+    redirect_to = safe_redirect_url(request.query_params.get("from"), "/")
     return RedirectResponse(url=redirect_to, status_code=303)
 
 
@@ -710,7 +716,10 @@ async def update_opportunity(
     def clean_num(val):
         if not val:
             return None
-        return Decimal(str(val).replace(",", ""))
+        try:
+            return Decimal(str(val).strip().replace(",", "").replace("$", ""))
+        except (InvalidOperation, ValueError):
+            return None
 
     # Parse account IDs
     parsed_account_ids = [int(aid) for aid in account_ids if aid]

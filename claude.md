@@ -155,11 +155,19 @@ Never push without confirmation.
 
 Never push migrations unless explicitly approved.
 
-Workflow Expectations
+Task Management
 
-Before coding: explain what will change.
+1. Plan First — Write a plan to tasks/todo.md with checkable items.
 
-After coding: list files modified.
+2. Verify Plan — Check in before starting implementation.
+
+3. Track Progress — Mark items complete as you go.
+
+4. Explain Changes — High-level summary at each step.
+
+5. Document Results — Add a review section to tasks/todo.md.
+
+6. Capture Lessons — Update tasks/lessons.md after corrections.
 
 Wait for approval before committing or pushing.
 
@@ -172,3 +180,73 @@ Prefer diffs or exact code blocks.
 No long explanations unless asked.
 
 Treat instructions literally.
+
+Workflow Orchestration
+
+1. Plan Mode Default
+
+Enter plan mode for any non-trivial task (3+ steps or architectural decisions).
+
+If something goes sideways, stop and re-plan immediately — don't keep pushing.
+
+Use plan mode for verification steps, not just building.
+
+Write detailed specs upfront to reduce ambiguity.
+
+2. Subagent Strategy
+
+Use subagents liberally to keep the main context window clean.
+
+Offload research, exploration, and parallel analysis to subagents.
+
+For complex problems, throw more compute at it via subagents.
+
+One task per subagent for focused execution.
+
+3. Self-Improvement Loop
+
+After any correction from the user, update tasks/lessons.md with the pattern.
+
+Write rules for yourself that prevent the same mistake.
+
+Ruthlessly iterate on these lessons until mistake rate drops.
+
+Review lessons at session start for the relevant project.
+
+4. Verification Before Done
+
+Never mark a task complete without proving it works.
+
+Diff your behavior between main and your changes when relevant.
+
+Ask yourself: "Would a staff engineer approve this?"
+
+Run tests, check logs, and demonstrate correctness.
+
+5. Demand Elegance (Balanced)
+
+For non-trivial changes: pause and ask "Is there a more elegant way?"
+
+If a fix feels hacky, re-implement using the most elegant solution you now know.
+
+Skip this for simple, obvious fixes — don't over-engineer.
+
+Challenge your own work before presenting it.
+
+6. Autonomous Bug Fixing
+
+When given a bug report: just fix it — don't ask for hand-holding.
+
+Point at logs, errors, or failing tests — then resolve them.
+
+Require zero context switching from the user.
+
+Go fix failing CI tests without being told how.
+
+Core Principles
+
+Simplicity First — Make every change as simple as possible. Minimal code impact.
+
+No Flakiness — Fix root causes. No temporary fixes. Senior-level standard.
+
+Minimal Impact — Only change what's necessary. Avoid introducing new bugs.

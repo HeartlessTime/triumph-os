@@ -1,0 +1,744 @@
+{% extends "base.html" %}
+
+{% block title %}Daily Summary - Triumph OS{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Daily Summary — mirrors dashboard-v2 patterns */
+    .daily-summary {
+        --row-padding: 0.5rem 0.75rem;
+        --section-gap: 1rem;
+    }
+
+    .daily-summary .content-area {
+        padding: 1rem 1.5rem;
+    }
+
+    .daily-summary .page-header {
+        margin-bottom: 1rem;
+        padding-bottom: 0.75rem;
+        border-bottom: 1px solid var(--border-default);
+    }
+
+    .daily-summary .page-header h1 {
+        font-size: 1.25rem;
+        margin-bottom: 0;
+        color: var(--text-heading);
+    }
+
+    .daily-summary .section-card {
+        background: var(--bg-surface);
+        border-radius: 0.5rem;
+        box-shadow: var(--shadow-card-sm);
+        margin-bottom: var(--section-gap);
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .daily-summary .section-header {
+        background: var(--bg-elevated);
+        padding: 0.5rem 0.75rem;
+        border-bottom: 1px solid var(--border-default);
+        font-weight: 600;
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+        color: var(--text-secondary);
+    }
+
+    .daily-summary .section-header .badge {
+        font-size: 0.7rem;
+        padding: 0.2em 0.5em;
+        font-weight: 500;
+    }
+
+    .daily-summary .section-body {
+        padding: 0;
+        flex: 1;
+    }
+
+    /* Dense table */
+    .daily-summary .dense-table {
+        width: 100%;
+        font-size: 0.85rem;
+        margin: 0;
+    }
+
+    .daily-summary .dense-table td {
+        padding: var(--row-padding);
+        border-bottom: 1px solid var(--border-subtle);
+        vertical-align: middle;
+        color: var(--text-primary);
+    }
+
+    .daily-summary .dense-table tr:last-child td {
+        border-bottom: none;
+    }
+
+    .daily-summary .dense-table tr:hover {
+        background: var(--bg-hover);
+    }
+
+    .daily-summary .dense-table tr[data-href] {
+        cursor: pointer;
+    }
+    .daily-summary .dense-table tr[data-href]:hover {
+        background: var(--bg-hover-row);
+    }
+
+    /* Entity styling */
+    .daily-summary .entity-name {
+        font-weight: 500;
+        color: var(--text-heading);
+    }
+
+    .daily-summary .entity-sub {
+        font-size: 0.75rem;
+        color: var(--text-muted);
+    }
+
+    /* Status badges */
+    .daily-summary .badge-overdue {
+        background: var(--danger-bg);
+        color: var(--danger-text);
+        font-weight: 500;
+    }
+
+    .daily-summary .badge-today {
+        background: var(--warning-bg);
+        color: var(--warning-text);
+        font-weight: 500;
+    }
+
+    .daily-summary .badge-soon {
+        background: var(--success-bg);
+        color: var(--success-text);
+        font-weight: 500;
+    }
+
+    .daily-summary .badge-pending {
+        background: var(--success-bg);
+        color: var(--success-text);
+        font-weight: 500;
+    }
+
+    /* Priority badges */
+    .daily-summary .priority-high { color: var(--text-danger-inline); }
+    .daily-summary .priority-urgent { color: var(--text-danger-inline); font-weight: 600; }
+    .daily-summary .priority-medium { color: var(--text-warning-inline); }
+    .daily-summary .priority-low { color: var(--text-muted); }
+
+    /* Sub-section headers */
+    .daily-summary .sub-header {
+        background: var(--bg-elevated);
+        padding: 0.35rem 0.75rem;
+        font-size: 0.7rem;
+        font-weight: 600;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        border-bottom: 1px solid var(--border-subtle);
+    }
+
+    /* Empty state */
+    .daily-summary .empty-state {
+        padding: 1.5rem;
+        text-align: center;
+        color: var(--text-muted);
+        font-size: 0.85rem;
+    }
+
+    .daily-summary .empty-state i {
+        font-size: 1.5rem;
+        margin-bottom: 0.5rem;
+        display: block;
+    }
+
+    /* Quick stats row */
+    .daily-summary .quick-stats {
+        display: flex;
+        gap: 1rem;
+        margin-bottom: 1rem;
+        flex-wrap: wrap;
+    }
+
+    .daily-summary .quick-stat {
+        background: var(--bg-surface);
+        padding: 0.5rem 1rem;
+        border-radius: 0.375rem;
+        border: 1px solid var(--border-default);
+        font-size: 0.85rem;
+    }
+
+    .daily-summary .quick-stat strong {
+        color: var(--text-heading);
+    }
+
+    .daily-summary .quick-stat span {
+        color: var(--text-secondary);
+        margin-left: 0.25rem;
+    }
+
+    /* Hot account header */
+    .daily-summary .section--hot .section-header {
+        background: #fef2f2;
+    }
+    [data-theme="dark"] .daily-summary .section--hot .section-header {
+        background: #3b1010;
+    }
+
+    /* Activity type icons */
+    .daily-summary .activity-icon {
+        width: 1.5rem;
+        text-align: center;
+        color: var(--text-muted);
+    }
+
+    /* AI Briefing box */
+    .daily-summary .briefing-card {
+        background: var(--bg-surface);
+        border-radius: 0.5rem;
+        box-shadow: var(--shadow-card-sm);
+        margin-bottom: var(--section-gap);
+        overflow: hidden;
+        border-left: 3px solid #8b5cf6;
+    }
+
+    .daily-summary .briefing-header {
+        background: var(--bg-elevated);
+        padding: 0.5rem 0.75rem;
+        border-bottom: 1px solid var(--border-default);
+        font-weight: 600;
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+        color: var(--text-secondary);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .daily-summary .briefing-body {
+        padding: 0.75rem;
+    }
+
+    .daily-summary .briefing-body textarea {
+        width: 100%;
+        min-height: 120px;
+        background: var(--bg-elevated);
+        color: var(--text-primary);
+        border: 1px solid var(--border-default);
+        border-radius: 0.375rem;
+        padding: 0.75rem;
+        font-size: 0.85rem;
+        font-family: inherit;
+        line-height: 1.5;
+        resize: vertical;
+    }
+
+    .daily-summary .briefing-body textarea:focus {
+        outline: none;
+        border-color: #8b5cf6;
+        box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.2);
+    }
+
+    .daily-summary .briefing-body textarea::placeholder {
+        color: var(--text-muted);
+        font-style: italic;
+    }
+
+    .daily-summary .briefing-hint {
+        font-size: 0.72rem;
+        color: var(--text-muted);
+        margin-top: 0.4rem;
+    }
+
+    /* Responsive columns */
+    @media (min-width: 992px) {
+        .daily-summary .dashboard-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        .daily-summary .section-full {
+            grid-column: 1 / -1;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="daily-summary">
+    <div class="content-area">
+        <!-- Header -->
+        <div class="page-header">
+            <h1><i class="bi bi-sunrise me-2"></i>Daily Summary</h1>
+            <small class="text-muted">{{ today.strftime('%A, %B %d, %Y') }}</small>
+        </div>
+
+        <!-- AI Briefing -->
+        <div class="briefing-card">
+            <div class="briefing-header">
+                <span><i class="bi bi-robot me-1"></i>AI Briefing</span>
+                <button type="button" class="tos-btn tos-btn-sm btn-view" id="clearBriefing" title="Clear briefing" style="font-size: 0.65rem; padding: 0.15rem 0.35rem;">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </div>
+            <div class="briefing-body">
+                <textarea id="aiBriefing" placeholder="Paste your AI-generated briefing here — use Claude Cowork to scan your Outlook inbox and paste the summary into this box."></textarea>
+                <div class="briefing-hint">
+                    <i class="bi bi-info-circle me-1"></i>This box is for pasting AI-generated summaries from your email, calendar, or other sources. Content is stored locally in your browser.
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Stats -->
+        <div class="quick-stats">
+            <div class="quick-stat">
+                <strong>{{ followup_opps|length + followup_contacts|length }}</strong>
+                <span>follow-ups due</span>
+            </div>
+            <div class="quick-stat">
+                <strong>{{ overdue_tasks|length }}</strong>
+                <span>tasks due</span>
+            </div>
+            <div class="quick-stat">
+                <strong>{{ upcoming_bids|length }}</strong>
+                <span>bids this week</span>
+            </div>
+            <div class="quick-stat">
+                <strong>{{ jobs_awaiting_estimate|length }}</strong>
+                <span>estimates pending</span>
+            </div>
+            <div class="quick-stat">
+                <strong>{{ meetings_pending|length }}</strong>
+                <span>meetings pending</span>
+            </div>
+        </div>
+
+        {# ===== FOLLOW-UPS (OPPORTUNITIES) ===== #}
+        <div class="section-card">
+            <div class="section-header">
+                <i class="bi bi-telephone-outbound me-1"></i>Follow-Ups Due — Opportunities
+                <span class="badge badge-overdue ms-2">{{ followup_opps|length }}</span>
+            </div>
+            <div class="section-body">
+                {% if followup_opps %}
+                <table class="dense-table">
+                    <tbody>
+                        {% for opp in followup_opps %}
+                        <tr data-href="/opportunities/{{ opp.id }}">
+                            <td style="width: 45%;">
+                                <span class="entity-name">{{ opp.name }}</span>
+                                <div class="entity-sub">{{ opp.primary_account.name if opp.primary_account else (opp.account.name if opp.account else 'No Account') }}</div>
+                            </td>
+                            <td>
+                                <span class="badge {% if opp.followup_status and opp.followup_status.status == 'overdue' %}badge-overdue{% elif opp.followup_status and opp.followup_status.status == 'due_today' %}badge-today{% else %}badge-soon{% endif %}">
+                                    {% if opp.followup_status and opp.followup_status.status == 'overdue' %}
+                                        {{ opp.followup_status.days_until|abs }}d overdue
+                                    {% elif opp.followup_status and opp.followup_status.status == 'due_today' %}
+                                        Due today
+                                    {% else %}
+                                        {{ opp.next_followup.strftime('%b %d') }}
+                                    {% endif %}
+                                </span>
+                            </td>
+                            <td class="text-end text-muted" style="font-size: 0.75rem; white-space: nowrap;">
+                                {{ opp.stage }}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <div class="empty-state">
+                    <i class="bi bi-check-circle"></i>
+                    <div>No opportunity follow-ups due.</div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        {# ===== FOLLOW-UPS (CONTACTS) ===== #}
+        <div class="section-card">
+            <div class="section-header">
+                <i class="bi bi-people me-1"></i>Follow-Ups Due — Contacts
+                <span class="badge badge-overdue ms-2">{{ followup_contacts|length }}</span>
+            </div>
+            <div class="section-body">
+                {% if followup_contacts %}
+                <table class="dense-table">
+                    <tbody>
+                        {% for contact in followup_contacts %}
+                        <tr data-href="/contacts/{{ contact.id }}">
+                            <td style="width: 45%;">
+                                <span class="entity-name">{{ contact.full_name }}</span>
+                                <div class="entity-sub">{{ contact.account.name if contact.account else 'No Account' }}</div>
+                            </td>
+                            <td>
+                                {% set days_overdue = (today - contact.next_followup).days %}
+                                <span class="badge {% if days_overdue > 0 %}badge-overdue{% elif days_overdue == 0 %}badge-today{% else %}badge-soon{% endif %}">
+                                    {% if days_overdue > 0 %}{{ days_overdue }}d overdue{% elif days_overdue == 0 %}Due today{% else %}{{ contact.next_followup.strftime('%b %d') }}{% endif %}
+                                </span>
+                            </td>
+                            <td class="text-end text-muted" style="font-size: 0.75rem; white-space: nowrap;">
+                                {% if contact.last_contacted %}
+                                    Last: {{ contact.last_contacted.strftime('%b %d') }}
+                                {% else %}
+                                    Never contacted
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <div class="empty-state">
+                    <i class="bi bi-check-circle"></i>
+                    <div>No contact follow-ups due.</div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        {# ===== TASKS DUE/OVERDUE ===== #}
+        <div class="section-card">
+            <div class="section-header">
+                <i class="bi bi-check2-square me-1"></i>Tasks Due Today or Overdue
+                <span class="badge bg-secondary ms-2">{{ overdue_tasks|length }}</span>
+            </div>
+            <div class="section-body">
+                {% if overdue_tasks %}
+                <table class="dense-table">
+                    <tbody>
+                        {% for task in overdue_tasks %}
+                        <tr data-href="/tasks/{{ task.id }}/edit?from=/daily-summary">
+                            <td style="width: 50%;">
+                                <span class="entity-name">{{ task.title }}</span>
+                                {% if task.opportunity %}
+                                <div class="entity-sub">{{ task.opportunity.name }}</div>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span class="priority-{{ task.priority|lower }}" style="font-size: 0.7rem; font-weight: 500;">
+                                    {{ task.priority }}
+                                </span>
+                            </td>
+                            <td class="text-end" style="white-space: nowrap;">
+                                {% if task.due_date %}
+                                {% set days = (today - task.due_date).days %}
+                                <span class="{% if days > 0 %}text-danger{% elif days == 0 %}text-warning{% else %}text-muted{% endif %}" style="font-size: 0.75rem;">
+                                    {% if days > 0 %}{{ days }}d overdue{% elif days == 0 %}Today{% else %}{{ task.due_date.strftime('%b %d') }}{% endif %}
+                                </span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <div class="empty-state">
+                    <i class="bi bi-check-all"></i>
+                    <div>No tasks due today. All clear.</div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        {# ===== TWO-COLUMN GRID ===== #}
+        <div class="dashboard-grid">
+
+            {# --- Upcoming Bids --- #}
+            <div class="section-card">
+                <div class="section-header">
+                    <i class="bi bi-calendar-event me-1"></i>Upcoming Bids
+                    <span class="badge bg-primary ms-2">{{ upcoming_bids|length }}</span>
+                </div>
+                <div class="section-body">
+                    {% if upcoming_bids %}
+                    <table class="dense-table">
+                        <tbody>
+                            {% for opp in upcoming_bids %}
+                            <tr data-href="/opportunities/{{ opp.id }}">
+                                <td>
+                                    <span class="entity-name">{{ opp.name }}</span>
+                                    <div class="entity-sub">{{ opp.primary_account.name if opp.primary_account else (opp.account.name if opp.account else 'No Account') }}</div>
+                                </td>
+                                <td class="text-end" style="white-space: nowrap;">
+                                    {% set days_until = (opp.bid_date - today).days %}
+                                    <span class="{% if days_until <= 1 %}text-danger{% elif days_until <= 3 %}text-warning{% else %}text-muted{% endif %}" style="font-size: 0.75rem;">
+                                        {% if days_until == 0 %}Today{% elif days_until == 1 %}Tomorrow{% else %}In {{ days_until }}d{% endif %}
+                                        <div style="font-size: 0.7rem; color: var(--text-muted);">{{ opp.bid_date.strftime('%b %d') }}</div>
+                                    </span>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    {% else %}
+                    <div class="empty-state">
+                        <i class="bi bi-calendar-check"></i>
+                        <div>No bids this week.</div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            {# --- Open Job Walks --- #}
+            <div class="section-card">
+                <div class="section-header">
+                    <i class="bi bi-signpost-2 me-1"></i>Open Job Walks
+                    <span class="badge bg-primary ms-2">{{ jobs_awaiting_estimate|length }}</span>
+                </div>
+                <div class="section-body">
+                    {% if jobs_awaiting_estimate %}
+                    <table class="dense-table">
+                        <tbody>
+                            {% for jw in jobs_awaiting_estimate %}
+                            <tr data-href="/job-walks/{{ jw.id }}?from=/daily-summary">
+                                <td>
+                                    <span class="entity-name">{{ jw.subject }}</span>
+                                    <div class="entity-sub">{{ jw.contact.account.name if jw.contact and jw.contact.account else '' }}</div>
+                                </td>
+                                <td class="text-end" style="white-space: nowrap; font-size: 0.75rem;">
+                                    {% if jw.job_walk_status == 'sent_to_estimator' %}
+                                        <span class="badge badge-pending">Sent to Estimator</span>
+                                    {% else %}
+                                        <span class="text-muted">Open</span>
+                                    {% endif %}
+                                    {% if jw.estimate_due_by %}
+                                    <div style="font-size: 0.7rem; color: var(--text-muted);">Due {{ jw.estimate_due_by.strftime('%b %d') }}</div>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    {% else %}
+                    <div class="empty-state">
+                        <i class="bi bi-check-circle"></i>
+                        <div>No open job walks.</div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            {# --- Account Next Actions --- #}
+            <div class="section-card">
+                <div class="section-header">
+                    <i class="bi bi-building me-1"></i>Account Actions Due
+                    <span class="badge bg-secondary ms-2">{{ next_action_accounts|length }}</span>
+                </div>
+                <div class="section-body">
+                    {% if next_action_accounts %}
+                    <table class="dense-table">
+                        <tbody>
+                            {% for account in next_action_accounts %}
+                            <tr data-href="/accounts/{{ account.id }}">
+                                <td>
+                                    <span class="entity-name">{{ account.name }}</span>
+                                    <div class="entity-sub">{{ account.next_action }}</div>
+                                </td>
+                                <td class="text-end" style="white-space: nowrap;">
+                                    {% if account.next_action_due_date %}
+                                    {% set days = (account.next_action_due_date - today).days %}
+                                    <span class="{% if days < 0 %}text-danger{% elif days <= 2 %}text-warning{% else %}text-muted{% endif %}" style="font-size: 0.75rem;">
+                                        {% if days < 0 %}{{ days|abs }}d overdue{% elif days == 0 %}Today{% else %}In {{ days }}d{% endif %}
+                                    </span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    {% else %}
+                    <div class="empty-state">
+                        <i class="bi bi-check-circle"></i>
+                        <div>No account actions due.</div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            {# --- Hot Accounts --- #}
+            <div class="section-card section--hot">
+                <div class="section-header">
+                    <i class="bi bi-fire me-1" style="color: #dc2626;"></i>Hot Accounts
+                    <span class="badge bg-secondary ms-2">{{ hot_accounts|length }}</span>
+                </div>
+                <div class="section-body">
+                    {% if hot_accounts %}
+                    <table class="dense-table">
+                        <tbody>
+                            {% for account in hot_accounts %}
+                            <tr data-href="/accounts/{{ account.id }}">
+                                <td>
+                                    <span class="entity-name">{{ account.name }}</span>
+                                    {% if account.next_action %}
+                                    <div class="entity-sub">{{ account.next_action }}</div>
+                                    {% endif %}
+                                </td>
+                                <td class="text-end" style="white-space: nowrap; font-size: 0.75rem;">
+                                    {% set lc = account.last_contacted %}
+                                    {% if lc %}
+                                    {% set days_ago = (today - lc).days %}
+                                    <span class="{% if days_ago >= 30 %}text-danger{% elif days_ago >= 21 %}text-warning{% else %}text-muted{% endif %}">
+                                        {{ days_ago }}d ago
+                                    </span>
+                                    {% else %}
+                                    <span class="text-danger">Never</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    {% else %}
+                    <div class="empty-state">
+                        <i class="bi bi-fire"></i>
+                        <div>No hot accounts.</div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            {# --- Meetings Pending --- #}
+            <div class="section-card">
+                <div class="section-header">
+                    <i class="bi bi-calendar-check me-1"></i>Meetings Pending
+                    <span class="badge badge-pending ms-2">{{ meetings_pending|length }}</span>
+                </div>
+                <div class="section-body">
+                    {% if meetings_pending %}
+                    <table class="dense-table">
+                        <tbody>
+                            {% for activity in meetings_pending %}
+                            <tr data-href="/activities/{{ activity.id }}?from=/daily-summary">
+                                <td>
+                                    <span class="entity-name">{{ activity.attendees_display or activity.contact.full_name }}</span>
+                                    <div class="entity-sub">{{ activity.contact.account.name if activity.contact and activity.contact.account else '' }}</div>
+                                    {% if activity.description %}
+                                    <div class="entity-sub text-truncate" style="max-width: 250px; font-style: italic;">{{ activity.description[:80] }}{% if activity.description|length > 80 %}...{% endif %}</div>
+                                    {% endif %}
+                                </td>
+                                <td class="text-end text-muted" style="font-size: 0.75rem; white-space: nowrap;">
+                                    {{ activity.activity_date | localtime('%b %d') }}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    {% else %}
+                    <div class="empty-state">
+                        <i class="bi bi-calendar"></i>
+                        <div>No pending meetings.</div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            {# --- Recent Activities (Context) --- #}
+            <div class="section-card">
+                <div class="section-header">
+                    <i class="bi bi-clock-history me-1"></i>Recent Activity (48h)
+                    <span class="badge bg-secondary ms-2">{{ recent_activities|length }}</span>
+                </div>
+                <div class="section-body">
+                    {% if recent_activities %}
+                    <table class="dense-table">
+                        <tbody>
+                            {% for activity in recent_activities %}
+                            <tr data-href="/activities/{{ activity.id }}?from=/daily-summary">
+                                <td style="width: 1.5rem;" class="activity-icon">
+                                    {% if activity.activity_type == 'call' %}<i class="bi bi-telephone"></i>
+                                    {% elif activity.activity_type == 'email' %}<i class="bi bi-envelope"></i>
+                                    {% elif activity.activity_type == 'meeting' %}<i class="bi bi-camera-video"></i>
+                                    {% elif activity.activity_type == 'site_visit' %}<i class="bi bi-geo-alt"></i>
+                                    {% elif activity.activity_type == 'job_walk' %}<i class="bi bi-signpost-2"></i>
+                                    {% elif activity.activity_type == 'note' %}<i class="bi bi-sticky"></i>
+                                    {% elif activity.activity_type == 'meeting_requested' %}<i class="bi bi-calendar-plus"></i>
+                                    {% else %}<i class="bi bi-activity"></i>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <span class="entity-name">{{ activity.subject }}</span>
+                                    {% if activity.contact %}
+                                    <div class="entity-sub">{{ activity.contact.full_name }}</div>
+                                    {% elif activity.opportunity %}
+                                    <div class="entity-sub">{{ activity.opportunity.name }}</div>
+                                    {% endif %}
+                                </td>
+                                <td class="text-end text-muted" style="font-size: 0.75rem; white-space: nowrap;">
+                                    {{ activity.activity_date | localtime('%b %d, %H:%M') }}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    {% else %}
+                    <div class="empty-state">
+                        <i class="bi bi-clock-history"></i>
+                        <div>No recent activity.</div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+        </div><!-- /dashboard-grid -->
+    </div><!-- /content-area -->
+</div><!-- /daily-summary -->
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Clickable rows — same pattern as dashboard_v2
+document.addEventListener('click', function(e) {
+    var clickable = e.target.closest('tr[data-href]');
+    if (!clickable) return;
+    if (e.target.closest('a, button, input, textarea, select, form')) return;
+    window.location.href = clickable.dataset.href;
+});
+
+// AI Briefing — persist in localStorage, keyed by date
+(function() {
+    var today = '{{ today.isoformat() }}';
+    var storageKey = 'daily_briefing_' + today;
+    var textarea = document.getElementById('aiBriefing');
+    var clearBtn = document.getElementById('clearBriefing');
+
+    // Load saved content
+    var saved = localStorage.getItem(storageKey);
+    if (saved) {
+        textarea.value = saved;
+    }
+
+    // Auto-save on input
+    textarea.addEventListener('input', function() {
+        localStorage.setItem(storageKey, textarea.value);
+    });
+
+    // Clear button
+    clearBtn.addEventListener('click', function() {
+        textarea.value = '';
+        localStorage.removeItem(storageKey);
+    });
+
+    // Clean up old briefings (keep last 7 days)
+    try {
+        for (var i = 0; i < localStorage.length; i++) {
+            var key = localStorage.key(i);
+            if (key && key.startsWith('daily_briefing_') && key !== storageKey) {
+                var dateStr = key.replace('daily_briefing_', '');
+                var d = new Date(dateStr);
+                var now = new Date(today);
+                if ((now - d) > 7 * 24 * 60 * 60 * 1000) {
+                    localStorage.removeItem(key);
+                }
+            }
+        }
+    } catch(e) {}
+})();
+</script>
+{% endblock %}

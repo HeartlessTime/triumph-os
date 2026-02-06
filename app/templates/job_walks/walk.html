@@ -130,7 +130,15 @@
 <div class="jw-page">
     <div class="jw-header">
         <a href="{{ return_to }}" class="back-link"><i class="bi bi-arrow-left"></i></a>
-        <h1>{{ activity.subject }}</h1>
+        <div style="flex: 1;">
+            <nav aria-label="breadcrumb" style="margin-bottom: 0.15rem;">
+                <ol class="breadcrumb mb-0" style="font-size: 0.75rem;">
+                    <li class="breadcrumb-item"><a href="/job-walks">Job Walks</a></li>
+                    <li class="breadcrumb-item active">{{ activity.subject }}</li>
+                </ol>
+            </nav>
+            <h1>{{ activity.subject }}</h1>
+        </div>
         <span class="jw-save-indicator" id="jwSaveIndicator">Saved</span>
     </div>
 

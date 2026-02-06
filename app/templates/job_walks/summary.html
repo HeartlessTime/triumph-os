@@ -41,7 +41,16 @@
 <div class="fws-page">
     <div class="fws-header">
         <a href="/job-walks/{{ activity.id }}"><i class="bi bi-arrow-left"></i></a>
-        <h1>Estimator Summary</h1>
+        <div>
+            <nav aria-label="breadcrumb" style="margin-bottom: 0.15rem;">
+                <ol class="breadcrumb mb-0" style="font-size: 0.75rem;">
+                    <li class="breadcrumb-item"><a href="/job-walks">Job Walks</a></li>
+                    <li class="breadcrumb-item"><a href="/job-walks/{{ activity.id }}">{{ activity.subject }}</a></li>
+                    <li class="breadcrumb-item active">Summary</li>
+                </ol>
+            </nav>
+            <h1>Estimator Summary</h1>
+        </div>
     </div>
 
     <div class="fws-copy-bar">

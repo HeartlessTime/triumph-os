@@ -1,37 +1,35 @@
-import os
-import shutil
 from datetime import datetime
 from decimal import Decimal, InvalidOperation
+from typing import Optional
 
-from fastapi import APIRouter, Depends, Form, Request, UploadFile, File
-from fastapi.responses import HTMLResponse, RedirectResponse, StreamingResponse
+from fastapi import APIRouter, Depends, Form, Request
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from sqlalchemy.orm import Session
 
 from app.database import get_db
+from app.models.account import Account
+from app.models.contact import Contact
 from app.models.commission_entry import CommissionEntry
 from app.template_config import templates
 
 router = APIRouter(prefix="/commissions", tags=["commissions"])
 
-UPLOAD_DIR = os.getenv("UPLOAD_DIR", "./uploads")
-TEMPLATE_FILENAME = "commission_template.xlsx"
+COMMISSION_RATE = Decimal("0.01")
 
 
-def _template_path() -> str:
-    return os.path.join(UPLOAD_DIR, TEMPLATE_FILENAME)
-
-
-def _template_exists() -> bool:
-    return os.path.isfile(_template_path())
-
-
-def _parse_decimal(value: str | None) -> Decimal | None:
+def _parse_decimal(value: Optional[str]) -> Optional[Decimal]:
     if not value or value.strip() == "":
         return None
     try:
         return Decimal(value.strip().replace(",", ""))
     except (InvalidOperation, ValueError):
         return None
+
+
+def _calc_commission(job_amount: Optional[Decimal]) -> Optional[Decimal]:
+    if job_amount is None:
+        return None
+    return (job_amount * COMMISSION_RATE).quantize(Decimal("0.01"))
 
 
 # ---------------------------------------------------------------------------
@@ -43,10 +41,32 @@ async def commission_list(request: Request, db: Session = Depends(get_db)):
     if not month:
         month = datetime.utcnow().strftime("%Y-%m")
 
+    # Compute prev/next months and display label
+    try:
+        dt = datetime.strptime(month, "%Y-%m")
+    except ValueError:
+        dt = datetime.utcnow().replace(day=1)
+
+    if dt.month == 1:
+        prev_dt = dt.replace(year=dt.year - 1, month=12)
+    else:
+        prev_dt = dt.replace(month=dt.month - 1)
+
+    if dt.month == 12:
+        next_dt = dt.replace(year=dt.year + 1, month=1)
+    else:
+        next_dt = dt.replace(month=dt.month + 1)
+
     entries = (
         db.query(CommissionEntry)
         .filter(CommissionEntry.month == month)
         .order_by(CommissionEntry.account_name, CommissionEntry.job_name)
+        .all()
+    )
+
+    accounts = (
+        db.query(Account)
+        .order_by(Account.name)
         .all()
     )
 
@@ -56,9 +76,26 @@ async def commission_list(request: Request, db: Session = Depends(get_db)):
             "request": request,
             "entries": entries,
             "selected_month": month,
-            "has_template": _template_exists(),
+            "month_label": dt.strftime("%B %Y"),
+            "prev_month": prev_dt.strftime("%Y-%m"),
+            "next_month": next_dt.strftime("%Y-%m"),
+            "accounts": accounts,
         },
     )
+
+
+# ---------------------------------------------------------------------------
+# JSON: contacts for a given account
+# ---------------------------------------------------------------------------
+@router.get("/api/contacts/{account_id}", response_class=JSONResponse)
+async def get_contacts_for_account(account_id: int, db: Session = Depends(get_db)):
+    contacts = (
+        db.query(Contact)
+        .filter(Contact.account_id == account_id)
+        .order_by(Contact.first_name)
+        .all()
+    )
+    return [{"id": c.id, "name": c.full_name} for c in contacts]
 
 
 # ---------------------------------------------------------------------------
@@ -73,18 +110,18 @@ async def add_commission(
     job_number: str = Form(""),
     contact: str = Form(""),
     job_amount: str = Form(""),
-    commission_amount: str = Form(""),
     notes: str = Form(""),
     db: Session = Depends(get_db),
 ):
+    parsed_job_amount = _parse_decimal(job_amount)
     entry = CommissionEntry(
         month=month.strip(),
         account_name=account_name.strip(),
         job_name=job_name.strip(),
         job_number=job_number.strip() or None,
         contact=contact.strip() or None,
-        job_amount=_parse_decimal(job_amount),
-        commission_amount=_parse_decimal(commission_amount),
+        job_amount=parsed_job_amount,
+        commission_amount=_calc_commission(parsed_job_amount),
         notes=notes.strip() or None,
     )
     db.add(entry)
@@ -105,7 +142,6 @@ async def edit_commission(
     job_number: str = Form(""),
     contact: str = Form(""),
     job_amount: str = Form(""),
-    commission_amount: str = Form(""),
     notes: str = Form(""),
     db: Session = Depends(get_db),
 ):
@@ -113,13 +149,14 @@ async def edit_commission(
     if not entry:
         return RedirectResponse(url="/commissions", status_code=303)
 
+    parsed_job_amount = _parse_decimal(job_amount)
     entry.month = month.strip()
     entry.account_name = account_name.strip()
     entry.job_name = job_name.strip()
     entry.job_number = job_number.strip() or None
     entry.contact = contact.strip() or None
-    entry.job_amount = _parse_decimal(job_amount)
-    entry.commission_amount = _parse_decimal(commission_amount)
+    entry.job_amount = parsed_job_amount
+    entry.commission_amount = _calc_commission(parsed_job_amount)
     entry.notes = notes.strip() or None
     entry.updated_at = datetime.utcnow()
     db.commit()
@@ -141,111 +178,3 @@ async def delete_commission(
         db.delete(entry)
         db.commit()
     return RedirectResponse(url=f"/commissions?month={redirect_month}", status_code=303)
-
-
-# ---------------------------------------------------------------------------
-# Upload Excel template
-# ---------------------------------------------------------------------------
-@router.post("/upload-template")
-async def upload_template(
-    request: Request,
-    file: UploadFile = File(...),
-):
-    os.makedirs(UPLOAD_DIR, exist_ok=True)
-    dest = _template_path()
-    with open(dest, "wb") as f:
-        shutil.copyfileobj(file.file, f)
-
-    from_month = request.query_params.get("month", datetime.utcnow().strftime("%Y-%m"))
-    return RedirectResponse(url=f"/commissions?month={from_month}", status_code=303)
-
-
-# ---------------------------------------------------------------------------
-# Export to Excel
-# ---------------------------------------------------------------------------
-@router.post("/export")
-async def export_commissions(
-    request: Request,
-    export_month: str = Form(...),
-    db: Session = Depends(get_db),
-):
-    if not _template_exists():
-        return RedirectResponse(url=f"/commissions?month={export_month}", status_code=303)
-
-    entries = (
-        db.query(CommissionEntry)
-        .filter(CommissionEntry.month == export_month)
-        .order_by(CommissionEntry.account_name, CommissionEntry.job_name)
-        .all()
-    )
-
-    if not entries:
-        return RedirectResponse(url=f"/commissions?month={export_month}", status_code=303)
-
-    import openpyxl
-    from io import BytesIO
-
-    wb = openpyxl.load_workbook(_template_path())
-    ws = wb.active
-
-    # ---- Row 5: Update month label ----
-    # Parse "YYYY-MM" into a readable label like "February 2026"
-    try:
-        dt = datetime.strptime(export_month, "%Y-%m")
-        month_label = dt.strftime("%B %Y")
-    except ValueError:
-        month_label = export_month
-
-    # Write only the value to row 5, column A — preserves formatting
-    ws.cell(row=5, column=1).value = month_label
-
-    # ---- Find first empty row starting at row 11 ----
-    start_row = 11
-    while True:
-        row_empty = True
-        for col in range(1, 8):  # Columns A–G
-            if ws.cell(row=start_row, column=col).value is not None:
-                row_empty = False
-                break
-        if row_empty:
-            break
-        start_row += 1
-
-    # ---- Write commission data ----
-    # Fixed column mapping:
-    #   A = account_name
-    #   B = job_name
-    #   C = job_number
-    #   D = contact
-    #   E = job_amount
-    #   F = commission_amount
-    #   G = notes
-    for i, entry in enumerate(entries):
-        row = start_row + i
-        ws.cell(row=row, column=1).value = entry.account_name
-        ws.cell(row=row, column=2).value = entry.job_name
-        ws.cell(row=row, column=3).value = entry.job_number
-        ws.cell(row=row, column=4).value = entry.contact
-        ws.cell(row=row, column=5).value = float(entry.job_amount) if entry.job_amount is not None else None
-        ws.cell(row=row, column=6).value = float(entry.commission_amount) if entry.commission_amount is not None else None
-        ws.cell(row=row, column=7).value = entry.notes
-
-    # ---- Save to BytesIO ----
-    buffer = BytesIO()
-    wb.save(buffer)
-    buffer.seek(0)
-
-    # ---- Mark entries as exported ----
-    for entry in entries:
-        entry.status = "exported"
-        entry.exported_month = export_month
-    db.commit()
-
-    # ---- Build filename ----
-    filename = f"{month_label.replace(' ', '_')}_Commission_Sheet.xlsx"
-
-    return StreamingResponse(
-        buffer,
-        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
-    )

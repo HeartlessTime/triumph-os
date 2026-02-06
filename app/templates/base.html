@@ -1395,6 +1395,10 @@
                 <i class="bi bi-person-check"></i>
                 My Summary
             </a>
+            <a href="/daily-summary" class="nav-link {% if '/daily-summary' in request.url.path %}active{% endif %}">
+                <i class="bi bi-sunrise"></i>
+                Daily Summary
+            </a>
 
             <div class="nav-section mt-3">Sales</div>
             {# Account-centric navigation: highlight Accounts when viewing contact from account context #}
@@ -1416,16 +1420,6 @@
             <a href="/job-walks" class="nav-link {% if '/job-walks' in request.url.path %}active{% endif %}">
                 <i class="bi bi-signpost-2"></i>
                 Job Walks
-            </a>
-
-            <div class="nav-section mt-3">Quick Actions</div>
-            <a href="/opportunities/intake" class="nav-link">
-                <i class="bi bi-plus-circle"></i>
-                New Opportunity
-            </a>
-            <a href="/accounts/new" class="nav-link">
-                <i class="bi bi-building-add"></i>
-                New Account
             </a>
 
             <div class="nav-section mt-3">Commissions</div>

@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models import Opportunity, Task, User, Activity
 from app.template_config import templates
+from app.utils.safe_redirect import safe_redirect_url
 
 router = APIRouter(prefix="/tasks", tags=["tasks"])
 
@@ -336,7 +337,7 @@ async def update_task(
     # Check for explicit return URL from query params (back navigation)
     from_url = request.query_params.get("from")
     if from_url:
-        return RedirectResponse(url=from_url, status_code=303)
+        return RedirectResponse(url=safe_redirect_url(from_url, "/summary/my-weekly"), status_code=303)
     elif task.opportunity_id:
         return RedirectResponse(url=f"/opportunities/{task.opportunity_id}", status_code=303)
     return RedirectResponse(url="/summary/my-weekly", status_code=303)
@@ -363,7 +364,7 @@ async def delete_task(request: Request, task_id: int, db: Session = Depends(get_
 
     # Check for explicit return URL from query params (back navigation)
     if from_url:
-        return RedirectResponse(url=from_url, status_code=303)
+        return RedirectResponse(url=safe_redirect_url(from_url, "/summary/my-weekly"), status_code=303)
     elif opp_id:
         return RedirectResponse(url=f"/opportunities/{opp_id}", status_code=303)
     return RedirectResponse(url="/summary/my-weekly", status_code=303)

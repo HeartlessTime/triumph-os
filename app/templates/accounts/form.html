@@ -5,6 +5,11 @@
 {% block content %}
 <div class="content-area">
     <div class="tos-page-header">
+        <div class="mb-2">
+            <a href="{{ request.query_params.get('from', '/accounts/' ~ account.id if not is_new else '/accounts') }}" class="tos-btn tos-btn-secondary">
+                <i class="bi bi-arrow-left me-1"></i> Back to {% if is_new %}Accounts{% else %}{{ account.name }}{% endif %}
+            </a>
+        </div>
         <nav aria-label="breadcrumb">
             <ol class="breadcrumb mb-1">
                 <li class="breadcrumb-item"><a href="/accounts">Accounts</a></li>

@@ -15,6 +15,7 @@ from sqlalchemy.orm import Session, selectinload
 from app.database import get_db
 from app.models import Activity, WalkSegment, Account, Contact
 from app.template_config import templates
+from app.utils.safe_redirect import safe_redirect_url
 
 router = APIRouter(prefix="/job-walks", tags=["job_walks"])
 
@@ -128,7 +129,7 @@ async def walk_page(
     if not activity:
         raise HTTPException(status_code=404, detail="Job walk not found")
 
-    return_to = request.query_params.get("from", "/job-walks")
+    return_to = safe_redirect_url(request.query_params.get("from"), "/job-walks")
 
     return templates.TemplateResponse(
         "job_walks/walk.html",

@@ -24,6 +24,7 @@ from app.routes import (
     audit_log_router,
     job_walks_router,
     commissions_router,
+    daily_summary_router,
 )
 from app.routes.auth import router as auth_router
 from app.database import SessionLocal
@@ -117,6 +118,7 @@ def create_app() -> FastAPI:
     app.include_router(audit_log_router)
     app.include_router(job_walks_router)
     app.include_router(commissions_router)
+    app.include_router(daily_summary_router)
 
     return app
 

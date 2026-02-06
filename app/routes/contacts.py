@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Request, Depends, Form, HTTPException
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
 from sqlalchemy.orm import Session, selectinload
 from datetime import datetime, date, timedelta
 
@@ -8,6 +8,7 @@ from app.models import Contact, Account, Opportunity, Activity
 from app.services.followup import calculate_next_followup
 from app.services.validators import validate_contact
 from app.template_config import templates, utc_now, get_app_tz
+from app.utils.safe_redirect import safe_redirect_url
 
 
 def add_business_days(start_date: date, num_days: int) -> date:
@@ -256,10 +257,10 @@ async def create_contact(
 
     db.add(contact)
     db.commit()
+    db.refresh(contact)
 
-    # Redirect based on where we came from
-    redirect_url = request.query_params.get("next", f"/accounts/{account_id}")
-    return RedirectResponse(url=redirect_url, status_code=303)
+    # Redirect to the newly created contact's detail page
+    return RedirectResponse(url=f"/contacts/{contact.id}", status_code=303)
 
 
 @router.get("/{contact_id}", response_class=HTMLResponse)
@@ -511,7 +512,8 @@ async def log_meeting(
     db.commit()
 
     # Redirect to 'from' param if provided, otherwise to contact detail
-    redirect_url = request.query_params.get("from") or request.query_params.get("next") or f"/contacts/{contact_id}"
+    fallback = f"/contacts/{contact_id}"
+    redirect_url = safe_redirect_url(request.query_params.get("from") or request.query_params.get("next"), fallback)
     return RedirectResponse(url=redirect_url, status_code=303)
 
 
@@ -604,13 +606,73 @@ async def log_contact(
     db.commit()
 
     # Redirect to 'from' param if provided, otherwise to contact detail
-    redirect_url = request.query_params.get("from") or request.query_params.get("next") or f"/contacts/{contact_id}"
+    fallback = f"/contacts/{contact_id}"
+    redirect_url = safe_redirect_url(request.query_params.get("from") or request.query_params.get("next"), fallback)
     return RedirectResponse(url=redirect_url, status_code=303)
 
 
 # -----------------------------
 # API Endpoints (JSON)
 # -----------------------------
+
+
+@router.post("/api/quick-create", response_class=JSONResponse)
+async def quick_create_contact(
+    request: Request,
+    db: Session = Depends(get_db),
+):
+    """Quick-create a contact from inline modals (e.g., opportunity intake).
+
+    Accepts JSON: { account_id, first_name, last_name?, email?, phone? }
+    Returns JSON: { id, display_name }
+    """
+    try:
+        data = await request.json()
+    except Exception:
+        return JSONResponse(
+            status_code=400,
+            content={"detail": "Invalid JSON"},
+        )
+
+    account_id = data.get("account_id")
+    first_name = (data.get("first_name") or "").strip()
+    last_name = (data.get("last_name") or "").strip() or None
+    email = (data.get("email") or "").strip() or None
+    phone = (data.get("phone") or "").strip() or None
+
+    if not account_id or not first_name:
+        return JSONResponse(
+            status_code=400,
+            content={"detail": "account_id and first_name are required"},
+        )
+
+    # Verify account exists
+    account = db.query(Account).filter(Account.id == account_id).first()
+    if not account:
+        return JSONResponse(
+            status_code=404,
+            content={"detail": "Account not found"},
+        )
+
+    if not email and not phone:
+        return JSONResponse(
+            status_code=400,
+            content={"detail": "Email or phone is required"},
+        )
+
+    contact = Contact(
+        account_id=account_id,
+        first_name=first_name,
+        last_name=last_name,
+        email=email,
+        phone=phone,
+    )
+    db.add(contact)
+    db.commit()
+    db.refresh(contact)
+
+    return {"id": contact.id, "display_name": contact.full_name}
+
 
 # Column names for Contact model (only these can be set)
 CONTACT_COLUMNS = {
@@ -634,7 +696,7 @@ async def toggle_has_responded(
     db.commit()
 
     # Redirect back to referring page or contact detail
-    redirect_url = request.query_params.get("from") or f"/contacts/{contact_id}"
+    redirect_url = safe_redirect_url(request.query_params.get("from"), f"/contacts/{contact_id}")
     return RedirectResponse(url=redirect_url, status_code=303)
 
 

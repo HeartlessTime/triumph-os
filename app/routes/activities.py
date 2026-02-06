@@ -9,6 +9,7 @@ from app.database import get_db
 from app.models import Opportunity, Activity, Contact, ActivityAttendee
 from app.services.followup import calculate_next_followup
 from app.template_config import templates, utc_now
+from app.utils.safe_redirect import safe_redirect_url
 
 logger = logging.getLogger(__name__)
 
@@ -149,10 +150,10 @@ async def add_standalone_activity(
 
     db.add(activity)
     db.commit()
+    db.refresh(activity)
 
-    # Redirect based on context
-    redirect_to = request.query_params.get("from", "/")
-    return RedirectResponse(url=redirect_to, status_code=303)
+    # Redirect to the newly created activity's detail page
+    return RedirectResponse(url=f"/activities/{activity.id}", status_code=303)
 
 
 @router.post("/log-meeting")
@@ -223,7 +224,7 @@ async def log_meeting(
 
     db.commit()
 
-    redirect_to = request.query_params.get("from", "/")
+    redirect_to = safe_redirect_url(request.query_params.get("from"), "/")
     return RedirectResponse(url=redirect_to, status_code=303)
 
 
@@ -358,7 +359,7 @@ async def update_activity(
     # Check for explicit return URL from query params (back navigation)
     from_url = request.query_params.get("from")
     if from_url:
-        redirect_url = from_url
+        redirect_url = safe_redirect_url(from_url, "/summary/my-weekly")
     elif activity.opportunity_id:
         redirect_url = f"/opportunities/{activity.opportunity_id}"
     elif activity.contact_id:
@@ -457,7 +458,7 @@ async def delete_activity(
     # Check for explicit return URL from query params (back navigation)
     from_url = request.query_params.get("from")
     if from_url:
-        redirect_url = from_url
+        redirect_url = safe_redirect_url(from_url, "/summary/my-weekly")
     elif activity.opportunity_id:
         redirect_url = f"/opportunities/{activity.opportunity_id}"
     elif activity.contact_id:

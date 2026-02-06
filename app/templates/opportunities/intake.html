@@ -5,6 +5,11 @@
 {% block content %}
 <div class="content-area">
     <div class="tos-page-header">
+        <div class="mb-2">
+            <a href="{{ request.query_params.get('from', '/opportunities') }}" class="tos-btn tos-btn-secondary">
+                <i class="bi bi-arrow-left me-1"></i> Back to Opportunities
+            </a>
+        </div>
         <nav aria-label="breadcrumb">
             <ol class="breadcrumb mb-1">
                 <li class="breadcrumb-item"><a href="/opportunities">Opportunities</a></li>
