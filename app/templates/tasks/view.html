@@ -6,15 +6,34 @@
 <div class="content-area">
     <div class="page-header">
         <div class="mb-2">
-            <a href="{{ request.query_params.get('from', '/opportunities/' ~ task.opportunity_id if task.opportunity else '/opportunities') }}" class="tos-btn tos-btn-secondary">
-                <i class="bi bi-arrow-left me-1"></i> Back{% if task.opportunity %} to {{ task.opportunity.name }}{% endif %}
+            {% if request.query_params.get('from') %}
+            <a href="{{ request.query_params.get('from') }}" class="tos-btn tos-btn-secondary">
+                <i class="bi bi-arrow-left me-1"></i> Back
             </a>
+            {% elif task.opportunity %}
+            <a href="/opportunities/{{ task.opportunity_id }}" class="tos-btn tos-btn-secondary">
+                <i class="bi bi-arrow-left me-1"></i> Back to {{ task.opportunity.name }}
+            </a>
+            {% elif task.account %}
+            <a href="/accounts/{{ task.account_id }}" class="tos-btn tos-btn-secondary">
+                <i class="bi bi-arrow-left me-1"></i> Back to {{ task.account.name }}
+            </a>
+            {% else %}
+            <a href="/summary/my-weekly" class="tos-btn tos-btn-secondary">
+                <i class="bi bi-arrow-left me-1"></i> Back
+            </a>
+            {% endif %}
         </div>
         <nav aria-label="breadcrumb">
             <ol class="breadcrumb">
-                <li class="breadcrumb-item"><a href="/opportunities">Opportunities</a></li>
                 {% if task.opportunity %}
+                <li class="breadcrumb-item"><a href="/opportunities">Opportunities</a></li>
                 <li class="breadcrumb-item"><a href="/opportunities/{{ task.opportunity_id }}">{{ task.opportunity.name }}</a></li>
+                {% elif task.account %}
+                <li class="breadcrumb-item"><a href="/accounts">Accounts</a></li>
+                <li class="breadcrumb-item"><a href="/accounts/{{ task.account_id }}">{{ task.account.name }}</a></li>
+                {% else %}
+                <li class="breadcrumb-item"><a href="/summary/my-weekly">Summary</a></li>
                 {% endif %}
                 <li class="breadcrumb-item active">Task</li>
             </ol>
@@ -78,6 +97,15 @@
                             {{ task.assigned_to.full_name }}
                             {% else %}
                             <span class="text-muted">Unassigned</span>
+                            {% endif %}
+                        </dd>
+
+                        <dt class="col-sm-4">Account</dt>
+                        <dd class="col-sm-8">
+                            {% if task.account %}
+                            <a href="/accounts/{{ task.account_id }}">{{ task.account.name }}</a>
+                            {% else %}
+                            <span class="text-muted">None</span>
                             {% endif %}
                         </dd>
 

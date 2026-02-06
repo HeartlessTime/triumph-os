@@ -21,6 +21,12 @@ class Task(Base):
     status = Column(String(20), nullable=False, default="Open", index=True)
     completed_at = Column(DateTime, nullable=True)
     completed_by_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+    account_id = Column(
+        Integer,
+        ForeignKey("accounts.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
     assigned_to_id = Column(Integer, ForeignKey("users.id"), nullable=True)
     created_by_id = Column(Integer, ForeignKey("users.id"), nullable=True)
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
@@ -30,6 +36,7 @@ class Task(Base):
 
     # Relationships
     opportunity = relationship("Opportunity", back_populates="tasks")
+    account = relationship("Account", back_populates="tasks")
     completed_by = relationship(
         "User", back_populates="completed_tasks", foreign_keys=[completed_by_id]
     )

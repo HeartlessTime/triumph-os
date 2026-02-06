@@ -7,7 +7,7 @@ from sqlalchemy import or_, func
 from datetime import date
 
 from app.database import get_db
-from app.models import Account, Opportunity, Contact, Activity, ActivityAttendee
+from app.models import Account, Opportunity, Contact, Activity, ActivityAttendee, Task
 from app.services.validators import validate_account
 from app.template_config import templates
 from app.utils.safe_redirect import safe_redirect_url
@@ -305,6 +305,14 @@ async def view_account(
             .all()
         )
 
+    # Get open tasks linked to this account
+    account_tasks = (
+        db.query(Task)
+        .filter(Task.account_id == account_id, Task.status == "Open")
+        .order_by(Task.due_date.asc().nullslast())
+        .all()
+    )
+
     # Get return URL from query params (for back navigation with sort preserved)
     return_to = safe_redirect_url(request.query_params.get("from"), None) if request.query_params.get("from") else None
 
@@ -316,6 +324,7 @@ async def view_account(
             "sorted_contacts": sorted_contacts,
             "return_to": return_to,
             "account_meetings": account_meetings,
+            "account_tasks": account_tasks,
         },
     )
 

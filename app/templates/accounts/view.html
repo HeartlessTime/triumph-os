@@ -144,40 +144,35 @@
                 </div>
             </div>
 
-            <!-- Next Action -->
+            <!-- Tasks -->
             <div class="tos-card mt-3">
                 <div class="tos-section-header">
-                    <i class="bi bi-lightning me-1"></i>Next Action
+                    <i class="bi bi-list-task me-1"></i>Tasks
                 </div>
-                <div class="p-3">
-                    <form id="nextActionForm" data-auto-save="/accounts/{{ account.id }}/auto-save">
-                        <div class="mb-2">
-                            <input type="text" class="form-control form-control-sm" name="next_action"
-                                value="{{ account.next_action or '' }}" placeholder="What's the next step?">
-                        </div>
-                        <div class="d-flex align-items-center gap-2">
-                            <label class="form-label mb-0 small text-muted">Due:</label>
-                            <input type="date" class="form-control form-control-sm" name="next_action_due_date"
-                                value="{{ account.next_action_due_date.strftime('%Y-%m-%d') if account.next_action_due_date else '' }}"
-                                style="max-width: 160px;
-                                {% if account.days_until_next_action is not none %}
-                                    {% if account.days_until_next_action < 0 %}color: #dc2626; font-weight: 600;
-                                    {% elif account.days_until_next_action <= 2 %}color: #d97706; font-weight: 600;
-                                    {% else %}color: #059669;
+                {% if account_tasks %}
+                <div class="table-responsive">
+                    <table class="dense-table w-100">
+                        <tbody>
+                            {% for task in account_tasks %}
+                            <tr>
+                                <td class="px-3 py-1">
+                                    <a href="/tasks/{{ task.id }}?from=/accounts/{{ account.id }}" class="text-decoration-none">{{ task.title }}</a>
+                                </td>
+                                <td class="px-3 py-1 text-end text-nowrap" style="width: 100px;">
+                                    {% if task.due_date %}
+                                    <small class="{% if task.is_overdue %}text-danger fw-bold{% else %}text-muted{% endif %}">
+                                        {{ task.due_date.strftime('%b %d') }}{% if task.is_overdue %} <i class="bi bi-exclamation-circle"></i>{% endif %}
+                                    </small>
                                     {% endif %}
-                                {% endif %}">
-                            {% if account.days_until_next_action is not none %}
-                            <span class="small {% if account.days_until_next_action < 0 %}text-danger fw-bold{% elif account.days_until_next_action <= 2 %}text-warning{% else %}text-success{% endif %}">
-                                {% if account.days_until_next_action < 0 %}{{ account.days_until_next_action|abs }}d overdue
-                                {% elif account.days_until_next_action == 0 %}Due today
-                                {% else %}In {{ account.days_until_next_action }}d
-                                {% endif %}
-                            </span>
-                            {% endif %}
-                        </div>
-                    </form>
-                    <span class="text-muted small d-block mt-1"><i class="bi bi-cloud-check me-1"></i>Auto-saves</span>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
                 </div>
+                {% else %}
+                <div class="p-3 text-center text-muted small">No open tasks</div>
+                {% endif %}
             </div>
 
             <!-- Meetings with this Account -->
@@ -460,13 +455,6 @@
 {% block extra_js %}
 <script>
 (function() {
-    // Next Action auto-save
-    const nextActionForm = document.getElementById('nextActionForm');
-    if (nextActionForm) {
-        const endpoint = nextActionForm.dataset.autoSave;
-        AutoSave.init(nextActionForm, endpoint);
-    }
-
     // Follow-up preset logic
     const presets = document.querySelectorAll('.followup-preset');
     const dateInput = document.getElementById('next_followup_input');

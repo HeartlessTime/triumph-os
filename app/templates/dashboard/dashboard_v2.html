@@ -798,6 +798,21 @@
                             <input type="date" class="form-control form-control-sm" id="taskDueDate" name="due_date">
                         </div>
                     </div>
+                    <!-- Account Selector -->
+                    <div class="mb-2">
+                        <label class="form-label small mb-1">Account</label>
+                        <input type="hidden" id="taskAccountId" name="account_id" value="">
+                        <div class="position-relative" id="taskAccountSelectorWrap">
+                            <input type="text" class="form-control form-control-sm" id="taskAccountSearch" placeholder="Search accounts..." autocomplete="off">
+                            <div class="list-group position-absolute w-100 shadow-sm" id="taskAccountResults" style="z-index:1060; max-height:180px; overflow-y:auto; display:none;"></div>
+                        </div>
+                        <div id="taskAccountSelected" class="mt-1" style="display:none;">
+                            <span class="badge bg-secondary d-inline-flex align-items-center gap-1">
+                                <span id="taskAccountSelectedName"></span>
+                                <button type="button" class="btn-close btn-close-white ms-1" style="font-size:.55rem;" id="taskAccountClear"></button>
+                            </span>
+                        </div>
+                    </div>
                     <div class="mb-0">
                         <label for="taskNotes" class="form-label small mb-1">Notes</label>
                         <input type="text" class="form-control form-control-sm" id="taskNotes" name="description" placeholder="Optional notes...">
@@ -829,6 +844,69 @@ window._jobWalkAccounts = [
     { id: {{ account.id }}, name: "{{ account.name | replace('"', '\\"') }}" },
     {% endfor %}
 ];
+window._taskAccounts = window._jobWalkAccounts;
+</script>
+
+<script>
+// Task modal: searchable account selector
+(function(){
+    const search = document.getElementById('taskAccountSearch');
+    const results = document.getElementById('taskAccountResults');
+    const hidden = document.getElementById('taskAccountId');
+    const selectedWrap = document.getElementById('taskAccountSelected');
+    const selectedName = document.getElementById('taskAccountSelectedName');
+    const clearBtn = document.getElementById('taskAccountClear');
+    const selectorWrap = document.getElementById('taskAccountSelectorWrap');
+    if (!search) return;
+
+    function render(items) {
+        if (!items.length) { results.style.display = 'none'; return; }
+        results.innerHTML = items.slice(0, 8).map(a =>
+            `<button type="button" class="list-group-item list-group-item-action py-1 px-2 small" data-id="${a.id}">${a.name}</button>`
+        ).join('');
+        results.style.display = 'block';
+    }
+
+    search.addEventListener('input', function(){
+        const q = this.value.trim().toLowerCase();
+        if (!q) { results.style.display = 'none'; return; }
+        render((window._taskAccounts || []).filter(a => a.name.toLowerCase().includes(q)));
+    });
+
+    results.addEventListener('click', function(e){
+        const btn = e.target.closest('[data-id]');
+        if (!btn) return;
+        hidden.value = btn.dataset.id;
+        selectedName.textContent = btn.textContent;
+        selectedWrap.style.display = '';
+        selectorWrap.style.display = 'none';
+        results.style.display = 'none';
+        search.value = '';
+    });
+
+    clearBtn.addEventListener('click', function(){
+        hidden.value = '';
+        selectedWrap.style.display = 'none';
+        selectorWrap.style.display = '';
+    });
+
+    // Close dropdown on outside click
+    document.addEventListener('click', function(e){
+        if (!e.target.closest('#taskAccountSelectorWrap')) results.style.display = 'none';
+    });
+
+    // Reset on modal close
+    const modal = document.getElementById('quickAddTaskModal');
+    if (modal) {
+        modal.addEventListener('hidden.bs.modal', function(){
+            hidden.value = '';
+            search.value = '';
+            selectedWrap.style.display = 'none';
+            selectorWrap.style.display = '';
+            results.style.display = 'none';
+        });
+    }
+})();
 </script>
 
 {% include "partials/site_visit_modal.html" %}

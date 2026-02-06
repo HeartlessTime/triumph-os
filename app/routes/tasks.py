@@ -4,7 +4,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy.orm import Session
 
 from app.database import get_db
-from app.models import Opportunity, Task, User, Activity
+from app.models import Account, Opportunity, Task, User, Activity
 from app.template_config import templates
 from app.utils.safe_redirect import safe_redirect_url
 
@@ -17,6 +17,7 @@ async def quick_add_task(
     title: str = Form(...),
     due_date: str = Form(None),
     description: str = Form(None),
+    account_id: int = Form(None),
     db: Session = Depends(get_db),
 ):
     """Quick add a standalone task (no opportunity)."""
@@ -29,6 +30,7 @@ async def quick_add_task(
         title=title,
         description=description or None,
         due_date=datetime.strptime(due_date, "%Y-%m-%d").date() if due_date else None,
+        account_id=account_id if account_id else None,
         assigned_to_id=current_user.id,
         created_by_id=current_user.id,
     )
@@ -77,7 +79,7 @@ async def add_task(
 # Column names for Task model (only these can be set)
 TASK_COLUMNS = {
     "title", "description", "due_date", "status",
-    "assigned_to_id", "opportunity_id", "completed_at", "completed_by_id",
+    "assigned_to_id", "opportunity_id", "account_id", "completed_at", "completed_by_id",
 }
 
 
@@ -179,6 +181,13 @@ async def quick_update_task(
             except Exception:
                 pass
 
+        # Handle account_id change
+        if "account_id" in payload:
+            try:
+                task.account_id = clean_int(payload["account_id"])
+            except Exception:
+                pass
+
         try:
             db.commit()
         except Exception:
@@ -275,6 +284,7 @@ async def edit_task_form(request: Request, task_id: int, db: Session = Depends(g
         raise HTTPException(status_code=404, detail="Task not found")
 
     users = db.query(User).filter(User.is_active == True).order_by(User.full_name).all()
+    accounts = db.query(Account).order_by(Account.name).all()
 
     return templates.TemplateResponse(
         "tasks/edit.html",
@@ -282,6 +292,7 @@ async def edit_task_form(request: Request, task_id: int, db: Session = Depends(g
             "request": request,
             "task": task,
             "users": users,
+            "accounts": accounts,
             "priorities": [],
         },
     )
@@ -295,6 +306,7 @@ async def update_task(
     description: str = Form(None),
     due_date: str = Form(None),
     assigned_to_id: int = Form(None),
+    account_id: int = Form(None),
     db: Session = Depends(get_db),
 ):
     """Update a task.
@@ -312,6 +324,7 @@ async def update_task(
     task.description = description or None
     task.due_date = datetime.strptime(due_date, "%Y-%m-%d").date() if due_date else None
     task.assigned_to_id = assigned_to_id if assigned_to_id else None
+    task.account_id = account_id if account_id else None
 
     db.commit()
 

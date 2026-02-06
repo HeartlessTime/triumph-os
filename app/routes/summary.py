@@ -584,6 +584,9 @@ async def my_weekly_summary(
     # Personal notes for this user
     section_notes = load_notes_for_week(db, week_start, user_id=user_id)
 
+    # All accounts for task modal account selector
+    all_accounts = db.query(Account).order_by(Account.name).all()
+
     return templates.TemplateResponse(
         "summary/my_weekly.html",
         {
@@ -597,6 +600,8 @@ async def my_weekly_summary(
             "summary_sentence": summary_sentence,
             # Notes
             "section_notes": section_notes,
+            # Account list for task modal
+            "all_accounts": all_accounts,
             # Spread all summary data
             **summary,
         },

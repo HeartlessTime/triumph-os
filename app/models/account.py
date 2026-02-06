@@ -44,6 +44,7 @@ class Account(Base):
         back_populates="end_user_account",
         foreign_keys="Opportunity.end_user_account_id",
     )
+    tasks = relationship("Task", back_populates="account", foreign_keys="Task.account_id")
     # Multi-account relationship via junction table
     opportunity_links = relationship(
         "OpportunityAccount",

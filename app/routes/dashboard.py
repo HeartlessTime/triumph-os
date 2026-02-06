@@ -30,8 +30,9 @@ async def dashboard(request: Request, db: Session = Depends(get_db)):
     data = get_dashboard_data(db, today)
 
     if not USE_DASHBOARD_V2:
+        all_accounts = db.query(Account).order_by(Account.name).all()
         return templates.TemplateResponse(
-            "dashboard/index.html", {"request": request, **data}
+            "dashboard/index.html", {"request": request, "all_accounts": all_accounts, **data}
         )
 
     # Dashboard V2: Additional data for execution-focused view
