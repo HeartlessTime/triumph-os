@@ -147,7 +147,7 @@
                                         {{ activity.contact.full_name }}
                                     </a>
                                     {% if activity.description %}
-                                    <div class="tos-entity-sub text-truncate" style="max-width: 200px; font-style: italic;">{{ activity.description[:60] }}{% if activity.description|length > 60 %}...{% endif %}</div>
+                                    <div class="tos-entity-sub text-truncate" style="max-width: 500px; font-style: italic;">{{ activity.description[:120] }}{% if activity.description|length > 120 %}...{% endif %}</div>
                                     {% endif %}
                                     {% else %}
                                     <span class="tos-entity-sub">{{ activity.subject }}</span>
