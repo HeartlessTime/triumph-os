@@ -560,7 +560,7 @@ async def log_contact(
     current_user = request.state.current_user
 
     # Build description from notes or default
-    description = notes.strip() if notes and notes.strip() else f"Logged contact with {contact.full_name} at {contact.account.name}"
+    description = notes.strip() if notes and notes.strip() else None
 
     # Always create a contact-level follow-up Activity (no opportunity required)
     # This ensures the follow-up appears in weekly summaries and audit log
