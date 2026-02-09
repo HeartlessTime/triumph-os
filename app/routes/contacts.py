@@ -105,8 +105,8 @@ async def list_contacts(
         else:
             query = query.order_by(Contact.last_contacted.desc().nullslast())
     else:
-        # Default sort by name
-        query = query.order_by(Contact.last_name.asc(), Contact.first_name.asc())
+        # Default sort by last contacted (most recent first), nulls at end
+        query = query.order_by(Contact.last_contacted.desc().nullslast(), Contact.last_name.asc())
 
     contacts = query.all()
     accounts = db.query(Account).order_by(Account.name).all()
