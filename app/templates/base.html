@@ -1381,10 +1381,7 @@
             <!-- Today page deprecated - redirects to Dashboard -->
 
             <div class="nav-section mt-3">Summaries</div>
-            <a href="/summary/weekly" class="nav-link {% if request.url.path == '/summary/weekly' %}active{% endif %}">
-                <i class="bi bi-clipboard-data"></i>
-                Weekly Summary
-            </a>
+            {# Weekly Summary nav hidden — route still works at /summary/weekly #}
             <a href="/summary/my-weekly" class="nav-link {% if request.url.path == '/summary/my-weekly' %}active{% endif %}">
                 <i class="bi bi-person-check"></i>
                 My Summary
