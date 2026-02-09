@@ -39,7 +39,7 @@
                 <span class="text-muted small me-1">Sort:</span>
                 {% set name_dir = 'desc' if sort == 'name' and dir == 'asc' else 'asc' %}
                 <a href="/contacts?sort=name&dir={{ name_dir }}{% if account_id %}&account_id={{ account_id }}{% endif %}"
-                   class="tos-sort-btn {% if sort == 'name' or not sort %}active{% endif %}">
+                   class="tos-sort-btn {% if sort == 'name' %}active{% endif %}">
                     Name <i class="bi {% if sort == 'name' and dir == 'desc' %}bi-sort-alpha-up{% else %}bi-sort-alpha-down{% endif %} sort-icon"></i>
                 </a>
                 {% set account_dir = 'desc' if sort == 'account' and dir == 'asc' else 'asc' %}
@@ -49,7 +49,7 @@
                 </a>
                 {% set contacted_dir = 'asc' if sort == 'last_contacted' and dir == 'desc' else 'desc' %}
                 <a href="/contacts?sort=last_contacted&dir={{ contacted_dir }}{% if account_id %}&account_id={{ account_id }}{% endif %}"
-                   class="tos-sort-btn {% if sort == 'last_contacted' %}active{% endif %}">
+                   class="tos-sort-btn {% if sort == 'last_contacted' or not sort %}active{% endif %}">
                     Last Contacted <i class="bi {% if sort == 'last_contacted' and dir == 'asc' %}bi-sort-up{% else %}bi-sort-down{% endif %} sort-icon"></i>
                 </a>
             </div>
