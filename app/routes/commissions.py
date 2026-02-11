@@ -5,7 +5,7 @@ from typing import Optional
 from fastapi import APIRouter, Depends, Form, Request
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from sqlalchemy import func
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 
 from app.database import get_db
 from app.models.account import Account
@@ -67,9 +67,16 @@ async def commission_list(request: Request, db: Session = Depends(get_db)):
 
     accounts = (
         db.query(Account)
+        .options(selectinload(Account.contacts))
         .order_by(Account.name)
         .all()
     )
+
+    # Build account_name -> last_contacted lookup
+    account_last_contacted = {}
+    for acct in accounts:
+        if acct.last_contacted:
+            account_last_contacted[acct.name] = acct.last_contacted
 
     # Only "Won" entries count toward the total
     total_commission = (
@@ -93,6 +100,7 @@ async def commission_list(request: Request, db: Session = Depends(get_db)):
             "accounts": accounts,
             "total_commission": total_commission,
             "job_statuses": CommissionEntry.JOB_STATUSES,
+            "account_last_contacted": account_last_contacted,
         },
     )
 
@@ -179,6 +187,37 @@ async def edit_commission(
     entry.updated_at = datetime.utcnow()
     db.commit()
     return RedirectResponse(url=f"/commissions?month={entry.month}", status_code=303)
+
+
+# ---------------------------------------------------------------------------
+# Quick status update (JSON)
+# ---------------------------------------------------------------------------
+@router.post("/{entry_id}/status", response_class=JSONResponse)
+async def update_commission_status(
+    entry_id: int,
+    request: Request,
+    db: Session = Depends(get_db),
+):
+    body = await request.json()
+    new_status = body.get("job_status", "Pending")
+    if new_status not in CommissionEntry.JOB_STATUSES:
+        return JSONResponse({"error": "Invalid status"}, status_code=400)
+
+    entry = db.query(CommissionEntry).filter(CommissionEntry.id == entry_id).first()
+    if not entry:
+        return JSONResponse({"error": "Not found"}, status_code=404)
+
+    entry.job_status = new_status
+    entry.updated_at = datetime.utcnow()
+    db.commit()
+
+    # Recompute won-only total for this month
+    total = (
+        db.query(func.sum(CommissionEntry.commission_amount))
+        .filter(CommissionEntry.month == entry.month, CommissionEntry.job_status == "Won")
+        .scalar()
+    ) or 0
+    return {"ok": True, "job_status": new_status, "total_commission": float(total)}
 
 
 # ---------------------------------------------------------------------------

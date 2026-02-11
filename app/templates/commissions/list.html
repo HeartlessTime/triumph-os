@@ -21,6 +21,32 @@
     }
     .search-results .sr-item:hover { background: var(--bg-hover); }
     .search-results .sr-item:last-child { border-bottom: none; }
+
+    /* Job status badges – theme-aware */
+    .job-status-badge {
+        display: inline-block; padding: 0.2em 0.55em; border-radius: 4px;
+        font-size: 0.75rem; font-weight: 500; cursor: pointer; user-select: none;
+        position: relative;
+    }
+    .job-status-badge:hover { filter: brightness(1.15); }
+    .job-status-badge[data-status="Won"]          { background: var(--success-bg); color: var(--success-text); }
+    .job-status-badge[data-status="Pending"]       { background: var(--warning-bg); color: var(--warning-text); }
+    .job-status-badge[data-status="Did Not Win"]   { background: var(--danger-bg);  color: var(--danger-text); }
+
+    /* Inline status picker */
+    .status-picker {
+        position: absolute; z-index: 1060; top: 100%; left: 0;
+        background: var(--bg-surface); border: 1px solid var(--border-default);
+        border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,.25);
+        min-width: 130px; display: none; margin-top: 4px;
+    }
+    .status-picker.show { display: block; }
+    .status-picker-item {
+        padding: 0.35rem 0.65rem; font-size: 0.82rem; cursor: pointer;
+        color: var(--text-primary); border-bottom: 1px solid var(--border-default);
+    }
+    .status-picker-item:last-child { border-bottom: none; }
+    .status-picker-item:hover { background: var(--bg-hover); }
 </style>
 {% endblock %}
 
@@ -65,7 +91,7 @@
                     <tr>
                         <th>Account</th>
                         <th>Job Name</th>
-                        <th>Job #</th>
+                        <th>Last Contacted</th>
                         <th>Contact</th>
                         <th>Status</th>
                         <th style="text-align:right;">Job Amount</th>
@@ -89,16 +115,13 @@
                         data-notes="{{ entry.notes or '' }}">
                         <td><span class="tos-entity-name">{{ entry.account_name }}</span></td>
                         <td>{{ entry.job_name }}</td>
-                        <td class="tos-entity-sub">{{ entry.job_number or '—' }}</td>
+                        <td class="tos-entity-sub">
+                            {% set lc = account_last_contacted.get(entry.account_name) %}
+                            {{ lc.strftime('%m/%d/%Y') if lc else '—' }}
+                        </td>
                         <td class="tos-entity-sub">{{ entry.contact or '—' }}</td>
-                        <td>
-                            {% if entry.job_status == "Won" %}
-                            <span class="badge bg-success">Won</span>
-                            {% elif entry.job_status == "Did Not Win" %}
-                            <span class="badge bg-danger">Did Not Win</span>
-                            {% else %}
-                            <span class="badge bg-warning text-dark">Pending</span>
-                            {% endif %}
+                        <td style="position:relative;">
+                            <span class="job-status-badge" data-entry-id="{{ entry.id }}" data-status="{{ entry.job_status }}">{{ entry.job_status }}</span>
                         </td>
                         <td style="text-align:right;">
                             {% if entry.job_amount is not none %}<span class="currency">{{ entry.job_amount }}</span>{% else %}—{% endif %}
@@ -425,7 +448,7 @@
     /* ==== Row click to view (read-only) ==== */
     document.querySelectorAll('.entry-row').forEach(function(row) {
         row.addEventListener('click', function(e) {
-            if (e.target.closest('button') || e.target.closest('form')) return;
+            if (e.target.closest('button') || e.target.closest('form') || e.target.closest('.job-status-badge') || e.target.closest('.status-picker')) return;
 
             var d = this.dataset;
             document.getElementById('viewAccount').textContent = d.account || '—';
@@ -482,6 +505,68 @@
     document.getElementById('commissionModal').addEventListener('hidden.bs.modal', function() {
         openAddModal();
     });
+
+    /* ==== Inline status picker ==== */
+    var JOB_STATUSES = {{ job_statuses | tojson }};
+    var activePicker = null;
+
+    function closePicker() {
+        if (activePicker) { activePicker.remove(); activePicker = null; }
+    }
+
+    document.querySelectorAll('.job-status-badge').forEach(function(badge) {
+        badge.addEventListener('click', function(e) {
+            e.stopPropagation();
+            closePicker();
+
+            var entryId = this.dataset.entryId;
+            var current = this.dataset.status;
+            var badgeEl = this;
+            var td = this.parentElement;
+
+            var picker = document.createElement('div');
+            picker.className = 'status-picker show';
+            JOB_STATUSES.forEach(function(s) {
+                var item = document.createElement('div');
+                item.className = 'status-picker-item';
+                item.textContent = s;
+                if (s === current) item.style.fontWeight = '600';
+                item.addEventListener('click', function(ev) {
+                    ev.stopPropagation();
+                    closePicker();
+                    if (s === current) return;
+
+                    fetch('/commissions/' + entryId + '/status', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({job_status: s})
+                    })
+                    .then(function(r) { return r.json(); })
+                    .then(function(data) {
+                        if (!data.ok) return;
+                        badgeEl.textContent = data.job_status;
+                        badgeEl.dataset.status = data.job_status;
+                        // Update the row data attribute too
+                        var row = badgeEl.closest('tr');
+                        if (row) row.dataset.jobStatus = data.job_status;
+                        // Update the edit button data attribute
+                        var editBtn = row && row.querySelector('.edit-btn');
+                        if (editBtn) editBtn.dataset.jobStatus = data.job_status;
+                        // Update the total display
+                        var totalEl = document.querySelector('.commission-total');
+                        if (totalEl) {
+                            totalEl.textContent = 'Total (Won): $' + data.total_commission.toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2});
+                        }
+                    });
+                });
+                picker.appendChild(item);
+            });
+            td.appendChild(picker);
+            activePicker = picker;
+        });
+    });
+
+    document.addEventListener('click', function() { closePicker(); });
 })();
 </script>
 {% endblock %}
