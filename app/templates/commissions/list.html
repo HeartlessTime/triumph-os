@@ -33,12 +33,12 @@
     .job-status-badge[data-status="Pending"]       { background: var(--warning-bg); color: var(--warning-text); }
     .job-status-badge[data-status="Did Not Win"]   { background: var(--danger-bg);  color: var(--danger-text); }
 
-    /* Inline status picker */
+    /* Inline status picker – fixed to viewport so it can't be clipped */
     .status-picker {
-        position: absolute; z-index: 1060; top: 100%; left: 0;
+        position: fixed; z-index: 9999;
         background: var(--bg-surface); border: 1px solid var(--border-default);
         border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,.25);
-        min-width: 130px; display: none; margin-top: 4px;
+        min-width: 130px; display: none;
     }
     .status-picker.show { display: block; }
     .status-picker-item {
@@ -524,8 +524,11 @@
             var badgeEl = this;
             var td = this.parentElement;
 
+            var rect = badgeEl.getBoundingClientRect();
             var picker = document.createElement('div');
             picker.className = 'status-picker show';
+            picker.style.top = rect.bottom + 4 + 'px';
+            picker.style.left = rect.left + 'px';
             JOB_STATUSES.forEach(function(s) {
                 var item = document.createElement('div');
                 item.className = 'status-picker-item';
@@ -561,7 +564,7 @@
                 });
                 picker.appendChild(item);
             });
-            td.appendChild(picker);
+            document.body.appendChild(picker);
             activePicker = picker;
         });
     });
