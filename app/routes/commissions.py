@@ -4,6 +4,7 @@ from typing import Optional
 
 from fastapi import APIRouter, Depends, Form, Request
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app.database import get_db
@@ -70,6 +71,16 @@ async def commission_list(request: Request, db: Session = Depends(get_db)):
         .all()
     )
 
+    # Only "Won" entries count toward the total
+    total_commission = (
+        db.query(func.sum(CommissionEntry.commission_amount))
+        .filter(
+            CommissionEntry.month == month,
+            CommissionEntry.job_status == "Won",
+        )
+        .scalar()
+    ) or Decimal("0")
+
     return templates.TemplateResponse(
         "commissions/list.html",
         {
@@ -80,6 +91,8 @@ async def commission_list(request: Request, db: Session = Depends(get_db)):
             "prev_month": prev_dt.strftime("%Y-%m"),
             "next_month": next_dt.strftime("%Y-%m"),
             "accounts": accounts,
+            "total_commission": total_commission,
+            "job_statuses": CommissionEntry.JOB_STATUSES,
         },
     )
 
@@ -111,9 +124,11 @@ async def add_commission(
     contact: str = Form(""),
     job_amount: str = Form(""),
     notes: str = Form(""),
+    job_status: str = Form("Pending"),
     db: Session = Depends(get_db),
 ):
     parsed_job_amount = _parse_decimal(job_amount)
+    safe_status = job_status if job_status in CommissionEntry.JOB_STATUSES else "Pending"
     entry = CommissionEntry(
         month=month.strip(),
         account_name=account_name.strip(),
@@ -123,6 +138,7 @@ async def add_commission(
         job_amount=parsed_job_amount,
         commission_amount=_calc_commission(parsed_job_amount),
         notes=notes.strip() or None,
+        job_status=safe_status,
     )
     db.add(entry)
     db.commit()
@@ -143,6 +159,7 @@ async def edit_commission(
     contact: str = Form(""),
     job_amount: str = Form(""),
     notes: str = Form(""),
+    job_status: str = Form("Pending"),
     db: Session = Depends(get_db),
 ):
     entry = db.query(CommissionEntry).filter(CommissionEntry.id == entry_id).first()
@@ -158,6 +175,7 @@ async def edit_commission(
     entry.job_amount = parsed_job_amount
     entry.commission_amount = _calc_commission(parsed_job_amount)
     entry.notes = notes.strip() or None
+    entry.job_status = job_status if job_status in CommissionEntry.JOB_STATUSES else "Pending"
     entry.updated_at = datetime.utcnow()
     db.commit()
     return RedirectResponse(url=f"/commissions?month={entry.month}", status_code=303)

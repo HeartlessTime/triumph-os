@@ -49,9 +49,8 @@
                 </a>
             </div>
             <div class="ms-auto d-flex align-items-center gap-3">
-                {% set total_commission = entries | map(attribute='commission_amount') | select('ne', None) | map('float') | sum %}
                 {% if entries %}
-                <span class="commission-total">Total: ${{ "{:,.2f}".format(total_commission) }}</span>
+                <span class="commission-total">Total (Won): ${{ "{:,.2f}".format(total_commission | float) }}</span>
                 {% endif %}
             </div>
         </div>
@@ -68,6 +67,7 @@
                         <th>Job Name</th>
                         <th>Job #</th>
                         <th>Contact</th>
+                        <th>Status</th>
                         <th style="text-align:right;">Job Amount</th>
                         <th style="text-align:right;">Commission (1%)</th>
                         <th>Notes</th>
@@ -83,6 +83,7 @@
                         data-job-name="{{ entry.job_name }}"
                         data-job-number="{{ entry.job_number or '' }}"
                         data-contact="{{ entry.contact or '' }}"
+                        data-job-status="{{ entry.job_status }}"
                         data-job-amount="{{ entry.job_amount if entry.job_amount is not none else '' }}"
                         data-commission="{{ entry.commission_amount if entry.commission_amount is not none else '' }}"
                         data-notes="{{ entry.notes or '' }}">
@@ -90,6 +91,15 @@
                         <td>{{ entry.job_name }}</td>
                         <td class="tos-entity-sub">{{ entry.job_number or '—' }}</td>
                         <td class="tos-entity-sub">{{ entry.contact or '—' }}</td>
+                        <td>
+                            {% if entry.job_status == "Won" %}
+                            <span class="badge bg-success">Won</span>
+                            {% elif entry.job_status == "Did Not Win" %}
+                            <span class="badge bg-danger">Did Not Win</span>
+                            {% else %}
+                            <span class="badge bg-warning text-dark">Pending</span>
+                            {% endif %}
+                        </td>
                         <td style="text-align:right;">
                             {% if entry.job_amount is not none %}<span class="currency">{{ entry.job_amount }}</span>{% else %}—{% endif %}
                         </td>
@@ -107,6 +117,7 @@
                                 data-job-name="{{ entry.job_name }}"
                                 data-job-number="{{ entry.job_number or '' }}"
                                 data-contact="{{ entry.contact or '' }}"
+                                data-job-status="{{ entry.job_status }}"
                                 data-job-amount="{{ entry.job_amount if entry.job_amount is not none else '' }}"
                                 data-commission="{{ entry.commission_amount if entry.commission_amount is not none else '' }}"
                                 data-notes="{{ entry.notes or '' }}">
@@ -189,6 +200,14 @@
                             <label class="form-label">Notes</label>
                             <textarea class="form-control form-control-sm" name="notes" id="entryNotes" rows="2"></textarea>
                         </div>
+                        <div class="col-12">
+                            <label class="form-label">Job Status</label>
+                            <select class="form-select form-select-sm" name="job_status" id="entryJobStatus">
+                                {% for s in job_statuses %}
+                                <option value="{{ s }}">{{ s }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -229,6 +248,10 @@
                     <div class="col-md-6">
                         <label class="form-label text-muted small mb-0">Contact</label>
                         <div id="viewContact"></div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label text-muted small mb-0">Status</label>
+                        <div id="viewJobStatus"></div>
                     </div>
                     <div class="col-md-3">
                         <label class="form-label text-muted small mb-0">Job Amount</label>
@@ -396,6 +419,7 @@
         jobAmountInput.value = '';
         commDisplay.value = '';
         document.getElementById('entryNotes').value = '';
+        document.getElementById('entryJobStatus').value = 'Pending';
     };
 
     /* ==== Row click to view (read-only) ==== */
@@ -409,6 +433,7 @@
             document.getElementById('viewJobName').textContent = d.jobName || '—';
             document.getElementById('viewJobNumber').textContent = d.jobNumber || '—';
             document.getElementById('viewContact').textContent = d.contact || '—';
+            document.getElementById('viewJobStatus').textContent = d.jobStatus || 'Pending';
             document.getElementById('viewJobAmount').textContent = d.jobAmount ? ('$' + parseFloat(d.jobAmount).toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2})) : '—';
             document.getElementById('viewCommission').textContent = d.commission ? ('$' + parseFloat(d.commission).toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2})) : '—';
             document.getElementById('viewNotes').textContent = d.notes || '—';
@@ -433,6 +458,7 @@
             jobAmountInput.value = d.jobAmount;
             commDisplay.value = d.commission ? ('$' + parseFloat(d.commission).toFixed(2)) : '';
             document.getElementById('entryNotes').value = d.notes;
+            document.getElementById('entryJobStatus').value = d.jobStatus || 'Pending';
 
             var acctId = accountNameToId[d.account];
             if (acctId) {
