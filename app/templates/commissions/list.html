@@ -614,21 +614,21 @@
     document.addEventListener('click', function() { closePicker(); });
 
     /* ==== Search ==== */
-    var searchInput = document.getElementById('commissionSearch');
-    if (searchInput) {
+    var commSearchInput = document.getElementById('commissionSearch');
+    if (commSearchInput) {
         var searchTimer = null;
         function doSearch() {
-            var term = searchInput.value.trim();
+            var term = commSearchInput.value.trim();
             var url = '/commissions?month={{ selected_month }}';
             if (term) url += '&search=' + encodeURIComponent(term);
             {% if sort %} url += '&sort={{ sort }}'; {% endif %}
             {% if dir %} url += '&dir={{ dir }}'; {% endif %}
             window.location.href = url;
         }
-        searchInput.addEventListener('keydown', function(e) {
+        commSearchInput.addEventListener('keydown', function(e) {
             if (e.key === 'Enter') { e.preventDefault(); doSearch(); }
         });
-        searchInput.addEventListener('input', function() {
+        commSearchInput.addEventListener('input', function() {
             clearTimeout(searchTimer);
             searchTimer = setTimeout(doSearch, 500);
         });
