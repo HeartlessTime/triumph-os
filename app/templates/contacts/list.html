@@ -25,6 +25,29 @@
         </a>
     </div>
 
+    <!-- Filter Chips -->
+    <div class="tos-controls mb-0">
+        <div class="d-flex flex-wrap gap-2 align-items-center">
+            <span class="text-muted small me-1">Filter:</span>
+            <a href="/contacts{% if sort %}?sort={{ sort }}&dir={{ dir }}{% endif %}"
+               class="tos-btn tos-btn-sm {% if not filter %}tos-btn-primary{% else %}tos-btn-secondary{% endif %}">
+                All
+            </a>
+            <a href="/contacts?filter=needs_followup{% if sort %}&sort={{ sort }}&dir={{ dir }}{% endif %}"
+               class="tos-btn tos-btn-sm {% if filter == 'needs_followup' %}tos-btn-primary{% else %}tos-btn-secondary{% endif %}">
+                <i class="bi bi-clock me-1"></i>Needs Follow-up
+            </a>
+            <a href="/contacts?filter=overdue{% if sort %}&sort={{ sort }}&dir={{ dir }}{% endif %}"
+               class="tos-btn tos-btn-sm {% if filter == 'overdue' %}tos-btn-primary{% else %}tos-btn-secondary{% endif %}">
+                <i class="bi bi-exclamation-triangle me-1"></i>Overdue
+            </a>
+            <a href="/contacts?filter=no_response{% if sort %}&sort={{ sort }}&dir={{ dir }}{% endif %}"
+               class="tos-btn tos-btn-sm {% if filter == 'no_response' %}tos-btn-primary{% else %}tos-btn-secondary{% endif %}">
+                <i class="bi bi-x-circle me-1"></i>No Response
+            </a>
+        </div>
+    </div>
+
     <!-- Search & Sort Controls -->
     <div class="tos-controls">
         <div class="d-flex flex-wrap gap-3 align-items-center">
@@ -38,17 +61,17 @@
             <div class="d-flex gap-2 align-items-center ms-auto">
                 <span class="text-muted small me-1">Sort:</span>
                 {% set name_dir = 'desc' if sort == 'name' and dir == 'asc' else 'asc' %}
-                <a href="/contacts?sort=name&dir={{ name_dir }}{% if account_id %}&account_id={{ account_id }}{% endif %}"
+                <a href="/contacts?sort=name&dir={{ name_dir }}{% if account_id %}&account_id={{ account_id }}{% endif %}{% if filter %}&filter={{ filter }}{% endif %}"
                    class="tos-sort-btn {% if sort == 'name' %}active{% endif %}">
                     Name <i class="bi {% if sort == 'name' and dir == 'desc' %}bi-sort-alpha-up{% else %}bi-sort-alpha-down{% endif %} sort-icon"></i>
                 </a>
                 {% set account_dir = 'desc' if sort == 'account' and dir == 'asc' else 'asc' %}
-                <a href="/contacts?sort=account&dir={{ account_dir }}{% if account_id %}&account_id={{ account_id }}{% endif %}"
+                <a href="/contacts?sort=account&dir={{ account_dir }}{% if account_id %}&account_id={{ account_id }}{% endif %}{% if filter %}&filter={{ filter }}{% endif %}"
                    class="tos-sort-btn {% if sort == 'account' %}active{% endif %}">
                     Account <i class="bi {% if sort == 'account' and dir == 'desc' %}bi-sort-alpha-up{% else %}bi-sort-alpha-down{% endif %} sort-icon"></i>
                 </a>
                 {% set contacted_dir = 'asc' if sort == 'last_contacted' and dir == 'desc' else 'desc' %}
-                <a href="/contacts?sort=last_contacted&dir={{ contacted_dir }}{% if account_id %}&account_id={{ account_id }}{% endif %}"
+                <a href="/contacts?sort=last_contacted&dir={{ contacted_dir }}{% if account_id %}&account_id={{ account_id }}{% endif %}{% if filter %}&filter={{ filter }}{% endif %}"
                    class="tos-sort-btn {% if sort == 'last_contacted' or not sort %}active{% endif %}">
                     Last Contacted <i class="bi {% if sort == 'last_contacted' and dir == 'asc' %}bi-sort-up{% else %}bi-sort-down{% endif %} sort-icon"></i>
                 </a>

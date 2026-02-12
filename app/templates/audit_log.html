@@ -16,7 +16,43 @@
             <p class="tos-entity-sub mb-0">Read-only view of all system activities</p>
         </div>
         <div>
-            <span class="tos-badge-neutral">{{ total_count }} total activities</span>
+            <span class="tos-badge-neutral">{{ total_count }} {% if search or activity_type or date_from or date_to %}matching {% endif %}activities</span>
+        </div>
+    </div>
+
+    <!-- Filter Bar -->
+    {% set filter_qs %}{% for k, v in filter_params.items() %}&{{ k }}={{ v | urlencode }}{% endfor %}{% endset %}
+    <div class="tos-card mb-3">
+        <div class="p-3">
+            <form method="get" action="/audit-log" class="d-flex flex-wrap gap-2 align-items-end">
+                <div>
+                    <label class="form-label small mb-1">Search</label>
+                    <input type="text" class="form-control form-control-sm" name="search" value="{{ search }}" placeholder="Subject or description..." style="width: 220px;">
+                </div>
+                <div>
+                    <label class="form-label small mb-1">Activity Type</label>
+                    <select class="form-select form-select-sm" name="activity_type" style="width: 160px;">
+                        <option value="">All Types</option>
+                        {% for code, label in activity_types %}
+                        <option value="{{ code }}" {% if activity_type == code %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label class="form-label small mb-1">From</label>
+                    <input type="date" class="form-control form-control-sm" name="date_from" value="{{ date_from }}" style="width: 150px;">
+                </div>
+                <div>
+                    <label class="form-label small mb-1">To</label>
+                    <input type="date" class="form-control form-control-sm" name="date_to" value="{{ date_to }}" style="width: 150px;">
+                </div>
+                <div class="d-flex gap-2">
+                    <button type="submit" class="tos-btn tos-btn-primary tos-btn-sm"><i class="bi bi-funnel me-1"></i>Filter</button>
+                    {% if search or activity_type or date_from or date_to %}
+                    <a href="/audit-log" class="tos-btn tos-btn-secondary tos-btn-sm"><i class="bi bi-x-lg me-1"></i>Clear</a>
+                    {% endif %}
+                </div>
+            </form>
         </div>
     </div>
 
@@ -108,7 +144,7 @@
                     <ul class="pagination pagination-sm mb-0">
                         {% if page > 1 %}
                         <li class="page-item">
-                            <a class="page-link" href="/audit-log?page={{ page - 1 }}">&laquo; Previous</a>
+                            <a class="page-link" href="/audit-log?page={{ page - 1 }}{{ filter_qs }}">&laquo; Previous</a>
                         </li>
                         {% else %}
                         <li class="page-item disabled">
@@ -123,7 +159,7 @@
                             </li>
                             {% elif p == 1 or p == total_pages or (p >= page - 2 and p <= page + 2) %}
                             <li class="page-item">
-                                <a class="page-link" href="/audit-log?page={{ p }}">{{ p }}</a>
+                                <a class="page-link" href="/audit-log?page={{ p }}{{ filter_qs }}">{{ p }}</a>
                             </li>
                             {% elif p == page - 3 or p == page + 3 %}
                             <li class="page-item disabled">
@@ -134,7 +170,7 @@
 
                         {% if page < total_pages %}
                         <li class="page-item">
-                            <a class="page-link" href="/audit-log?page={{ page + 1 }}">Next &raquo;</a>
+                            <a class="page-link" href="/audit-log?page={{ page + 1 }}{{ filter_qs }}">Next &raquo;</a>
                         </li>
                         {% else %}
                         <li class="page-item disabled">
@@ -149,7 +185,12 @@
         {% else %}
         <div class="tos-empty-state">
             <i class="bi bi-journal-x"></i>
+            {% if search or activity_type or date_from or date_to %}
+            <p>No activities match your filters.</p>
+            <a href="/audit-log" class="tos-btn tos-btn-secondary"><i class="bi bi-x-lg me-1"></i>Clear Filters</a>
+            {% else %}
             <p>No activities recorded in the system yet.</p>
+            {% endif %}
         </div>
         {% endif %}
     </div>

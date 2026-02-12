@@ -88,7 +88,8 @@
 
             <div class="ms-auto d-flex align-items-center gap-3">
                 {% if entries %}
-                <span class="commission-total">Total (Won): ${{ "{:,.2f}".format(total_commission | float) }}</span>
+                <span class="commission-total commission-total-pending" style="color: var(--warning-text);">Total (Pending): ${{ "{:,.2f}".format(pending_commission | float) }}</span>
+                <span class="commission-total commission-total-won">Total (Won): ${{ "{:,.2f}".format(total_commission | float) }}</span>
                 {% endif %}
             </div>
         </div>
@@ -592,10 +593,14 @@
                         // Update the edit button data attribute
                         var editBtn = row && row.querySelector('.edit-btn');
                         if (editBtn) editBtn.dataset.jobStatus = data.job_status;
-                        // Update the total display
-                        var totalEl = document.querySelector('.commission-total');
-                        if (totalEl) {
-                            totalEl.textContent = 'Total (Won): $' + data.total_commission.toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2});
+                        // Update the total displays
+                        var wonEl = document.querySelector('.commission-total-won');
+                        if (wonEl) {
+                            wonEl.textContent = 'Total (Won): $' + data.total_commission.toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2});
+                        }
+                        var pendingEl = document.querySelector('.commission-total-pending');
+                        if (pendingEl) {
+                            pendingEl.textContent = 'Total (Pending): $' + data.pending_commission.toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2});
                         }
                     });
                 });

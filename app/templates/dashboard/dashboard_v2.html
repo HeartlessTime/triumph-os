@@ -193,15 +193,15 @@
 
     /* Empty state - compact */
     .dashboard-v2 .empty-state {
-        padding: 1.5rem;
+        padding: 0.75rem;
         text-align: center;
         color: var(--text-muted);
         font-size: 0.85rem;
     }
 
     .dashboard-v2 .empty-state i {
-        font-size: 1.5rem;
-        margin-bottom: 0.5rem;
+        font-size: 1.2rem;
+        margin-bottom: 0.25rem;
         display: block;
     }
 
@@ -493,6 +493,11 @@
                                     <span class="badge badge-overdue">{{ (today - contact.next_followup).days }}d overdue</span>
                                 </td>
                                 <td class="text-end" style="white-space: nowrap;">
+                                    <button type="button" class="tos-btn tos-btn-sm btn-log dash-log-contact-btn"
+                                            data-contact-id="{{ contact.id }}" data-contact-name="{{ contact.full_name }}"
+                                            title="Log Contact">
+                                        <i class="bi bi-telephone me-1"></i>Log
+                                    </button>
                                     <a href="/contacts/{{ contact.id }}" class="tos-btn tos-btn-sm btn-view"><i class="bi bi-eye"></i></a>
                                 </td>
                             </tr>
@@ -539,6 +544,11 @@
                                     <span class="badge badge-today">Due today</span>
                                 </td>
                                 <td class="text-end" style="white-space: nowrap;">
+                                    <button type="button" class="tos-btn tos-btn-sm btn-log dash-log-contact-btn"
+                                            data-contact-id="{{ contact.id }}" data-contact-name="{{ contact.full_name }}"
+                                            title="Log Contact">
+                                        <i class="bi bi-telephone me-1"></i>Log
+                                    </button>
                                     <a href="/contacts/{{ contact.id }}" class="tos-btn tos-btn-sm btn-view"><i class="bi bi-eye"></i></a>
                                 </td>
                             </tr>
@@ -1031,6 +1041,102 @@ window._taskAccounts = window._jobWalkAccounts;
         document.getElementById('dashMeetingDate').value = '';
         document.getElementById('dashMeetingSubject').value = '';
         document.getElementById('dashMeetingNotes').value = '';
+    });
+})();
+</script>
+
+<!-- Dashboard Log Contact Modal -->
+<div class="modal fade" id="dashLogContactModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="post" id="dashLogContactForm" action="">
+                <div class="modal-header py-2">
+                    <h6 class="modal-title" id="dashLogContactTitle"><i class="bi bi-telephone me-2"></i>Log Contact</h6>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body py-2">
+                    <div class="mb-2">
+                        <label class="form-label small mb-1">Activity Type</label>
+                        <select class="form-select form-select-sm" name="activity_type">
+                            <option value="call">Phone Call</option>
+                            <option value="email" selected>Email</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label small mb-1">Follow-up In</label>
+                        <div class="d-flex gap-2 flex-wrap mb-1" id="dashFollowupPresets">
+                            <button type="button" class="tos-btn tos-btn-secondary dash-fu-preset" data-days="3" style="font-size:0.75rem;padding:0.2rem 0.5rem;">3d</button>
+                            <button type="button" class="tos-btn tos-btn-secondary dash-fu-preset" data-days="7" style="font-size:0.75rem;padding:0.2rem 0.5rem;">7d</button>
+                            <button type="button" class="tos-btn tos-btn-secondary dash-fu-preset" data-days="14" style="font-size:0.75rem;padding:0.2rem 0.5rem;">14d</button>
+                            <button type="button" class="tos-btn tos-btn-primary dash-fu-preset active" data-days="30" style="font-size:0.75rem;padding:0.2rem 0.5rem;">30d</button>
+                            <button type="button" class="tos-btn tos-btn-secondary dash-fu-preset" data-days="60" style="font-size:0.75rem;padding:0.2rem 0.5rem;">60d</button>
+                            <button type="button" class="tos-btn tos-btn-secondary dash-fu-preset" data-days="90" style="font-size:0.75rem;padding:0.2rem 0.5rem;">90d</button>
+                        </div>
+                        <input type="date" class="form-control form-control-sm" name="next_followup" id="dashFollowupDate" style="max-width:180px;">
+                    </div>
+                    <div class="mb-0">
+                        <label class="form-label small mb-1">Notes <span class="text-muted">(optional)</span></label>
+                        <textarea class="form-control form-control-sm" name="notes" id="dashLogContactNotes" rows="2" placeholder="Notes..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer py-2">
+                    <button type="button" class="tos-btn tos-btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="tos-btn tos-btn-primary"><i class="bi bi-check-lg me-1"></i>Log Contact</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<script>
+(function() {
+    var modal = document.getElementById('dashLogContactModal');
+    var form = document.getElementById('dashLogContactForm');
+    var title = document.getElementById('dashLogContactTitle');
+    var dateInput = document.getElementById('dashFollowupDate');
+    var presets = document.querySelectorAll('.dash-fu-preset');
+
+    function normalizeToBusinessDay(d) {
+        var day = d.getDay();
+        if (day === 6) d.setDate(d.getDate() + 2);
+        if (day === 0) d.setDate(d.getDate() + 1);
+        return d;
+    }
+    function formatISO(d) {
+        return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+    }
+    function setPreset(days, btn) {
+        var d = new Date(); d.setDate(d.getDate() + days);
+        d = normalizeToBusinessDay(d);
+        dateInput.value = formatISO(d);
+        presets.forEach(function(p) { p.classList.remove('active','tos-btn-primary'); p.classList.add('tos-btn-secondary'); });
+        btn.classList.remove('tos-btn-secondary'); btn.classList.add('active','tos-btn-primary');
+    }
+
+    presets.forEach(function(btn) {
+        btn.addEventListener('click', function() { setPreset(parseInt(this.dataset.days), this); });
+    });
+    dateInput.addEventListener('change', function() {
+        presets.forEach(function(p) { p.classList.remove('active','tos-btn-primary'); p.classList.add('tos-btn-secondary'); });
+    });
+
+    // Wire up all Log Contact buttons on the dashboard
+    document.querySelectorAll('.dash-log-contact-btn').forEach(function(btn) {
+        btn.addEventListener('click', function(e) {
+            e.stopPropagation(); // Prevent row click navigation
+            var cid = this.dataset.contactId;
+            var cname = this.dataset.contactName;
+            form.action = '/contacts/' + cid + '/log-contact?from=/';
+            title.innerHTML = '<i class="bi bi-telephone me-2"></i>Log Contact with ' + cname;
+            // Reset form
+            form.querySelector('[name="activity_type"]').value = 'email';
+            document.getElementById('dashLogContactNotes').value = '';
+            // Set default 30d preset
+            var defaultBtn = document.querySelector('.dash-fu-preset[data-days="30"]');
+            if (defaultBtn) setPreset(30, defaultBtn);
+            var bsModal = new bootstrap.Modal(modal);
+            bsModal.show();
+        });
     });
 })();
 </script>

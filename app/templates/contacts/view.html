@@ -149,6 +149,38 @@
                 </div>
             </div>
         </div>
+
+        <!-- Activity Timeline (right column) -->
+        <div class="col-lg-6">
+            <div class="tos-card">
+                <div class="tos-section-header">Activity Timeline</div>
+                <div class="p-3">
+                    {% if activities %}
+                    <div class="activity-timeline">
+                        {% for activity in activities %}
+                        <div class="activity-item">
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <span class="me-1">{{ activity.icon }}</span>
+                                    <strong>{{ activity.subject }}</strong>
+                                </div>
+                                <small class="text-muted">{{ activity.activity_date | localtime('%b %d, %H:%M') }}</small>
+                            </div>
+                            {% if activity.description %}
+                            <p class="mb-0 mt-1 text-muted small">{{ activity.description }}</p>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="text-center text-muted py-3">
+                        <i class="bi bi-clock-history d-block mb-1" style="font-size: 1.2rem;"></i>
+                        <small>No activity recorded yet</small>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 

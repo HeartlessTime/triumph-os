@@ -130,6 +130,15 @@ async def commission_list(request: Request, db: Session = Depends(get_db)):
         .scalar()
     ) or Decimal("0")
 
+    pending_commission = (
+        db.query(func.sum(CommissionEntry.commission_amount))
+        .filter(
+            CommissionEntry.month == month,
+            CommissionEntry.job_status == "Pending",
+        )
+        .scalar()
+    ) or Decimal("0")
+
     return templates.TemplateResponse(
         "commissions/list.html",
         {
@@ -141,6 +150,7 @@ async def commission_list(request: Request, db: Session = Depends(get_db)):
             "next_month": next_dt.strftime("%Y-%m"),
             "accounts": accounts,
             "total_commission": total_commission,
+            "pending_commission": pending_commission,
             "job_statuses": CommissionEntry.JOB_STATUSES,
             "account_last_contacted": account_last_contacted,
             "search": search,
@@ -262,7 +272,12 @@ async def update_commission_status(
         .filter(CommissionEntry.month == entry.month, CommissionEntry.job_status == "Won")
         .scalar()
     ) or 0
-    return {"ok": True, "job_status": new_status, "total_commission": float(total)}
+    pending = (
+        db.query(func.sum(CommissionEntry.commission_amount))
+        .filter(CommissionEntry.month == entry.month, CommissionEntry.job_status == "Pending")
+        .scalar()
+    ) or 0
+    return {"ok": True, "job_status": new_status, "total_commission": float(total), "pending_commission": float(pending)}
 
 
 # ---------------------------------------------------------------------------

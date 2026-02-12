@@ -63,6 +63,7 @@ async def list_contacts(
     account_id: str = None,
     sort: str = None,
     dir: str = None,
+    filter: str = None,
     db: Session = Depends(get_db),
 ):
     """List all contacts with optional filtering."""
@@ -83,6 +84,15 @@ async def list_contacts(
 
     if account_id_int:
         query = query.filter(Contact.account_id == account_id_int)
+
+    # Apply quick filters
+    today_date = datetime.now(get_app_tz()).date()
+    if filter == "needs_followup":
+        query = query.filter(Contact.next_followup.isnot(None), Contact.next_followup <= today_date)
+    elif filter == "no_response":
+        query = query.filter(Contact.has_responded == False)
+    elif filter == "overdue":
+        query = query.filter(Contact.next_followup.isnot(None), Contact.next_followup < today_date)
 
     # Normalize direction
     direction = dir if dir in ("asc", "desc") else None
@@ -125,6 +135,7 @@ async def list_contacts(
             "sort": sort,
             "dir": direction or ("asc" if sort in ("name", "account") else "desc"),
             "list_query_string": query_string,
+            "filter": filter,
         },
     )
 
@@ -272,11 +283,19 @@ async def view_contact(
     if not contact:
         raise HTTPException(status_code=404, detail="Contact not found")
 
+    activities = (
+        db.query(Activity)
+        .filter(Activity.contact_id == contact_id)
+        .order_by(Activity.activity_date.desc())
+        .all()
+    )
+
     return templates.TemplateResponse(
         "contacts/view.html",
         {
             "request": request,
             "contact": contact,
+            "activities": activities,
             "today": datetime.now(get_app_tz()).date(),
         },
     )
