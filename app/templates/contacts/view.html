@@ -86,7 +86,7 @@
                         </div>
                         <div class="tos-quick-stat">
                             <div class="tos-entity-sub">Response</div>
-                            <form method="post" action="/contacts/{{ contact.id }}/toggle-has-responded?from=/contacts/{{ contact.id }}" class="d-inline">
+                            <form method="post" action="/contacts/{{ contact.id }}/toggle-has-responded?from=/contacts/{{ contact.id }}{% if return_to %}&return_to={{ return_to | urlencode }}{% endif %}{% if from_account_id %}&from_account={{ from_account_id }}{% endif %}" class="d-inline">
                                 {% if contact.has_responded %}
                                 <button type="submit" class="tos-btn tos-btn-sm tos-btn-success">
                                     <i class="bi bi-check-circle-fill me-1"></i>Responded
@@ -153,25 +153,31 @@
         <!-- Activity Timeline (right column) -->
         <div class="col-lg-6">
             <div class="tos-card">
-                <div class="tos-section-header">Activity Timeline</div>
+                <div class="tos-section-header">Activity Timeline{% if activities %} <span class="text-muted" style="font-size: 0.75rem; font-weight: 400;">({{ activities|length }})</span>{% endif %}</div>
                 <div class="p-3">
                     {% if activities %}
-                    <div class="activity-timeline">
+                    <div class="activity-timeline" style="font-size: 0.85rem;">
+                        {% set collapsed_limit = 5 %}
                         {% for activity in activities %}
-                        <div class="activity-item">
-                            <div class="d-flex justify-content-between">
+                        <div class="activity-item{% if loop.index > collapsed_limit %} activity-hidden{% endif %}" {% if loop.index > collapsed_limit %}style="display: none;"{% endif %}>
+                            <div class="d-flex justify-content-between align-items-start">
                                 <div>
-                                    <span class="me-1">{{ activity.icon }}</span>
-                                    <strong>{{ activity.subject }}</strong>
+                                    <span class="me-1" style="font-size: 0.8rem;">{{ activity.icon }}</span>
+                                    <span>{{ activity.subject }}</span>
                                 </div>
-                                <small class="text-muted">{{ activity.activity_date | localtime('%b %d, %H:%M') }}</small>
+                                <small class="text-muted" style="white-space: nowrap; margin-left: 0.5rem;">{{ activity.activity_date | localtime('%b %d, %H:%M') }}</small>
                             </div>
                             {% if activity.description %}
-                            <p class="mb-0 mt-1 text-muted small">{{ activity.description }}</p>
+                            <p class="mb-0 mt-1 text-muted" style="font-size: 0.8rem;">{{ activity.description }}</p>
                             {% endif %}
                         </div>
                         {% endfor %}
                     </div>
+                    {% if activities|length > collapsed_limit %}
+                    <button type="button" class="tos-btn tos-btn-secondary tos-btn-sm w-100 mt-2" id="showAllActivities">
+                        Show all {{ activities|length }} activities
+                    </button>
+                    {% endif %}
                     {% else %}
                     <div class="text-center text-muted py-3">
                         <i class="bi bi-clock-history d-block mb-1" style="font-size: 1.2rem;"></i>
@@ -412,6 +418,19 @@ document.getElementById('meeting_type').addEventListener('change', function() {
     if (modal) {
         modal.addEventListener('show.bs.modal', function() {
             if (defaultBtn) setFollowupFromPreset(30, defaultBtn);
+        });
+    }
+})();
+
+// Expand hidden activities
+(function() {
+    const btn = document.getElementById('showAllActivities');
+    if (btn) {
+        btn.addEventListener('click', function() {
+            document.querySelectorAll('.activity-hidden').forEach(function(el) {
+                el.style.display = '';
+            });
+            btn.remove();
         });
     }
 })();

@@ -217,6 +217,7 @@ async def log_meeting(
         contacts = db.query(Contact).filter(Contact.id.in_(contact_ids)).all()
         for contact in contacts:
             contact.last_contacted = activity_dt.date()
+            contact.has_responded = True
             # Set 30-day follow-up (standard post-meeting)
             contact.next_followup = _normalize_to_business_day(
                 activity_dt.date() + timedelta(days=30)

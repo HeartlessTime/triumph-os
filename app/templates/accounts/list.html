@@ -98,10 +98,8 @@
                         <th>Account Name</th>
                         <th>Type</th>
                         <th>Industry</th>
-                        <th>Location</th>
                         <th>Contacts</th>
                         <th>Last Contacted</th>
-                        <th>Open Opps</th>
                         <th>Pipeline</th>
                         <th></th>
                     </tr>
@@ -135,13 +133,6 @@
                             <span class="text-muted">—</span>
                             {% endif %}
                         </td>
-                        <td class="tos-entity-sub">
-                            {% if account.city %}
-                            {{ account.city }}{% if account.state %}, {{ account.state }}{% endif %}
-                            {% else %}
-                            —
-                            {% endif %}
-                        </td>
                         <td>{{ account.contacts|length }}</td>
                         <td class="tos-entity-sub">
                             {% if view in ('waiting', 'hot') and account.days_since_last_activity is not none %}
@@ -152,13 +143,6 @@
                             <span style="color: #dc2626;">Never</span>
                             {% else %}
                             {{ account.last_contacted.strftime('%b %d') if account.last_contacted else '—' }}
-                            {% endif %}
-                        </td>
-                        <td>
-                            {% if account.open_opportunities_count > 0 %}
-                            <span class="tos-badge-pending">{{ account.open_opportunities_count }}</span>
-                            {% else %}
-                            <span class="text-muted">0</span>
                             {% endif %}
                         </td>
                         <td>
@@ -179,7 +163,7 @@
                     </tr>
                     {% endfor %}
                     <tr class="no-results-row">
-                        <td colspan="9" class="text-center text-muted py-4">
+                        <td colspan="7" class="text-center text-muted py-4">
                             <i class="bi bi-search me-2"></i>No accounts match your search
                         </td>
                     </tr>

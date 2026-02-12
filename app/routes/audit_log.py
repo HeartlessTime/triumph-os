@@ -58,14 +58,14 @@ async def audit_log(request: Request, page: int = 1, db: Session = Depends(get_d
     if date_from:
         try:
             dt_from = datetime.strptime(date_from, "%Y-%m-%d")
-            query = query.filter(Activity.created_at >= dt_from)
+            query = query.filter(Activity.activity_date >= dt_from)
         except ValueError:
             pass
 
     if date_to:
         try:
             dt_to = datetime.strptime(date_to, "%Y-%m-%d").replace(hour=23, minute=59, second=59)
-            query = query.filter(Activity.created_at <= dt_to)
+            query = query.filter(Activity.activity_date <= dt_to)
         except ValueError:
             pass
 
@@ -83,7 +83,7 @@ async def audit_log(request: Request, page: int = 1, db: Session = Depends(get_d
             selectinload(Activity.contact).selectinload(Contact.account),
             selectinload(Activity.opportunity).selectinload(Opportunity.account),
         )
-        .order_by(Activity.created_at.desc())
+        .order_by(Activity.activity_date.desc())
         .offset(offset)
         .limit(PAGE_SIZE)
         .all()

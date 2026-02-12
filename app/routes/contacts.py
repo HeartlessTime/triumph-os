@@ -523,6 +523,7 @@ async def log_meeting(
 
     # Update last_contacted on the contact
     contact.last_contacted = meeting_dt.date()
+    contact.has_responded = True
     # Meeting occurred = standard 30-day follow-up (no special activity_type override)
     # Note: Outlook remains the source of truth for scheduled meetings.
     # This just logs that a meeting happened and sets a standard follow-up reminder.
@@ -561,6 +562,9 @@ async def log_contact(
     # For meeting_requested, the meeting hasn't happened yet - don't update last_contacted
     if activity_type != "meeting_requested":
         contact.last_contacted = date.today()
+    # A meeting means they responded — auto-mark
+    if activity_type in ("meeting", "meeting_requested"):
+        contact.has_responded = True
 
     # Use custom follow-up date if provided, otherwise use activity_type-based calculation
     if next_followup and next_followup.strip():
@@ -714,8 +718,22 @@ async def toggle_has_responded(
     contact.has_responded = not contact.has_responded
     db.commit()
 
-    # Redirect back to referring page or contact detail
-    redirect_url = safe_redirect_url(request.query_params.get("from"), f"/contacts/{contact_id}")
+    # Redirect back to contact detail, preserving navigation context (back button)
+    base_url = safe_redirect_url(request.query_params.get("from"), f"/contacts/{contact_id}")
+    # Forward return_to and from_account so the back button survives the toggle
+    parts = []
+    return_to = request.query_params.get("return_to")
+    from_account = request.query_params.get("from_account")
+    if return_to:
+        parts.append(f"from={return_to}")
+    if from_account:
+        parts.append(f"from_account={from_account}")
+    if parts and "?" not in base_url:
+        redirect_url = base_url + "?" + "&".join(parts)
+    elif parts:
+        redirect_url = base_url + "&" + "&".join(parts)
+    else:
+        redirect_url = base_url
     return RedirectResponse(url=redirect_url, status_code=303)
 
 
