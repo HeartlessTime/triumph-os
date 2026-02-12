@@ -42,6 +42,10 @@ async def commission_list(request: Request, db: Session = Depends(get_db)):
     if not month:
         month = datetime.utcnow().strftime("%Y-%m")
 
+    search = request.query_params.get("search", "").strip()
+    sort = request.query_params.get("sort", "")
+    sort_dir = request.query_params.get("dir", "")
+
     # Compute prev/next months and display label
     try:
         dt = datetime.strptime(month, "%Y-%m")
@@ -58,12 +62,40 @@ async def commission_list(request: Request, db: Session = Depends(get_db)):
     else:
         next_dt = dt.replace(month=dt.month + 1)
 
-    entries = (
-        db.query(CommissionEntry)
-        .filter(CommissionEntry.month == month)
-        .order_by(CommissionEntry.account_name, CommissionEntry.job_name)
-        .all()
-    )
+    query = db.query(CommissionEntry).filter(CommissionEntry.month == month)
+
+    # Search filter
+    if search:
+        term = f"%{search}%"
+        query = query.filter(
+            CommissionEntry.account_name.ilike(term)
+            | CommissionEntry.job_name.ilike(term)
+            | CommissionEntry.job_number.ilike(term)
+            | CommissionEntry.contact.ilike(term)
+            | CommissionEntry.notes.ilike(term)
+        )
+
+    # DB-sortable columns
+    if sort == "account":
+        if sort_dir == "desc":
+            query = query.order_by(CommissionEntry.account_name.desc())
+        else:
+            query = query.order_by(CommissionEntry.account_name.asc())
+    elif sort == "job_amount":
+        if sort_dir == "asc":
+            query = query.order_by(CommissionEntry.job_amount.asc().nullslast())
+        else:
+            query = query.order_by(CommissionEntry.job_amount.desc().nullslast())
+    elif sort == "status":
+        if sort_dir == "desc":
+            query = query.order_by(CommissionEntry.job_status.desc())
+        else:
+            query = query.order_by(CommissionEntry.job_status.asc())
+    elif sort != "last_contacted":
+        # Default sort
+        query = query.order_by(CommissionEntry.account_name, CommissionEntry.job_name)
+
+    entries = query.all()
 
     accounts = (
         db.query(Account)
@@ -77,6 +109,16 @@ async def commission_list(request: Request, db: Session = Depends(get_db)):
     for acct in accounts:
         if acct.last_contacted:
             account_last_contacted[acct.name] = acct.last_contacted
+
+    # Sort by last_contacted in Python (data lives on Account, not CommissionEntry)
+    if sort == "last_contacted":
+        from datetime import date as _date
+        _min = _date.min
+        _max = _date.max
+        if sort_dir == "asc":
+            entries.sort(key=lambda e: account_last_contacted.get(e.account_name, _max))
+        else:
+            entries.sort(key=lambda e: account_last_contacted.get(e.account_name, _min), reverse=True)
 
     # Only "Won" entries count toward the total
     total_commission = (
@@ -101,6 +143,9 @@ async def commission_list(request: Request, db: Session = Depends(get_db)):
             "total_commission": total_commission,
             "job_statuses": CommissionEntry.JOB_STATUSES,
             "account_last_contacted": account_last_contacted,
+            "search": search,
+            "sort": sort,
+            "dir": sort_dir,
         },
     )
 

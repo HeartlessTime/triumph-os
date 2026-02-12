@@ -62,6 +62,10 @@
         </button>
     </div>
 
+    {# Macro to build sort URLs preserving month + search #}
+    {% set _base = "/commissions?month=" ~ selected_month %}
+    {% if search %}{% set _base = _base ~ "&search=" ~ search %}{% endif %}
+
     <!-- Controls -->
     <div class="tos-controls">
         <div class="d-flex flex-wrap gap-3 align-items-center">
@@ -74,11 +78,44 @@
                     <i class="bi bi-chevron-right"></i>
                 </a>
             </div>
+
+            <!-- Search -->
+            <div class="input-group" style="max-width:260px;">
+                <span class="input-group-text"><i class="bi bi-search"></i></span>
+                <input type="text" class="form-control form-control-sm" id="commissionSearch"
+                       placeholder="Search jobs..." value="{{ search }}">
+            </div>
+
             <div class="ms-auto d-flex align-items-center gap-3">
                 {% if entries %}
                 <span class="commission-total">Total (Won): ${{ "{:,.2f}".format(total_commission | float) }}</span>
                 {% endif %}
             </div>
+        </div>
+
+        <!-- Sort Controls -->
+        <div class="d-flex gap-2 align-items-center mt-2">
+            <span class="text-muted small me-1">Sort:</span>
+            {% set acct_dir = 'desc' if sort == 'account' and dir == 'asc' else 'asc' %}
+            <a href="{{ _base }}&sort=account&dir={{ acct_dir }}"
+               class="tos-sort-btn {% if sort == 'account' or not sort %}active{% endif %}">
+                Account <i class="bi {% if sort == 'account' and dir == 'desc' %}bi-sort-alpha-up{% else %}bi-sort-alpha-down{% endif %} sort-icon"></i>
+            </a>
+            {% set lc_dir = 'asc' if sort == 'last_contacted' and dir == 'desc' else 'desc' %}
+            <a href="{{ _base }}&sort=last_contacted&dir={{ lc_dir }}"
+               class="tos-sort-btn {% if sort == 'last_contacted' %}active{% endif %}">
+                Last Contacted <i class="bi {% if sort == 'last_contacted' and dir == 'asc' %}bi-sort-up{% else %}bi-sort-down{% endif %} sort-icon"></i>
+            </a>
+            {% set amt_dir = 'asc' if sort == 'job_amount' and dir == 'desc' else 'desc' %}
+            <a href="{{ _base }}&sort=job_amount&dir={{ amt_dir }}"
+               class="tos-sort-btn {% if sort == 'job_amount' %}active{% endif %}">
+                Job Amount <i class="bi {% if sort == 'job_amount' and dir == 'asc' %}bi-sort-up{% else %}bi-sort-down{% endif %} sort-icon"></i>
+            </a>
+            {% set st_dir = 'desc' if sort == 'status' and dir == 'asc' else 'asc' %}
+            <a href="{{ _base }}&sort=status&dir={{ st_dir }}"
+               class="tos-sort-btn {% if sort == 'status' %}active{% endif %}">
+                Status <i class="bi {% if sort == 'status' and dir == 'desc' %}bi-sort-alpha-up{% else %}bi-sort-alpha-down{% endif %} sort-icon"></i>
+            </a>
         </div>
     </div>
 
@@ -570,6 +607,27 @@
     });
 
     document.addEventListener('click', function() { closePicker(); });
+
+    /* ==== Search ==== */
+    var searchInput = document.getElementById('commissionSearch');
+    if (searchInput) {
+        var searchTimer = null;
+        function doSearch() {
+            var term = searchInput.value.trim();
+            var url = '/commissions?month={{ selected_month }}';
+            if (term) url += '&search=' + encodeURIComponent(term);
+            {% if sort %} url += '&sort={{ sort }}'; {% endif %}
+            {% if dir %} url += '&dir={{ dir }}'; {% endif %}
+            window.location.href = url;
+        }
+        searchInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') { e.preventDefault(); doSearch(); }
+        });
+        searchInput.addEventListener('input', function() {
+            clearTimeout(searchTimer);
+            searchTimer = setTimeout(doSearch, 500);
+        });
+    }
 })();
 </script>
 {% endblock %}
