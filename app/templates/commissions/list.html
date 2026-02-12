@@ -379,7 +379,11 @@
             var div = document.createElement('div');
             div.className = 'sr-item';
             div.textContent = m.name;
-            div.addEventListener('click', function() { pickAccount(m.id, m.name); });
+            div.addEventListener('mousedown', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                pickAccount(m.id, m.name);
+            });
             resultsDiv.appendChild(div);
         });
         resultsDiv.classList.add('show');
