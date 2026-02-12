@@ -79,6 +79,11 @@
                    class="tos-sort-btn {% if sort == 'name' or (not sort and not view) %}active{% endif %}">
                     Name <i class="bi {% if sort == 'name' and dir == 'desc' %}bi-sort-alpha-up{% else %}bi-sort-alpha-down{% endif %} sort-icon"></i>
                 </a>
+                {% set activities_dir = 'asc' if sort == 'activities' and dir == 'desc' else 'desc' %}
+                <a href="/accounts?sort=activities&dir={{ activities_dir }}{% if account_type %}&account_type={{ account_type }}{% endif %}{% if view %}&view={{ view }}{% endif %}"
+                   class="tos-sort-btn {% if sort == 'activities' %}active{% endif %}">
+                    Activities <i class="bi {% if sort == 'activities' and dir == 'asc' %}bi-sort-up{% else %}bi-sort-down{% endif %} sort-icon"></i>
+                </a>
                 {% set activity_dir = 'asc' if sort == 'last_activity' and dir == 'desc' else 'desc' %}
                 <a href="/accounts?sort=last_activity&dir={{ activity_dir }}{% if account_type %}&account_type={{ account_type }}{% endif %}{% if view %}&view={{ view }}{% endif %}"
                    class="tos-sort-btn {% if sort == 'last_activity' or view == 'waiting' %}active{% endif %}">
