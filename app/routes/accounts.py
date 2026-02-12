@@ -114,6 +114,19 @@ async def list_accounts(
             reverse=True,
         )
 
+    # Build activity count per account (total touchpoints across all contacts)
+    account_ids = [a.id for a in accounts]
+    activity_counts = {}
+    if account_ids:
+        rows = (
+            db.query(Contact.account_id, func.count(Activity.id))
+            .join(Activity, Activity.contact_id == Contact.id)
+            .filter(Contact.account_id.in_(account_ids))
+            .group_by(Contact.account_id)
+            .all()
+        )
+        activity_counts = {row[0]: row[1] for row in rows}
+
     # Build query string for preserving state in navigation
     query_string = str(request.query_params) if request.query_params else ""
 
@@ -131,6 +144,7 @@ async def list_accounts(
             "sort": sort,
             "dir": direction or ("asc" if sort == "name" else "desc"),
             "list_query_string": query_string,
+            "activity_counts": activity_counts,
         },
     )
 

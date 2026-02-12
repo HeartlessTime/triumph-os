@@ -99,8 +99,8 @@
                         <th>Type</th>
                         <th>Industry</th>
                         <th>Contacts</th>
+                        <th>Activities</th>
                         <th>Last Contacted</th>
-                        <th>Pipeline</th>
                         <th></th>
                     </tr>
                 </thead>
@@ -134,6 +134,7 @@
                             {% endif %}
                         </td>
                         <td>{{ account.contacts|length }}</td>
+                        <td class="tos-entity-sub">{{ activity_counts.get(account.id, 0) }}</td>
                         <td class="tos-entity-sub">
                             {% if view in ('waiting', 'hot') and account.days_since_last_activity is not none %}
                             <span style="color: {% if account.days_since_last_activity >= 30 %}#dc2626{% elif account.days_since_last_activity >= 21 %}#d97706{% else %}#059669{% endif %};">
@@ -144,9 +145,6 @@
                             {% else %}
                             {{ account.last_contacted.strftime('%b %d') if account.last_contacted else '—' }}
                             {% endif %}
-                        </td>
-                        <td>
-                            <span class="currency">{{ account.total_pipeline_value }}</span>
                         </td>
                         <td class="text-end" style="white-space: nowrap;">
                             <button type="button"
