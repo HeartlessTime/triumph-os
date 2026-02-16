@@ -125,44 +125,71 @@
                 </div>
             </div>
 
-            <!-- Pipeline Stats -->
+            <!-- Activity Timeline -->
             <div class="tos-card mt-3">
                 <div class="tos-section-header">
-                    <i class="bi bi-graph-up me-1"></i>Pipeline
+                    <i class="bi bi-clock-history me-1"></i>Activity Timeline{% if account_activities %} <span class="text-muted" style="font-size: 0.75rem; font-weight: 400;">({{ account_activities|length }})</span>{% endif %}
                 </div>
                 <div class="p-3">
-                    <div class="tos-quick-stats">
-                        <div class="tos-quick-stat">
-                            <div class="tos-entity-sub">Open Opportunities</div>
-                            <div style="font-size: 1.25rem; font-weight: 600;">{{ account.open_opportunities_count }}</div>
+                    {% if account_activities %}
+                    <div class="activity-timeline" style="font-size: 0.85rem;">
+                        {% set collapsed_limit = 5 %}
+                        {% for activity in account_activities %}
+                        <div class="activity-item{% if loop.index > collapsed_limit %} acct-activity-hidden{% endif %}" {% if loop.index > collapsed_limit %}style="display: none;"{% endif %}>
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <span class="me-1" style="font-size: 0.8rem;">{{ activity.icon }}</span>
+                                    <span>{{ activity.subject }}</span>
+                                </div>
+                                <small class="text-muted" style="white-space: nowrap; margin-left: 0.5rem;">{{ activity.activity_date | localtime('%b %d, %H:%M') }}</small>
+                            </div>
+                            {% if activity.description %}
+                            <p class="mb-0 mt-1 text-muted" style="font-size: 0.8rem;">{{ activity.description }}</p>
+                            {% endif %}
                         </div>
-                        <div class="tos-quick-stat">
-                            <div class="tos-entity-sub">Pipeline Value</div>
-                            <div class="currency" style="font-size: 1.25rem; font-weight: 600;">{{ account.total_pipeline_value }}</div>
-                        </div>
+                        {% endfor %}
                     </div>
+                    {% if account_activities|length > collapsed_limit %}
+                    <button type="button" class="tos-btn tos-btn-secondary tos-btn-sm w-100 mt-2" id="showAllAccountActivities">
+                        Show all {{ account_activities|length }} activities
+                    </button>
+                    {% endif %}
+                    {% else %}
+                    <div class="text-center text-muted py-3">
+                        <i class="bi bi-clock-history d-block mb-1" style="font-size: 1.2rem;"></i>
+                        <small>No activity recorded yet</small>
+                    </div>
+                    {% endif %}
                 </div>
             </div>
 
-            <!-- Tasks -->
+            <!-- Commission Jobs -->
             <div class="tos-card mt-3">
                 <div class="tos-section-header">
-                    <i class="bi bi-list-task me-1"></i>Tasks
+                    <i class="bi bi-briefcase me-1"></i>Commission Jobs{% if account_jobs %} <span class="text-muted" style="font-size: 0.75rem; font-weight: 400;">({{ account_jobs|length }})</span>{% endif %}
                 </div>
-                {% if account_tasks %}
+                {% if account_jobs %}
                 <div class="table-responsive">
                     <table class="dense-table w-100">
                         <tbody>
-                            {% for task in account_tasks %}
+                            {% for job in account_jobs %}
                             <tr>
                                 <td class="px-3 py-1">
-                                    <a href="/tasks/{{ task.id }}?from=/accounts/{{ account.id }}" class="text-decoration-none">{{ task.title }}</a>
+                                    <span style="font-size: 0.85rem;">{{ job.job_name }}</span>
+                                    {% if job.job_number %}<span class="text-muted" style="font-size: 0.75rem;"> #{{ job.job_number }}</span>{% endif %}
+                                </td>
+                                <td class="px-3 py-1 text-center" style="width: 90px;">
+                                    {% if job.job_status == 'Won' %}
+                                    <span class="tos-badge-success" style="font-size: 0.7rem;">Won</span>
+                                    {% elif job.job_status == 'Did Not Win' %}
+                                    <span class="tos-badge-danger" style="font-size: 0.7rem;">Lost</span>
+                                    {% else %}
+                                    <span class="tos-badge-pending" style="font-size: 0.7rem;">Pending</span>
+                                    {% endif %}
                                 </td>
                                 <td class="px-3 py-1 text-end text-nowrap" style="width: 100px;">
-                                    {% if task.due_date %}
-                                    <small class="{% if task.is_overdue %}text-danger fw-bold{% else %}text-muted{% endif %}">
-                                        {{ task.due_date.strftime('%b %d') }}{% if task.is_overdue %} <i class="bi bi-exclamation-circle"></i>{% endif %}
-                                    </small>
+                                    {% if job.job_amount %}
+                                    <small class="text-muted">${{ "{:,.0f}".format(job.job_amount) }}</small>
                                     {% endif %}
                                 </td>
                             </tr>
@@ -171,7 +198,7 @@
                     </table>
                 </div>
                 {% else %}
-                <div class="p-3 text-center text-muted small">No open tasks</div>
+                <div class="p-3 text-center text-muted small">No commission jobs</div>
                 {% endif %}
             </div>
 
@@ -559,6 +586,17 @@
     }
 
     // Site Visit Modal JS is handled by the shared partial
+
+    // Expand hidden activities
+    const showAllBtn = document.getElementById('showAllAccountActivities');
+    if (showAllBtn) {
+        showAllBtn.addEventListener('click', function() {
+            document.querySelectorAll('.acct-activity-hidden').forEach(function(el) {
+                el.style.display = '';
+            });
+            showAllBtn.remove();
+        });
+    }
 })();
 </script>
 {% endblock %}

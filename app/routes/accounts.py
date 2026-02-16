@@ -8,6 +8,7 @@ from datetime import date
 
 from app.database import get_db
 from app.models import Account, Opportunity, Contact, Activity, ActivityAttendee, Task
+from app.models.commission_entry import CommissionEntry
 from app.services.validators import validate_account
 from app.template_config import templates
 from app.utils.safe_redirect import safe_redirect_url
@@ -327,11 +328,29 @@ async def view_account(
             .all()
         )
 
+    # Get all activities for this account's contacts
+    account_activities = []
+    if contact_ids:
+        account_activities = (
+            db.query(Activity)
+            .filter(Activity.contact_id.in_(contact_ids))
+            .order_by(Activity.activity_date.desc())
+            .all()
+        )
+
     # Get open tasks linked to this account
     account_tasks = (
         db.query(Task)
         .filter(Task.account_id == account_id, Task.status == "Open")
         .order_by(Task.due_date.asc().nullslast())
+        .all()
+    )
+
+    # Get commission jobs linked to this account (by name match)
+    account_jobs = (
+        db.query(CommissionEntry)
+        .filter(CommissionEntry.account_name == account.name)
+        .order_by(CommissionEntry.created_at.desc())
         .all()
     )
 
@@ -346,7 +365,9 @@ async def view_account(
             "sorted_contacts": sorted_contacts,
             "return_to": return_to,
             "account_meetings": account_meetings,
+            "account_activities": account_activities,
             "account_tasks": account_tasks,
+            "account_jobs": account_jobs,
         },
     )
 
