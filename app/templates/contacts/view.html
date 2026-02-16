@@ -159,7 +159,7 @@
                     <div class="activity-timeline" style="font-size: 0.85rem;">
                         {% set collapsed_limit = 5 %}
                         {% for activity in activities %}
-                        <div class="activity-item{% if loop.index > collapsed_limit %} activity-hidden{% endif %}" {% if loop.index > collapsed_limit %}style="display: none;"{% endif %}>
+                        <a href="/activities/{{ activity.id }}?from=/contacts/{{ contact.id }}" class="activity-item text-decoration-none d-block{% if loop.index > collapsed_limit %} activity-hidden{% endif %}" {% if loop.index > collapsed_limit %}style="display: none;"{% endif %}>
                             <div class="d-flex justify-content-between align-items-start">
                                 <div>
                                     <span class="me-1" style="font-size: 0.8rem;">{{ activity.icon }}</span>
@@ -170,7 +170,7 @@
                             {% if activity.description %}
                             <p class="mb-0 mt-1 text-muted" style="font-size: 0.8rem;">{{ activity.description }}</p>
                             {% endif %}
-                        </div>
+                        </a>
                         {% endfor %}
                     </div>
                     {% if activities|length > collapsed_limit %}

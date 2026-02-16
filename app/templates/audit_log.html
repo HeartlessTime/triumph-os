@@ -71,7 +71,7 @@
                     </thead>
                     <tbody>
                         {% for activity in activities %}
-                        <tr>
+                        <tr style="cursor: pointer;" onclick="window.location='/activities/{{ activity.id }}?from=/audit-log'">
                             <td>
                                 <div class="small">
                                     <div class="fw-medium">{{ activity.activity_date | localdate('%b %d, %Y') }}</div>
